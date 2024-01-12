@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -87,7 +87,7 @@ static void LldpSendFrame(const unsigned char *frameData, size_t frameLength, si
         return;
     }
 
-    StatLldpFrameSent(sequenceCounter);
+    StatFrameSent(LLDP_FRAME_TYPE, sequenceCounter);
 }
 
 static void LldpGenAndSendFrame(unsigned char *frameData, size_t frameLength, size_t numFramesPerCycle, int socketFd,
@@ -109,7 +109,7 @@ static void LldpGenAndSendFrame(unsigned char *frameData, size_t frameLength, si
         return;
     }
 
-    StatLldpFrameSent(sequenceCounter);
+    StatFrameSent(LLDP_FRAME_TYPE, sequenceCounter);
 }
 
 static void *LldpTxThreadRoutine(void *data)
@@ -243,7 +243,7 @@ static void *LldpRxThreadRoutine(void *data)
         meta = (struct ReferenceMetaData *)(frame + sizeof(struct ethhdr));
         rxSequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
 
-        StatLldpFrameReceived(rxSequenceCounter);
+        StatFrameReceived(LLDP_FRAME_TYPE, rxSequenceCounter);
 
         if (rxSequenceCounter != sequenceCounter)
         {

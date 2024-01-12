@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -76,7 +76,7 @@ static void UdpSendFrame(const struct UdpThreadConfiguration *udpConfig, const u
         return;
     }
 
-    udpConfig->StatUdpFrameSent(sequenceCounter);
+    StatFrameSent(udpConfig->FrameType, sequenceCounter);
 }
 
 static void UdpGenAndSendFrame(const struct UdpThreadConfiguration *udpConfig, unsigned char *frameData,
@@ -111,7 +111,7 @@ static void UdpGenAndSendFrame(const struct UdpThreadConfiguration *udpConfig, u
         return;
     }
 
-    udpConfig->StatUdpFrameSent(sequenceCounter);
+    StatFrameSent(udpConfig->FrameType, sequenceCounter);
 }
 
 static void *UdpTxThreadRoutine(void *data)
@@ -232,7 +232,7 @@ static void *UdpRxThreadRoutine(void *data)
         meta = (struct ReferenceMetaData *)frame;
         rxSequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
 
-        udpConfig->StatUdpFrameReceived(rxSequenceCounter);
+        StatFrameReceived(udpConfig->FrameType, sequenceCounter);
 
         if (rxSequenceCounter != sequenceCounter)
         {
@@ -488,6 +488,7 @@ int UdpLowThreadsCreate(struct ThreadContext *udpThreadContext)
         return -ENOMEM;
 
     memset(udpConfig, '\0', sizeof(*udpConfig));
+    udpConfig->FrameType = UDP_LOW_FRAME_TYPE;
     udpConfig->UdpSuffix = "Low";
     udpConfig->UdpTxEnabled = appConfig.UdpLowTxEnabled;
     udpConfig->UdpRxEnabled = appConfig.UdpLowRxEnabled;
@@ -507,8 +508,6 @@ int UdpLowThreadsCreate(struct ThreadContext *udpThreadContext)
     udpConfig->UdpPort = appConfig.UdpLowPort;
     udpConfig->UdpDestination = appConfig.UdpLowDestination;
     udpConfig->UdpSource = appConfig.UdpLowSource;
-    udpConfig->StatUdpFrameSent = StatUdpLowFrameSent;
-    udpConfig->StatUdpFrameReceived = StatUdpLowFrameReceived;
 
     ret = UdpThreadsCreate(udpThreadContext, udpConfig);
     if (ret)
@@ -543,6 +542,7 @@ int UdpHighThreadsCreate(struct ThreadContext *udpThreadContext)
         return -ENOMEM;
 
     memset(udpConfig, '\0', sizeof(*udpConfig));
+    udpConfig->FrameType = UDP_HIGH_FRAME_TYPE;
     udpConfig->UdpSuffix = "High";
     udpConfig->UdpTxEnabled = appConfig.UdpHighTxEnabled;
     udpConfig->UdpRxEnabled = appConfig.UdpHighRxEnabled;
@@ -562,8 +562,6 @@ int UdpHighThreadsCreate(struct ThreadContext *udpThreadContext)
     udpConfig->UdpPort = appConfig.UdpHighPort;
     udpConfig->UdpDestination = appConfig.UdpHighDestination;
     udpConfig->UdpSource = appConfig.UdpHighSource;
-    udpConfig->StatUdpFrameSent = StatUdpHighFrameSent;
-    udpConfig->StatUdpFrameReceived = StatUdpHighFrameReceived;
 
     ret = UdpThreadsCreate(udpThreadContext, udpConfig);
     if (ret)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2021-2022 Linutronix GmbH
+ * Copyright (C) 2021-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -22,6 +22,14 @@ static uint64_t RttExpectedRTLimit;
 static bool LogRtt;
 static FILE *FileTracingOn;
 static FILE *FileTraceMarker;
+
+static const char *StatFrameTypeNames[NUM_FRAME_TYPES] = {"TsnHigh", "TsnLow",  "Rtc",    "Rta",      "Dcp",
+                                                          "Lldp",    "UdpHigh", "UdpLow", "GenericL2"};
+
+static inline const char *StatFrameTypeToString(enum StatFrameType frameType)
+{
+    return StatFrameTypeNames[frameType];
+}
 
 /*
  * Keep 2048 periods of backlog available. If a frame is received later than
@@ -117,11 +125,13 @@ void StatFree(void)
     }
 }
 
-static void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber)
+void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber)
 {
     struct RoundTripContext *rtt = &RoundTripContexts[frameType];
     struct Statistics *stat = &GlobalStatistics[frameType];
     struct timespec txTime = {};
+
+    LogMessage(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] sent\n", StatFrameTypeToString(frameType), cycleNumber);
 
     if (LogRtt)
     {
@@ -134,12 +144,14 @@ static void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber)
     stat->FramesSent++;
 }
 
-static void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber)
+void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber)
 {
     struct RoundTripContext *rtt = &RoundTripContexts[frameType];
     struct Statistics *stat = &GlobalStatistics[frameType];
     struct timespec rxTime = {};
     uint64_t rtTime;
+
+    LogMessage(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] received\n", StatFrameTypeToString(frameType), cycleNumber);
 
     /* Record Rx timestamp in us */
     if (LogRtt)
@@ -176,112 +188,4 @@ static void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber
 
     /* Increment stats */
     stat->FramesReceived++;
-}
-
-void StatTsnHighFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "TsnHighTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(TSN_HIGH_FRAME_TYPE, cycleNumber);
-}
-
-void StatTsnHighFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "TsnHighRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(TSN_HIGH_FRAME_TYPE, cycleNumber);
-}
-
-void StatTsnLowFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "TsnLowTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(TSN_LOW_FRAME_TYPE, cycleNumber);
-}
-
-void StatTsnLowFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "TsnLowRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(TSN_LOW_FRAME_TYPE, cycleNumber);
-}
-
-void StatRtcFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "RtcTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(RTC_FRAME_TYPE, cycleNumber);
-}
-
-void StatRtcFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "RtcRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(RTC_FRAME_TYPE, cycleNumber);
-}
-
-void StatRtaFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "RtaTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(RTA_FRAME_TYPE, cycleNumber);
-}
-
-void StatRtaFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "RtaRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(RTA_FRAME_TYPE, cycleNumber);
-}
-
-void StatDcpFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "DcpTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(DCP_FRAME_TYPE, cycleNumber);
-}
-
-void StatDcpFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "DcpRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(DCP_FRAME_TYPE, cycleNumber);
-}
-
-void StatLldpFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "LldpTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(LLDP_FRAME_TYPE, cycleNumber);
-}
-
-void StatLldpFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "LldpRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(LLDP_FRAME_TYPE, cycleNumber);
-}
-
-void StatUdpHighFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "UdpHighTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(UDP_HIGH_FRAME_TYPE, cycleNumber);
-}
-
-void StatUdpHighFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "UdpHighRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(UDP_HIGH_FRAME_TYPE, cycleNumber);
-}
-
-void StatUdpLowFrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "UdpLowTx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(UDP_LOW_FRAME_TYPE, cycleNumber);
-}
-
-void StatUdpLowFrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "UdpLowRx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(UDP_LOW_FRAME_TYPE, cycleNumber);
-}
-
-void StatGenericL2FrameSent(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "GenericL2Tx: frame[%" PRIu64 "] sent\n", cycleNumber);
-    StatFrameSent(GENERICL2_FRAME_TYPE, cycleNumber);
-}
-
-void StatGenericL2FrameReceived(uint64_t cycleNumber)
-{
-    LogMessage(LOG_LEVEL_DEBUG, "GenericL2Rx: frame[%" PRIu64 "] received\n", cycleNumber);
-    StatFrameReceived(GENERICL2_FRAME_TYPE, cycleNumber);
 }

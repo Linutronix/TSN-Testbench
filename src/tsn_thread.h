@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2021-2023 Linutronix GmbH
+ * Copyright (C) 2021-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -14,6 +14,7 @@
 #include <linux/if_ether.h>
 
 #include "security.h"
+#include "stat.h"
 #include "thread.h"
 #include "xdp.h"
 
@@ -22,6 +23,7 @@
 struct TsnThreadConfiguration
 {
     /* TSN configuration */
+    enum StatFrameType FrameType;
     const char *TsnSuffix;
     bool TsnTxEnabled;
     bool TsnRxEnabled;
@@ -53,9 +55,6 @@ struct TsnThreadConfiguration
     int TsnRxThreadCpu;
     const char *TsnInterface;
     const unsigned char *TsnDestination;
-    /* Corresponding stat functions */
-    void (*StatTsnFrameSent)(uint64_t sequenceCounter);
-    void (*StatTsnFrameReceived)(uint64_t sequenceCounter);
     /* Socket create function */
     int (*CreateTSNSocket)(void);
     /* TSN low/high specific */

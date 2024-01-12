@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -66,7 +66,7 @@ static void RtaSendFrame(const unsigned char *frameData, size_t frameLength, siz
         return;
     }
 
-    StatRtaFrameSent(sequenceCounter);
+    StatFrameSent(RTA_FRAME_TYPE, sequenceCounter);
 }
 
 static void RtaGenAndSendFrame(struct SecurityContext *securityContext, unsigned char *frameData, size_t frameLength,
@@ -102,7 +102,7 @@ static void RtaGenAndSendFrame(struct SecurityContext *securityContext, unsigned
         return;
     }
 
-    StatRtaFrameSent(sequenceCounter);
+    StatFrameSent(RTA_FRAME_TYPE, sequenceCounter);
 }
 
 static void RtaGenAndSendXdpFrames(struct SecurityContext *securityContext, struct XdpSocket *xsk,
@@ -124,7 +124,7 @@ static void RtaGenAndSendXdpFrames(struct SecurityContext *securityContext, stru
     xdp.FrameNumber = frameNumber;
     xdp.SequenceCounterBegin = sequenceCounter;
     xdp.MetaDataOffset = metaDataOffset;
-    xdp.StatFunction = StatRtaFrameSent;
+    xdp.FrameType = RTA_FRAME_TYPE;
 
     XdpGenAndSendFrames(xsk, &xdp);
 }
@@ -293,7 +293,7 @@ static void *RtaXdpTxThreadRoutine(void *data)
             xsk_ring_prod__submit(&xsk->Tx, received);
 
             for (i = sequenceCounter; i < sequenceCounter + received; ++i)
-                StatRtaFrameSent(i);
+                StatFrameSent(RTA_FRAME_TYPE, i);
 
             xsk->OutstandingTx += received;
             threadContext->ReceivedFrames = 0;
@@ -453,7 +453,7 @@ static int RtaRxFrame(void *data, unsigned char *frameData, size_t len)
         p = plaintext;
     }
 
-    StatRtaFrameReceived(sequenceCounter);
+    StatFrameReceived(RTA_FRAME_TYPE, sequenceCounter);
 
     if (frameId != 0xfc01)
         LogMessage(LOG_LEVEL_WARNING, "RtaRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n", sequenceCounter, 0xfc01);

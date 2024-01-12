@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2021-2023 Linutronix GmbH
+ * Copyright (C) 2021-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -22,6 +22,7 @@
 #include <xdp/xsk.h>
 
 #include "security.h"
+#include "stat.h"
 
 #undef XSK_RING_CONS__DEFAULT_NUM_DESCS
 #undef XSK_RING_PROD__DEFAULT_NUM_DESCS
@@ -64,7 +65,7 @@ struct XdpGenConfig
     uint32_t *FrameNumber;
     uint64_t SequenceCounterBegin;
     uint32_t MetaDataOffset;
-    void (*StatFunction)(uint64_t);
+    enum StatFrameType FrameType;
 };
 
 struct XdpSocket *XdpOpenSocket(const char *interface, const char *xdpProgram, int queue, bool skbMode,

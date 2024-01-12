@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2022,2023 Linutronix GmbH
+ * Copyright (C) 2022-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -147,7 +147,7 @@ static void GenericL2SendFrame(unsigned char *frameData, size_t numFramesPerCycl
     if (ret)
         return;
 
-    StatGenericL2FrameSent(sequenceCounter);
+    StatFrameSent(GENERICL2_FRAME_TYPE, sequenceCounter);
 }
 
 static void GenericL2GenAndSendFrame(unsigned char *frameData, size_t numFramesPerCycle, int socketFd,
@@ -168,7 +168,7 @@ static void GenericL2GenAndSendFrame(unsigned char *frameData, size_t numFramesP
     if (ret)
         return;
 
-    StatGenericL2FrameSent(sequenceCounter);
+    StatFrameSent(GENERICL2_FRAME_TYPE, sequenceCounter);
 }
 
 static void GenericL2GenAndSendXdpFrames(struct XdpSocket *xsk, size_t numFramesPerCycle, uint64_t sequenceCounter,
@@ -187,7 +187,7 @@ static void GenericL2GenAndSendXdpFrames(struct XdpSocket *xsk, size_t numFrames
     xdp.FrameNumber = frameNumber;
     xdp.SequenceCounterBegin = sequenceCounter;
     xdp.MetaDataOffset = metaDataOffset;
-    xdp.StatFunction = StatGenericL2FrameSent;
+    xdp.FrameType = GENERICL2_FRAME_TYPE;
 
     XdpGenAndSendFrames(xsk, &xdp);
 }
@@ -368,7 +368,7 @@ static void *GenericL2XdpTxThreadRoutine(void *data)
             xsk_ring_prod__submit(&xsk->Tx, received);
 
             for (i = sequenceCounter; i < sequenceCounter + received; ++i)
-                StatGenericL2FrameSent(i);
+                StatFrameSent(GENERICL2_FRAME_TYPE, i);
 
             xsk->OutstandingTx += received;
             threadContext->ReceivedFrames = 0;
@@ -444,7 +444,7 @@ static int GenericL2RxFrame(void *data, unsigned char *frameData, size_t len)
 
     sequenceCounter = MetaDataToSequenceCounter(&l2->MetaData, numFramesPerCycle);
 
-    StatGenericL2FrameReceived(sequenceCounter);
+    StatFrameReceived(GENERICL2_FRAME_TYPE, sequenceCounter);
 
     if (sequenceCounter != threadContext->RxSequenceCounter)
     {

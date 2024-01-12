@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2021-2022 Linutronix GmbH
+ * Copyright (C) 2021-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -61,23 +61,7 @@ extern struct RoundTripContext RoundTripContexts[NUM_FRAME_TYPES];
 
 int StatInit(bool logRtt);
 void StatFree(void);
-void StatTsnHighFrameSent(uint64_t cycleNumber);
-void StatTsnHighFrameReceived(uint64_t cycleNumber);
-void StatTsnLowFrameSent(uint64_t cycleNumber);
-void StatTsnLowFrameReceived(uint64_t cycleNumber);
-void StatRtcFrameSent(uint64_t cycleNumber);
-void StatRtcFrameReceived(uint64_t cycleNumber);
-void StatRtaFrameSent(uint64_t cycleNumber);
-void StatRtaFrameReceived(uint64_t cycleNumber);
-void StatDcpFrameSent(uint64_t cycleNumber);
-void StatDcpFrameReceived(uint64_t cycleNumber);
-void StatLldpFrameSent(uint64_t cycleNumber);
-void StatLldpFrameReceived(uint64_t cycleNumber);
-void StatUdpHighFrameSent(uint64_t cycleNumber);
-void StatUdpHighFrameReceived(uint64_t cycleNumber);
-void StatUdpLowFrameSent(uint64_t cycleNumber);
-void StatUdpLowFrameReceived(uint64_t cycleNumber);
-void StatGenericL2FrameSent(uint64_t cycleNumber);
-void StatGenericL2FrameReceived(uint64_t cycleNumber);
+void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber);
+void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber);
 
 #endif /* _STAT_H_ */

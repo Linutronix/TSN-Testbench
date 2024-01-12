@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -74,7 +74,7 @@ static void DcpSendFrame(const unsigned char *frameData, size_t frameLength, siz
         return;
     }
 
-    StatDcpFrameSent(sequenceCounter);
+    StatFrameSent(DCP_FRAME_TYPE, sequenceCounter);
 }
 
 static void DcpGenAndSendFrame(unsigned char *frameData, size_t frameLength, size_t numFramesPerCycle, int socketFd,
@@ -96,7 +96,7 @@ static void DcpGenAndSendFrame(unsigned char *frameData, size_t frameLength, siz
         return;
     }
 
-    StatDcpFrameSent(sequenceCounter);
+    StatFrameSent(DCP_FRAME_TYPE, sequenceCounter);
 }
 
 static void *DcpTxThreadRoutine(void *data)
@@ -206,7 +206,7 @@ static int DcpRxFrame(struct ThreadContext *threadContext, unsigned char *frameD
     rt = (struct ProfinetRtHeader *)(frameData + sizeof(struct ethhdr));
     sequenceCounter = MetaDataToSequenceCounter(&rt->MetaData, numFramesPerCycle);
 
-    StatDcpFrameReceived(sequenceCounter);
+    StatFrameReceived(DCP_FRAME_TYPE, sequenceCounter);
 
     if (sequenceCounter != threadContext->RxSequenceCounter)
     {

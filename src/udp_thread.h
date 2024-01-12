@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -13,6 +13,7 @@
 
 #include <pthread.h>
 
+#include "stat.h"
 #include "thread.h"
 
 #define UDP_TX_FRAME_LENGTH (4096)
@@ -20,6 +21,7 @@
 struct UdpThreadConfiguration
 {
     /* UDP configuration */
+    enum StatFrameType FrameType;
     const char *UdpSuffix;
     bool UdpTxEnabled;
     bool UdpRxEnabled;
@@ -39,9 +41,6 @@ struct UdpThreadConfiguration
     const char *UdpPort;
     const char *UdpDestination;
     const char *UdpSource;
-    /* Corresponding stat functions */
-    void (*StatUdpFrameSent)(uint64_t sequenceCounter);
-    void (*StatUdpFrameReceived)(uint64_t sequenceCounter);
 };
 
 int UdpLowThreadsCreate(struct ThreadContext *threadContext);

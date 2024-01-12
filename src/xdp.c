@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2021-2023 Linutronix GmbH
+ * Copyright (C) 2021-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -419,7 +419,7 @@ void XdpGenAndSendFrames(struct XdpSocket *xsk, const struct XdpGenConfig *xdp)
 
     /* Log */
     for (i = 0; i < xdp->NumFramesPerCycle; ++i)
-        xdp->StatFunction(xdp->SequenceCounterBegin + i);
+        StatFrameSent(xdp->FrameType, xdp->SequenceCounterBegin + i);
 }
 
 unsigned int XdpReceiveFrames(struct XdpSocket *xsk, size_t frameLength, bool mirrorEnabled,

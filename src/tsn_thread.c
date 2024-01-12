@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2021-2023 Linutronix GmbH
+ * Copyright (C) 2021-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -125,7 +125,7 @@ static void TsnSendFrame(const struct TsnThreadConfiguration *tsnConfig, unsigne
     if (ret)
         return;
 
-    tsnConfig->StatTsnFrameSent(sequenceCounter);
+    StatFrameSent(tsnConfig->FrameType, sequenceCounter);
 }
 
 static void TsnGenAndSendFrame(const struct TsnThreadConfiguration *tsnConfig, struct SecurityContext *securityContext,
@@ -160,7 +160,7 @@ static void TsnGenAndSendFrame(const struct TsnThreadConfiguration *tsnConfig, s
     if (ret)
         return;
 
-    tsnConfig->StatTsnFrameSent(sequenceCounter);
+    StatFrameSent(tsnConfig->FrameType, sequenceCounter);
 }
 
 static void TsnGenAndSendXdpFrames(const struct TsnThreadConfiguration *tsnConfig,
@@ -182,7 +182,7 @@ static void TsnGenAndSendXdpFrames(const struct TsnThreadConfiguration *tsnConfi
     xdp.FrameNumber = frameNumber;
     xdp.SequenceCounterBegin = sequenceCounter;
     xdp.MetaDataOffset = metaDataOffset;
-    xdp.StatFunction = tsnConfig->StatTsnFrameSent;
+    xdp.FrameType = tsnConfig->FrameType;
 
     XdpGenAndSendFrames(xsk, &xdp);
 }
@@ -415,7 +415,7 @@ static void *TsnXdpTxThreadRoutine(void *data)
             xsk_ring_prod__submit(&xsk->Tx, received);
 
             for (i = sequenceCounter; i < sequenceCounter + received; ++i)
-                tsnConfig->StatTsnFrameSent(i);
+                StatFrameSent(tsnConfig->FrameType, i);
 
             xsk->OutstandingTx += received;
             threadContext->ReceivedFrames = 0;
@@ -576,7 +576,7 @@ static int TsnRxFrame(void *data, unsigned char *frameData, size_t len)
         p = plaintext;
     }
 
-    tsnConfig->StatTsnFrameReceived(sequenceCounter);
+    StatFrameReceived(tsnConfig->FrameType, sequenceCounter);
 
     if (frameId != tsnConfig->FrameIdRangeStart)
         LogMessage(LOG_LEVEL_WARNING, "Tsn%sRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n", tsnConfig->TsnSuffix,
@@ -925,6 +925,7 @@ int TsnLowThreadsCreate(struct ThreadContext *tsnThreadContext)
         return -ENOMEM;
 
     memset(tsnConfig, '\0', sizeof(*tsnConfig));
+    tsnConfig->FrameType = TSN_LOW_FRAME_TYPE;
     tsnConfig->TsnSuffix = "Low";
     tsnConfig->TsnTxEnabled = appConfig.TsnLowTxEnabled;
     tsnConfig->TsnRxEnabled = appConfig.TsnLowRxEnabled;
@@ -956,8 +957,6 @@ int TsnLowThreadsCreate(struct ThreadContext *tsnThreadContext)
     tsnConfig->TsnRxThreadCpu = appConfig.TsnLowRxThreadCpu;
     tsnConfig->TsnInterface = appConfig.TsnLowInterface;
     tsnConfig->TsnDestination = appConfig.TsnLowDestination;
-    tsnConfig->StatTsnFrameSent = StatTsnLowFrameSent;
-    tsnConfig->StatTsnFrameReceived = StatTsnLowFrameReceived;
     tsnConfig->CreateTSNSocket = CreateTSNLowSocket;
     tsnConfig->VlanId = appConfig.TsnLowVid;
     tsnConfig->VlanPCP = TSN_LOW_PCP_VALUE;
@@ -996,6 +995,7 @@ int TsnHighThreadsCreate(struct ThreadContext *tsnThreadContext)
         return -ENOMEM;
 
     memset(tsnConfig, '\0', sizeof(*tsnConfig));
+    tsnConfig->FrameType = TSN_HIGH_FRAME_TYPE;
     tsnConfig->TsnSuffix = "High";
     tsnConfig->TsnTxEnabled = appConfig.TsnHighTxEnabled;
     tsnConfig->TsnRxEnabled = appConfig.TsnHighRxEnabled;
@@ -1027,8 +1027,6 @@ int TsnHighThreadsCreate(struct ThreadContext *tsnThreadContext)
     tsnConfig->TsnRxThreadCpu = appConfig.TsnHighRxThreadCpu;
     tsnConfig->TsnInterface = appConfig.TsnHighInterface;
     tsnConfig->TsnDestination = appConfig.TsnHighDestination;
-    tsnConfig->StatTsnFrameSent = StatTsnHighFrameSent;
-    tsnConfig->StatTsnFrameReceived = StatTsnHighFrameReceived;
     tsnConfig->CreateTSNSocket = CreateTSNHighSocket;
     tsnConfig->VlanId = appConfig.TsnHighVid;
     tsnConfig->VlanPCP = TSN_HIGH_PCP_VALUE;
