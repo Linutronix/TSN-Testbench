@@ -205,6 +205,7 @@ static void *UdpRxThreadRoutine(void *data)
 
     while (!threadContext->Stop)
     {
+        bool outOfOrder, payloadMismatch, frameIdMismatch;
         struct ReferenceMetaData *meta;
         uint64_t rxSequenceCounter;
         ssize_t len;
@@ -232,9 +233,13 @@ static void *UdpRxThreadRoutine(void *data)
         meta = (struct ReferenceMetaData *)frame;
         rxSequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
 
-        StatFrameReceived(udpConfig->FrameType, sequenceCounter);
+        outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+        payloadMismatch = memcmp(frame + sizeof(struct ReferenceMetaData), expectedPattern, expectedPatternLength);
+        frameIdMismatch = false;
 
-        if (rxSequenceCounter != sequenceCounter)
+        StatFrameReceived(udpConfig->FrameType, sequenceCounter, outOfOrder, payloadMismatch, frameIdMismatch);
+
+        if (outOfOrder)
         {
             if (!ignoreRxErrors)
                 LogMessage(LOG_LEVEL_WARNING, "Udp%sRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64 "!\n",
@@ -244,7 +249,7 @@ static void *UdpRxThreadRoutine(void *data)
 
         sequenceCounter++;
 
-        if (memcmp(frame + sizeof(struct ReferenceMetaData), expectedPattern, expectedPatternLength))
+        if (payloadMismatch)
             LogMessage(LOG_LEVEL_WARNING, "Udp%sRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
                        udpConfig->UdpSuffix, rxSequenceCounter);
 

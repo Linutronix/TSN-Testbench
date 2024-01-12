@@ -189,6 +189,7 @@ static int DcpRxFrame(struct ThreadContext *threadContext, unsigned char *frameD
     const bool mirrorEnabled = appConfig.DcpRxMirrorEnabled;
     const bool ignoreRxErrors = appConfig.DcpIgnoreRxErrors;
     const size_t frameLength = appConfig.DcpFrameLength;
+    bool outOfOrder, payloadMismatch, frameIdMismatch;
     unsigned char newFrame[DCP_TX_FRAME_LENGTH];
     struct ProfinetRtHeader *rt;
     uint64_t sequenceCounter;
@@ -206,9 +207,13 @@ static int DcpRxFrame(struct ThreadContext *threadContext, unsigned char *frameD
     rt = (struct ProfinetRtHeader *)(frameData + sizeof(struct ethhdr));
     sequenceCounter = MetaDataToSequenceCounter(&rt->MetaData, numFramesPerCycle);
 
-    StatFrameReceived(DCP_FRAME_TYPE, sequenceCounter);
+    outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+    payloadMismatch = memcmp(frameData + sizeof(struct ethhdr) + sizeof(*rt), expectedPattern, expectedPatternLength);
+    frameIdMismatch = false;
 
-    if (sequenceCounter != threadContext->RxSequenceCounter)
+    StatFrameReceived(DCP_FRAME_TYPE, sequenceCounter, outOfOrder, payloadMismatch, frameIdMismatch);
+
+    if (outOfOrder)
     {
         if (!ignoreRxErrors)
             LogMessage(LOG_LEVEL_WARNING, "DcpRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64 "!\n",
@@ -216,7 +221,7 @@ static int DcpRxFrame(struct ThreadContext *threadContext, unsigned char *frameD
         threadContext->RxSequenceCounter++;
     }
 
-    if (memcmp(frameData + sizeof(struct ethhdr) + sizeof(*rt), expectedPattern, expectedPatternLength))
+    if (payloadMismatch)
         LogMessage(LOG_LEVEL_WARNING, "DcpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n", sequenceCounter);
 
     threadContext->RxSequenceCounter++;

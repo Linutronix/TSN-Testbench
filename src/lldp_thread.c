@@ -216,6 +216,7 @@ static void *LldpRxThreadRoutine(void *data)
 
     while (!threadContext->Stop)
     {
+        bool outOfOrder, payloadMismatch, frameIdMismatch;
         struct ReferenceMetaData *meta;
         uint64_t rxSequenceCounter;
         ssize_t len;
@@ -243,9 +244,14 @@ static void *LldpRxThreadRoutine(void *data)
         meta = (struct ReferenceMetaData *)(frame + sizeof(struct ethhdr));
         rxSequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
 
-        StatFrameReceived(LLDP_FRAME_TYPE, rxSequenceCounter);
+        outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+        payloadMismatch =
+            memcmp(frame + sizeof(struct ethhdr) + sizeof(rxSequenceCounter), expectedPattern, expectedPatternLength);
+        frameIdMismatch = false;
 
-        if (rxSequenceCounter != sequenceCounter)
+        StatFrameReceived(LLDP_FRAME_TYPE, rxSequenceCounter, outOfOrder, payloadMismatch, frameIdMismatch);
+
+        if (outOfOrder)
         {
             if (!ignoreRxErrors)
                 LogMessage(LOG_LEVEL_WARNING, "LldpRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64 "!\n",
@@ -253,7 +259,7 @@ static void *LldpRxThreadRoutine(void *data)
             sequenceCounter++;
         }
 
-        if (memcmp(frame + sizeof(struct ethhdr) + sizeof(rxSequenceCounter), expectedPattern, expectedPatternLength))
+        if (payloadMismatch)
             LogMessage(LOG_LEVEL_WARNING, "LldpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n", rxSequenceCounter);
 
         sequenceCounter++;

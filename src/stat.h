@@ -43,6 +43,9 @@ struct Statistics
 {
     uint64_t FramesSent;
     uint64_t FramesReceived;
+    uint64_t OutOfOrderErrors;
+    uint64_t FrameIdErrors;
+    uint64_t PayloadErrors;
     uint64_t RoundTripMin;
     uint64_t RoundTripMax;
     uint64_t RoundTripCount;
@@ -62,6 +65,7 @@ extern struct RoundTripContext RoundTripContexts[NUM_FRAME_TYPES];
 int StatInit(bool logRtt);
 void StatFree(void);
 void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber);
-void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber);
+void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder, bool payloadMismatch,
+                       bool frameIdMismatch);
 
 #endif /* _STAT_H_ */

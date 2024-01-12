@@ -367,6 +367,7 @@ static int RtcRxFrame(void *data, unsigned char *frameData, size_t len)
     const bool mirrorEnabled = appConfig.RtcRxMirrorEnabled;
     const bool ignoreRxErrors = appConfig.RtcIgnoreRxErrors;
     size_t expectedFrameLength = appConfig.RtcFrameLength;
+    bool outOfOrder, payloadMismatch, frameIdMismatch;
     unsigned char newFrame[RTC_TX_FRAME_LENGTH];
     struct ProfinetSecureHeader *srt;
     struct ProfinetRtHeader *rt;
@@ -495,12 +496,16 @@ static int RtcRxFrame(void *data, unsigned char *frameData, size_t len)
         p = plaintext;
     }
 
-    StatFrameReceived(RTC_FRAME_TYPE, sequenceCounter);
+    outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+    payloadMismatch = memcmp(p, expectedPattern, expectedPatternLength);
+    frameIdMismatch = frameId != 0x8000;
 
-    if (frameId != 0x8000)
+    StatFrameReceived(RTC_FRAME_TYPE, sequenceCounter, outOfOrder, payloadMismatch, frameIdMismatch);
+
+    if (frameIdMismatch)
         LogMessage(LOG_LEVEL_WARNING, "RtcRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n", sequenceCounter, 0x8000);
 
-    if (sequenceCounter != threadContext->RxSequenceCounter)
+    if (outOfOrder)
     {
         if (!ignoreRxErrors)
             LogMessage(LOG_LEVEL_WARNING, "RtcRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64 "!\n",
@@ -508,7 +513,7 @@ static int RtcRxFrame(void *data, unsigned char *frameData, size_t len)
         threadContext->RxSequenceCounter++;
     }
 
-    if (memcmp(p, expectedPattern, expectedPatternLength))
+    if (payloadMismatch)
         LogMessage(LOG_LEVEL_WARNING, "RtcRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n", sequenceCounter);
 
     threadContext->RxSequenceCounter++;

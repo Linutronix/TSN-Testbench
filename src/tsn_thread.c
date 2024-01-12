@@ -446,6 +446,7 @@ static int TsnRxFrame(void *data, unsigned char *frameData, size_t len)
     const bool mirrorEnabled = tsnConfig->TsnRxMirrorEnabled;
     const bool ignoreRxErrors = tsnConfig->TsnIgnoreRxErrors;
     size_t expectedFrameLength = tsnConfig->TsnFrameLength;
+    bool outOfOrder, payloadMismatch, frameIdMismatch;
     unsigned char newFrame[TSN_TX_FRAME_LENGTH];
     struct ProfinetSecureHeader *srt;
     struct ProfinetRtHeader *rt;
@@ -576,13 +577,17 @@ static int TsnRxFrame(void *data, unsigned char *frameData, size_t len)
         p = plaintext;
     }
 
-    StatFrameReceived(tsnConfig->FrameType, sequenceCounter);
+    outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+    payloadMismatch = memcmp(p, expectedPattern, expectedPatternLength);
+    frameIdMismatch = frameId != tsnConfig->FrameIdRangeStart;
 
-    if (frameId != tsnConfig->FrameIdRangeStart)
+    StatFrameReceived(tsnConfig->FrameType, sequenceCounter, outOfOrder, payloadMismatch, frameIdMismatch);
+
+    if (frameIdMismatch)
         LogMessage(LOG_LEVEL_WARNING, "Tsn%sRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n", tsnConfig->TsnSuffix,
                    sequenceCounter, tsnConfig->FrameIdRangeStart);
 
-    if (sequenceCounter != threadContext->RxSequenceCounter)
+    if (outOfOrder)
     {
         if (!ignoreRxErrors)
             LogMessage(LOG_LEVEL_WARNING, "Tsn%sRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64 "!\n",
@@ -590,7 +595,7 @@ static int TsnRxFrame(void *data, unsigned char *frameData, size_t len)
         threadContext->RxSequenceCounter++;
     }
 
-    if (memcmp(p, expectedPattern, expectedPatternLength))
+    if (payloadMismatch)
         LogMessage(LOG_LEVEL_WARNING, "Tsn%sRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n", tsnConfig->TsnSuffix,
                    sequenceCounter);
 

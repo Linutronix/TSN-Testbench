@@ -390,6 +390,7 @@ static int GenericL2RxFrame(void *data, unsigned char *frameData, size_t len)
     const bool mirrorEnabled = appConfig.GenericL2RxMirrorEnabled;
     const bool ignoreRxErrors = appConfig.GenericL2IgnoreRxErrors;
     size_t expectedFrameLength = appConfig.GenericL2FrameLength;
+    bool outOfOrder, payloadMismatch, frameIdMismatch;
     unsigned char newFrame[GENL2_TX_FRAME_LENGTH];
     struct GenericL2Header *l2;
     uint64_t sequenceCounter;
@@ -444,9 +445,13 @@ static int GenericL2RxFrame(void *data, unsigned char *frameData, size_t len)
 
     sequenceCounter = MetaDataToSequenceCounter(&l2->MetaData, numFramesPerCycle);
 
-    StatFrameReceived(GENERICL2_FRAME_TYPE, sequenceCounter);
+    outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+    payloadMismatch = memcmp(p, expectedPattern, expectedPatternLength);
+    frameIdMismatch = false;
 
-    if (sequenceCounter != threadContext->RxSequenceCounter)
+    StatFrameReceived(GENERICL2_FRAME_TYPE, sequenceCounter, outOfOrder, payloadMismatch, frameIdMismatch);
+
+    if (outOfOrder)
     {
         if (!ignoreRxErrors)
             LogMessage(LOG_LEVEL_WARNING, "GenericL2Rx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64 "!\n",
@@ -454,7 +459,7 @@ static int GenericL2RxFrame(void *data, unsigned char *frameData, size_t len)
         threadContext->RxSequenceCounter++;
     }
 
-    if (memcmp(p, expectedPattern, expectedPatternLength))
+    if (payloadMismatch)
         LogMessage(LOG_LEVEL_WARNING, "GenericL2Rx: frame[%" PRIu64 "] Payload Pattern mismatch!\n", sequenceCounter);
 
     threadContext->RxSequenceCounter++;

@@ -144,7 +144,8 @@ void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber)
     stat->FramesSent++;
 }
 
-void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber)
+void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder, bool payloadMismatch,
+                       bool frameIdMismatch)
 {
     struct RoundTripContext *rtt = &RoundTripContexts[frameType];
     struct Statistics *stat = &GlobalStatistics[frameType];
@@ -188,4 +189,10 @@ void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber)
 
     /* Increment stats */
     stat->FramesReceived++;
+    if (outOfOrder)
+        stat->OutOfOrderErrors++;
+    if (payloadMismatch)
+        stat->PayloadErrors++;
+    if (frameIdMismatch)
+        stat->FrameIdErrors++;
 }
