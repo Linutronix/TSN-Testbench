@@ -1,0 +1,53 @@
+#
+# Copyright (C) 2023 Linutronix GmbH
+# Author Kurt Kanzenbach <kurt@linutronix.de>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# Sample OPC/UA PubSub reference YAML configuration file for Intel TSN NICs.
+#
+Application:
+  ApplicationClockId: CLOCK_TAI
+  # ApplicationBaseStartTimeNS: 0
+  ApplicationBaseCycleTimeNS: 1000000
+  ApplicationTxBaseOffsetNS: 800000
+  ApplicationRxBaseOffsetNS: 300000
+  ApplicationXdpProgram: xdp_kern_opcua_vid200.o
+GenericL2:
+  GenericL2Name: OpcUa
+  GenericL2TxEnabled: True
+  GenericL2RxEnabled: True
+  GenericL2XdpEnabled: True
+  GenericL2XdpSkbMode: False
+  GenericL2XdpZcMode: True
+  GenericL2XdpWakeupMode: True
+  GenericL2TxTimeEnabled: False
+  GenericL2TxTimeOffsetNS: 0
+  GenericL2Vid: 200
+  GenericL2Pcp: 6
+  GenericL2EtherType: 0xb62c
+  GenericL2NumFramesPerCycle: 32
+  GenericL2PayloadPattern: |
+    OpcUaPayloadPattern
+  GenericL2FrameLength: 128
+  GenericL2RxQueue: 0
+  GenericL2TxQueue: 0
+  GenericL2SocketPriority: 7
+  GenericL2TxThreadPriority: 98
+  GenericL2RxThreadPriority: 98
+  GenericL2TxThreadCpu: 0
+  GenericL2RxThreadCpu: 0
+  GenericL2Interface: enp3s0
+  GenericL2Destination: a8:74:1d:9d:98:d8
+Log:
+  LogThreadPeriodNS: 500000000
+  LogThreadPriority: 1
+  LogThreadCpu: 1
+  LogFile: /var/log/reference_opcua_vid200.log
+  LogLevel: Info
+Debug:
+  DebugStopTraceOnRtt: False
+  DebugStopTraceOnError: False
+  DebugStopTraceRttLimitNS: 10000000
+  DebugMonitorMode: False
+  DebugMonitorDestination: 44:44:44:44:44:44

@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
+/*
+ * Copyright (C) 2020-2023 Linutronix GmbH
+ * Author Kurt Kanzenbach <kurt@linutronix.de>
+ */
+
+#ifndef _APP_CONFIG_H_
+#define _APP_CONFIG_H_
+
+#define VERSION "${VERSION}"
+#define INSTALL_EBPF_DIR "${INSTALL_EBPF_DIR}"
+
+#cmakedefine HAVE_SO_BUSY_POLL @HAVE_SO_BUSY_POLL@
+#cmakedefine HAVE_SO_PREFER_BUSY_POLL @HAVE_SO_PREFER_BUSY_POLL@
+#cmakedefine HAVE_SO_BUSY_POLL_BUDGET @HAVE_SO_BUSY_POLL_BUDGET@
+
+#endif	/* _APP_CONFIG_H_ */

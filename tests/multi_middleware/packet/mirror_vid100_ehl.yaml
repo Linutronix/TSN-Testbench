@@ -1,0 +1,194 @@
+#
+# Copyright (C) Linutronix GmbH
+# Author Kurt Kanzenbach <kurt@linutronix.de>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# Sample mirror YAML configuration file Intel TSN NICs.
+#
+Application:
+  ApplicationClockId: CLOCK_TAI
+  # ApplicationBaseStartTimeNS: 0
+  ApplicationBaseCycleTimeNS: 1000000
+  ApplicationTxBaseOffsetNS: 800000
+  ApplicationRxBaseOffsetNS: 600000
+  ApplicationXdpProgram: xdp_kern_profinet_vid100.o
+TSNHigh:
+  TsnHighTxEnabled: True
+  TsnHighRxEnabled: True
+  TsnHighXdpEnabled: False
+  TsnHighXdpSkbMode: False
+  TsnHighXdpZcMode: True
+  TsnHighXdpWakeupMode: False
+  TsnHighTxTimeEnabled: True
+  TsnHighTxTimeOffsetNS: 0
+  TsnHighVid: 100
+  TsnHighNumFramesPerCycle: 8
+  TsnHighPayloadPattern: |
+    TsnHighPayloadPattern
+  TsnHighFrameLength: 128
+  TsnHighRxQueue: 7
+  TsnHighTxQueue: 7
+  TsnHighSocketPriority: 7
+  TsnHighTxThreadPriority: 98
+  TsnHighRxThreadPriority: 98
+  TsnHighTxThreadCpu: 0
+  TsnHighRxThreadCpu: 0
+  TsnHighInterface: eno1
+  TsnHighDestination: 00:13:95:48:97:ab
+TSNLow:
+  TsnLowTxEnabled: True
+  TsnLowRxEnabled: True
+  TsnLowXdpEnabled: True
+  TsnLowXdpSkbMode: False
+  TsnLowXdpZcMode: True
+  TsnLowXdpWakeupMode: False
+  TsnLowTxTimeEnabled: False
+  TsnLowTxTimeOffsetNS: 0
+  TsnLowVid: 100
+  TsnLowNumFramesPerCycle: 0
+  TsnLowPayloadPattern: |
+    TsnLowPayloadPattern
+  TsnLowFrameLength: 128
+  TsnLowRxQueue: 6
+  TsnLowTxQueue: 6
+  TsnLowSocketPriority: 6
+  TsnLowTxThreadPriority: 98
+  TsnLowRxThreadPriority: 98
+  TsnLowTxThreadCpu: 0
+  TsnLowRxThreadCpu: 0
+  TsnLowInterface: eno1
+  TsnLowDestination: 00:13:95:48:97:ab
+RTC:
+  RtcTxEnabled: True
+  RtcRxEnabled: True
+  RtcXdpEnabled: True
+  RtcXdpSkbMode: False
+  RtcXdpZcMode: True
+  RtcXdpWakeupMode: False
+  RtcVid: 100
+  RtcNumFramesPerCycle: 0
+  RtcPayloadPattern: |
+    RtcPayloadPattern
+  RtcFrameLength: 128
+  RtcRxQueue: 5
+  RtcTxQueue: 5
+  RtcSocketPriority: 5
+  RtcTxThreadPriority: 98
+  RtcRxThreadPriority: 98
+  RtcTxThreadCpu: 1
+  RtcRxThreadCpu: 1
+  RtcInterface: eno1
+  RtcDestination: 00:13:95:48:97:ab
+RTA:
+  RtaTxEnabled: True
+  RtaRxEnabled: True
+  RtaTxGenEnabled: False
+  RtaXdpEnabled: True
+  RtaXdpSkbMode: False
+  RtaXdpZcMode: True
+  RtaXdpWakeupMode: False
+  RtaVid: 100
+  RtaBurstPeriodNS: 200000000
+  RtaNumFramesPerCycle: 0
+  RtaPayloadPattern: |
+    RtaPayloadPattern
+  RtaFrameLength: 200
+  RtaRxQueue: 3
+  RtaTxQueue: 3
+  RtaSocketPriority: 3
+  RtaTxThreadPriority: 97
+  RtaRxThreadPriority: 97
+  RtaTxThreadCpu: 1
+  RtaRxThreadCpu: 1
+  RtaInterface: eno1
+  RtaDestination: 00:13:95:48:97:ab
+DCP:
+  DcpTxEnabled: True
+  DcpRxEnabled: True
+  DcpTxGenEnabled: False
+  DcpVid: 100
+  DcpBurstPeriodNS: 2000000000
+  DcpNumFramesPerCycle: 0
+  DcpPayloadPattern: |
+    DcpPayloadPattern
+  DcpFrameLength: 200
+  DcpRxQueue: 2
+  DcpTxQueue: 2
+  DcpSocketPriority: 2
+  DcpTxThreadPriority: 53
+  DcpRxThreadPriority: 53
+  DcpTxThreadCpu: 1
+  DcpRxThreadCpu: 1
+  DcpInterface: eno1
+  DcpDestination: 00:13:95:48:97:ab
+LLDP:
+  LldpTxEnabled: True
+  LldpRxEnabled: True
+  LldpTxGenEnabled: False
+  LldpBurstPeriodNS: 5000000000
+  LldpNumFramesPerCycle: 0
+  LldpPayloadPattern: |
+    LldpPayloadPattern
+  LldpFrameLength: 200
+  LldpRxQueue: 4
+  LldpTxQueue: 4
+  LldpSocketPriority: 4
+  LldpTxThreadPriority: 52
+  LldpRxThreadPriority: 52
+  LldpTxThreadCpu: 1
+  LldpRxThreadCpu: 1
+  LldpInterface: eno1
+  LldpDestination: 01:80:c2:00:00:0e
+UDPHigh:
+  UdpHighTxEnabled: True
+  UdpHighRxEnabled: True
+  UdpHighTxGenEnabled: False
+  UdpHighBurstPeriodNS: 1000000000
+  UdpHighNumFramesPerCycle: 0
+  UdpHighPayloadPattern: |
+    UdpHighPayloadPattern
+  UdpHighFrameLength: 1400
+  UdpHighRxQueue: 1
+  UdpHighTxQueue: 1
+  UdpHighSocketPriority: 1
+  UdpHighTxThreadPriority: 51
+  UdpHighRxThreadPriority: 51
+  UdpHighTxThreadCpu: 1
+  UdpHighRxThreadCpu: 1
+  UdpHighInterface: eno1
+  UdpHighPort: 6666
+  UdpHighDestination: 192.168.0.1
+  UdpHighSource: 192.168.0.2
+UDPLow:
+  UdpLowTxEnabled: True
+  UdpLowRxEnabled: True
+  UdpLowTxGenEnabled: False
+  UdpLowBurstPeriodNS: 1000000000
+  UdpLowNumFramesPerCycle: 0
+  UdpLowPayloadPattern: |
+    UdpLowPayloadPattern
+  UdpLowFrameLength: 1400
+  UdpLowRxQueue: 0
+  UdpLowTxQueue: 0
+  UdpLowSocketPriority: 0
+  UdpLowTxThreadPriority: 51
+  UdpLowRxThreadPriority: 51
+  UdpLowTxThreadCpu: 1
+  UdpLowRxThreadCpu: 1
+  UdpLowInterface: eno1
+  UdpLowPort: 6667
+  UdpLowDestination: 192.168.0.1
+  UdpLowSource: 192.168.0.2
+Log:
+  LogThreadPeriodNS: 500000000
+  LogThreadPriority: 1
+  LogThreadCpu: 1
+  LogFile: /var/log/mirror_vid100.log
+  LogLevel: Info
+Debug:
+  DebugStopTraceOnRtt: False
+  DebugStopTraceOnError: False
+  DebugStopTraceRttLimitNS: 10000000
+  DebugMonitorMode: False
+  DebugMonitorDestination: 44:44:44:44:44:44

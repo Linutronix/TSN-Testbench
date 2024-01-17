@@ -1,0 +1,5 @@
+tsn-testbench (4.0-1) bookworm; urgency=medium
+
+  * Initial release for version 4.0
+
+ -- Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>  Thu, 26 Oct 2023 12:58:27 +0200
