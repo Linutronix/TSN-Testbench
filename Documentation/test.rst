@@ -24,9 +24,9 @@ the involved test machines. In theory, the round trip times should not exceed
 three times the given PROFINET cycle. Thus, the worst case round trip time is a
 good indicator whether the simulation works or not.
 
-In order to perform test runs two machines are required. They need to be
-connected via Ethernet. Before the reference and mirror application are started
-the network interface needs to configured. Furthermore, PTP has to be used.
+In order to perform test runs two machines are required. They need to be connected via Ethernet. The link speed can be
+100Mbit/s, 1Gbit/s or even higher. Before the reference and mirror application are started the network interface needs
+to configured. Furthermore, PTP has to be used.
 
 Example for Intel CML with i225:
 
