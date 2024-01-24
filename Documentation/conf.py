@@ -17,8 +17,8 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'TSN Testbench'
-copyright = '2022-2023, Linutronix GmbH'
+project = 'TSN-Testbench'
+copyright = '2022-2024, Linutronix GmbH'
 author = 'Kurt Kanzenbach'
 
 # The full version, including alpha/beta/rc tags
