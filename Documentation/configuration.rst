@@ -98,11 +98,11 @@ The possible traffic classes are:
           impact does real time frame encryption and decryption has on quantity structures? Key updates and other
           mechanisms are not covered.
 
-Sample configuration files are provided for Intel EHL and Intel i225:
+Sample configuration files are provided for Intel Elkhart Lake and Intel i225:
 
-- ``configurations/reference_vid100_ehl.yaml``: Sample for reference application on Intel EHL (VLAN ID 100)
+- ``configurations/reference_vid100_ehl.yaml``: Sample for reference application on Intel Elkhart Lake (VLAN ID 100)
 - ``configurations/reference_vid100_cml.yaml``: Sample for reference application on Intel i225 (VLAN ID 100)
-- ``configurations/mirror_vid100_ehl.yaml``: Sample for mirror application on Intel EHL (VLAN ID 100)
+- ``configurations/mirror_vid100_ehl.yaml``: Sample for mirror application on Intel Elkhart Lake (VLAN ID 100)
 - ``configurations/mirror_vid100_cml.yaml``: Sample for mirror application on Intel i225 (VLAN ID 100)
 
 These can be used as starting point. At minimum MAC and IP addresses as well as
@@ -121,7 +121,7 @@ depends on the Linux driver implementation.
 
 The reference applications provides two sample scripts:
 
-- ``scripts/flow_ehl.sh``: NIC configuration for Intel TSN CPUs such as EHL
+- ``scripts/flow_ehl.sh``: NIC configuration for Intel TSN CPUs such as Elkhart Lake
 - ``scripts/flow_cml.sh``: NIC configuration for Intel i225
 
 These scripts configure multiple settings:

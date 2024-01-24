@@ -28,7 +28,7 @@ In order to perform test runs two machines are required. They need to be connect
 100Mbit/s, 1Gbit/s or even higher. Before the reference and mirror application are started the network interface needs
 to configured. Furthermore, PTP has to be used.
 
-Example for Intel CML with i225:
+Example for Intel Comet Lake with i225:
 
 .. code:: bash
 
