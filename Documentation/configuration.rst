@@ -89,8 +89,8 @@ The possible traffic classes are:
           (Layer 2) based protocols such as OPC/UA PubSub. In addition, to the other traffic classes the EtherType is
           configurable.
 
-.. Note:: The ``XdpBusyPollMode`` option does not work on PREEMPT_RT enabled Linux kernels by default. The kernel has to
-          be modified to support this feature.
+.. Note:: The ``XdpBusyPollMode`` option requires Linux kernel >= v6.5. Previous Linux kernel version do not support
+          this feature with ``PREEMPT_RT`` enabled.
 
 .. Note:: The security settings are only valid for the PROFINET real time traffic classes.
 
