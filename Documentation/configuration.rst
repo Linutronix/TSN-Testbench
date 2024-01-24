@@ -71,15 +71,15 @@ Possible parameters include:
 
 The possible traffic classes are:
 
-- TsnHigh
-- TsnLow
-- Rtc
-- Rta
-- Dcp
-- Lldp
-- UdpHigh
-- UdpLow
-- GenericL2
+- TsnHigh: TSN Stream High traffic
+- TsnLow: TSN Stream Low traffic
+- Rtc: Real time cyclic traffic
+- Rta: Real time acyclic traffic
+- Dcp: Discovery and basic Configuration Protocol
+- Lldp: Link-Layer Discovery Protocol
+- UdpHigh: Connection traffic Best Effort High
+- UdpLow: Connection traffic Best Effort Low
+- GenericL2: Traffic class to simulate any kind of protocol such as OPC/UA
 
 .. Note:: Not all traffic class have all options available. For instance, only real time traffic classes such as TSN or
           RT make use of XDP sockets. When the XDP option is enabled the traffic classes utilize ``AF_XDP`` instead of
