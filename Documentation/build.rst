@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: BSD-2-Clause
 ..
-.. Copyright (C) 2022,2023 Linutronix GmbH
+.. Copyright (C) 2022-2024 Linutronix GmbH
 .. Author Kurt Kanzenbach <kurt@linutronix.de>
 ..
 .. Testbench documentation build file.
@@ -38,7 +38,7 @@ For Debian based systems do:
       libbpf-dev libyaml-dev libc6-dev rt-tests ethtool iproute2 \
       iperf3 linuxptp libxdp-dev libssl-dev
 
-Note: For Debian Bullseye ``libxdp`` is packaged in backports.
+.. Note:: For Debian Bullseye ``libxdp`` is packaged in backports.
 
 Furthermore, the TSN Testbench requires Linux kernel version >= v5.12.
 PREEMPT_RT is recommended. In addition, the following configuration options

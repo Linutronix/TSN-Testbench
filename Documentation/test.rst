@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: BSD-2-Clause
 ..
-.. Copyright (C) 2022,2023 Linutronix GmbH
+.. Copyright (C) 2022-2024 Linutronix GmbH
 .. Author Kurt Kanzenbach <kurt@linutronix.de>
 ..
 .. Testbench documentation introduction file.
@@ -420,7 +420,7 @@ network communication in order to reduce jitter introduced by hardware and
 software interrupts. The following test scenario is designed to test busy
 polling with AF_XDP sockets.
 
-Note: Busy polling on ``PREEMPT_RT`` only works with Linux kernel >= v6.5.
+.. Note:: Busy polling on ``PREEMPT_RT`` only works with Linux kernel >= v6.5.
 
 .. list-table:: Busypolling Test
    :widths: 28 28 12 12 12 12

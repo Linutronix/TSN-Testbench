@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: BSD-2-Clause
 ..
-.. Copyright (C) 2022,2023 Linutronix GmbH
+.. Copyright (C) 2022-2024 Linutronix GmbH
 .. Author Kurt Kanzenbach <kurt@linutronix.de>
 ..
 .. Testbench documentation configuration file.
@@ -81,19 +81,18 @@ The possible traffic classes are:
 - UdpLow
 - GenericL2
 
-Note: Not all traffic class have all options available. For instance, only real
-time traffic classes such as TSN or RT make use of XDP sockets. When the XDP
-option is enabled the traffic classes utilize ``AF_XDP`` instead of
-``AF_PACKET`` sockets for Ethernet communication.
+.. Note:: Not all traffic class have all options available. For instance, only real time traffic classes such as TSN or
+          RT make use of XDP sockets. When the XDP option is enabled the traffic classes utilize ``AF_XDP`` instead of
+          ``AF_PACKET`` sockets for Ethernet communication.
 
-Note: The ``GenericL2`` traffic class is not PROFINET specific, but rather used
-to simulate general purpose Ethernet (Layer 2) based protocols such as OPC/UA
-PubSub. In addition, to the other traffic classes the EtherType is configurable.
+.. Note:: The ``GenericL2`` traffic class is not PROFINET specific, but rather used to simulate general purpose Ethernet
+          (Layer 2) based protocols such as OPC/UA PubSub. In addition, to the other traffic classes the EtherType is
+          configurable.
 
-Note: The ``XdpBusyPollMode`` option does not work on PREEMPT_RT enabled Linux kernels by default. The kernel has to be
-modified to support this feature.
+.. Note:: The ``XdpBusyPollMode`` option does not work on PREEMPT_RT enabled Linux kernels by default. The kernel has to
+          be modified to support this feature.
 
-Note: The security settings are only valid for the PROFINET real time traffic classes.
+.. Note:: The security settings are only valid for the PROFINET real time traffic classes.
 
 Sample configuration files are provided for Intel EHL and Intel i225:
 
