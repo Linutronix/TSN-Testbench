@@ -550,7 +550,6 @@ static int TsnRxFrame(void *data, unsigned char *frameData, size_t len)
         int ret;
 
         srt = p;
-        p += sizeof(*srt);
 
         frameId = be16toh(srt->FrameId);
         sequenceCounter = MetaDataToSequenceCounter(&srt->MetaData, tsnConfig->TsnNumFramesPerCycle);
