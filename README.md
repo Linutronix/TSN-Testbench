@@ -59,13 +59,8 @@ utilizing XDP.
 
 ## Documentation ##
 
-The documentation includes information on how to build, use and run the
-TSN-``Testbench``.  The documentation build requires ``sphinx``. To generate the
-HTML form use:
-
-    $ cd Documentation
-    $ make html
-    $ firefox _build/html/index.html
+The documentation includes information on how to build, use and run the TSN-``Testbench``.  The documentation is
+available at https://linutronix.github.io/TSN-Testbench
 
 ## Credits ##
 
@@ -82,3 +77,7 @@ BSD-2 Clause and Dual BSD/GPL for all eBPF programs
 ## Resources ##
 
 Project home: https://github.com/Linutronix/TSN-Testbench
+
+Project documentation: https://linutronix.github.io/TSN-Testbench
+
+Contribution: Use Github Issues and Pull Requests
