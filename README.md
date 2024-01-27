@@ -66,6 +66,8 @@ available at https://linutronix.github.io/TSN-Testbench
 
 Idea and initial funding by Phoenix Contact Electronics GmbH
 
+Supported by Siemens and Intel
+
 ## Copyright ##
 
 Copyright (C) 2020-2024 Linutronix GmbH
