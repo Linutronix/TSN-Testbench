@@ -368,6 +368,7 @@ static int RtcRxFrame(void *data, unsigned char *frameData, size_t len)
     const bool ignoreRxErrors = appConfig.RtcIgnoreRxErrors;
     size_t expectedFrameLength = appConfig.RtcFrameLength;
     bool outOfOrder, payloadMismatch, frameIdMismatch;
+    unsigned char plaintext[RTC_TX_FRAME_LENGTH];
     unsigned char newFrame[RTC_TX_FRAME_LENGTH];
     struct ProfinetSecureHeader *srt;
     struct ProfinetRtHeader *rt;
@@ -458,7 +459,6 @@ static int RtcRxFrame(void *data, unsigned char *frameData, size_t len)
     }
     else
     {
-        unsigned char plaintext[RTC_TX_FRAME_LENGTH];
         unsigned char *beginOfSecurityChecksum;
         unsigned char *beginOfCiphertext;
         unsigned char *beginOfAadData;

@@ -326,6 +326,7 @@ static int RtaRxFrame(void *data, unsigned char *frameData, size_t len)
     const bool ignoreRxErrors = appConfig.RtaIgnoreRxErrors;
     size_t expectedFrameLength = appConfig.RtaFrameLength;
     bool outOfOrder, payloadMismatch, frameIdMismatch;
+    unsigned char plaintext[RTA_TX_FRAME_LENGTH];
     unsigned char newFrame[RTA_TX_FRAME_LENGTH];
     struct ProfinetSecureHeader *srt;
     struct ProfinetRtHeader *rt;
@@ -416,7 +417,6 @@ static int RtaRxFrame(void *data, unsigned char *frameData, size_t len)
     }
     else
     {
-        unsigned char plaintext[RTA_TX_FRAME_LENGTH];
         unsigned char *beginOfSecurityChecksum;
         unsigned char *beginOfCiphertext;
         unsigned char *beginOfAadData;

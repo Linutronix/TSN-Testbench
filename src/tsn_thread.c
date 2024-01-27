@@ -447,6 +447,7 @@ static int TsnRxFrame(void *data, unsigned char *frameData, size_t len)
     const bool ignoreRxErrors = tsnConfig->TsnIgnoreRxErrors;
     size_t expectedFrameLength = tsnConfig->TsnFrameLength;
     bool outOfOrder, payloadMismatch, frameIdMismatch;
+    unsigned char plaintext[TSN_TX_FRAME_LENGTH];
     unsigned char newFrame[TSN_TX_FRAME_LENGTH];
     struct ProfinetSecureHeader *srt;
     struct ProfinetRtHeader *rt;
@@ -539,7 +540,6 @@ static int TsnRxFrame(void *data, unsigned char *frameData, size_t len)
     }
     else
     {
-        unsigned char plaintext[TSN_TX_FRAME_LENGTH];
         unsigned char *beginOfSecurityChecksum;
         unsigned char *beginOfCiphertext;
         unsigned char *beginOfAadData;
