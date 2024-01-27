@@ -62,6 +62,16 @@ utilizing XDP.
 The documentation includes information on how to build, use and run the TSN-``Testbench``.  The documentation is
 available at https://linutronix.github.io/TSN-Testbench
 
+## ToDo ##
+
+The following list contains ideas for further development:
+
+- Add support for XDP and Tx Launch Time
+- Add configurations for other hardware platforms and NIC(s)
+- Add a quick start guide
+- Add description about task scheduling model used
+- Make it more user friendly
+
 ## Credits ##
 
 Idea and initial funding by Phoenix Contact Electronics GmbH
