@@ -41,6 +41,8 @@ static inline const char *StatFrameTypeToString(enum StatFrameType frameType)
 
 int StatInit(bool logRtt)
 {
+    bool allocationError = false;
+
     RoundTripContexts[TSN_HIGH_FRAME_TYPE].BacklogLen = STAT_MAX_BACKLOG * appConfig.TsnHighNumFramesPerCycle;
     RoundTripContexts[TSN_LOW_FRAME_TYPE].BacklogLen = STAT_MAX_BACKLOG * appConfig.TsnLowNumFramesPerCycle;
     RoundTripContexts[RTC_FRAME_TYPE].BacklogLen = STAT_MAX_BACKLOG * appConfig.RtcNumFramesPerCycle;
@@ -51,37 +53,24 @@ int StatInit(bool logRtt)
     RoundTripContexts[UDP_LOW_FRAME_TYPE].BacklogLen = STAT_MAX_BACKLOG * appConfig.UdpLowNumFramesPerCycle;
     RoundTripContexts[GENERICL2_FRAME_TYPE].BacklogLen = STAT_MAX_BACKLOG * appConfig.GenericL2NumFramesPerCycle;
 
-    RoundTripContexts[TSN_HIGH_FRAME_TYPE].Backlog =
-        calloc(RoundTripContexts[TSN_HIGH_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[TSN_LOW_FRAME_TYPE].Backlog =
-        calloc(RoundTripContexts[TSN_LOW_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[RTC_FRAME_TYPE].Backlog = calloc(RoundTripContexts[RTC_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[RTA_FRAME_TYPE].Backlog = calloc(RoundTripContexts[RTA_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[DCP_FRAME_TYPE].Backlog = calloc(RoundTripContexts[DCP_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[LLDP_FRAME_TYPE].Backlog = calloc(RoundTripContexts[LLDP_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[UDP_HIGH_FRAME_TYPE].Backlog =
-        calloc(RoundTripContexts[UDP_HIGH_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[UDP_LOW_FRAME_TYPE].Backlog =
-        calloc(RoundTripContexts[UDP_LOW_FRAME_TYPE].BacklogLen, sizeof(int64_t));
-    RoundTripContexts[GENERICL2_FRAME_TYPE].Backlog =
-        calloc(RoundTripContexts[GENERICL2_FRAME_TYPE].BacklogLen, sizeof(int64_t));
+    for (int i = 0; i < NUM_FRAME_TYPES; i++)
+    {
+        struct RoundTripContext *currentContext = &RoundTripContexts[i];
 
-    if (!RoundTripContexts[TSN_HIGH_FRAME_TYPE].Backlog || !RoundTripContexts[TSN_LOW_FRAME_TYPE].Backlog ||
-        !RoundTripContexts[RTC_FRAME_TYPE].Backlog || !RoundTripContexts[RTA_FRAME_TYPE].Backlog ||
-        !RoundTripContexts[DCP_FRAME_TYPE].Backlog || !RoundTripContexts[LLDP_FRAME_TYPE].Backlog ||
-        !RoundTripContexts[UDP_HIGH_FRAME_TYPE].Backlog || !RoundTripContexts[UDP_LOW_FRAME_TYPE].Backlog ||
-        !RoundTripContexts[GENERICL2_FRAME_TYPE].Backlog)
+        currentContext->Backlog = calloc(currentContext->BacklogLen, sizeof(int64_t));
+        allocationError |= !currentContext->Backlog;
+    }
+
+    if (allocationError)
         return -ENOMEM;
 
-    GlobalStatistics[TSN_HIGH_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[TSN_LOW_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[RTC_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[RTA_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[DCP_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[LLDP_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[UDP_HIGH_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[UDP_LOW_FRAME_TYPE].RoundTripMin = UINT64_MAX;
-    GlobalStatistics[GENERICL2_FRAME_TYPE].RoundTripMin = UINT64_MAX;
+    for (int i = 0; i < NUM_FRAME_TYPES; i++)
+    {
+        struct Statistics *currentStats = &GlobalStatistics[i];
+
+        currentStats->RoundTripMin = UINT64_MAX;
+        currentStats->RoundTripMax = 0;
+    }
 
     if (appConfig.DebugStopTraceOnRtt)
     {
@@ -109,14 +98,9 @@ int StatInit(bool logRtt)
 
 void StatFree(void)
 {
-    free(RoundTripContexts[TSN_HIGH_FRAME_TYPE].Backlog);
-    free(RoundTripContexts[TSN_LOW_FRAME_TYPE].Backlog);
-    free(RoundTripContexts[RTC_FRAME_TYPE].Backlog);
-    free(RoundTripContexts[RTA_FRAME_TYPE].Backlog);
-    free(RoundTripContexts[DCP_FRAME_TYPE].Backlog);
-    free(RoundTripContexts[LLDP_FRAME_TYPE].Backlog);
-    free(RoundTripContexts[UDP_HIGH_FRAME_TYPE].Backlog);
-    free(RoundTripContexts[UDP_LOW_FRAME_TYPE].Backlog);
+
+    for (int i = 0; i < NUM_FRAME_TYPES; i++)
+        free(RoundTripContexts[i].Backlog);
 
     if (appConfig.DebugStopTraceOnRtt)
     {
@@ -144,6 +128,12 @@ void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber)
     stat->FramesSent++;
 }
 
+static inline void StatUpdateMinMax(uint64_t newValue, uint64_t *min, uint64_t *max)
+{
+    *max = (newValue > *max) ? newValue : *max;
+    *min = (newValue < *min) ? newValue : *min;
+}
+
 void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder, bool payloadMismatch,
                        bool frameIdMismatch)
 {
@@ -161,10 +151,7 @@ void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool 
         rtTime = TsToNs(&rxTime) - rtt->Backlog[cycleNumber % rtt->BacklogLen];
         rtTime /= 1000;
 
-        if (rtTime < stat->RoundTripMin)
-            stat->RoundTripMin = rtTime;
-        if (rtTime > stat->RoundTripMax)
-            stat->RoundTripMax = rtTime;
+        StatUpdateMinMax(rtTime, &stat->RoundTripMin, &stat->RoundTripMax);
         if (StatFrameTypeIsRealTime(frameType) && rtTime > RttExpectedRTLimit)
             stat->RoundTripOutliers++;
         stat->RoundTripCount++;
@@ -189,10 +176,7 @@ void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool 
 
     /* Increment stats */
     stat->FramesReceived++;
-    if (outOfOrder)
-        stat->OutOfOrderErrors++;
-    if (payloadMismatch)
-        stat->PayloadErrors++;
-    if (frameIdMismatch)
-        stat->FrameIdErrors++;
+    stat->OutOfOrderErrors += outOfOrder;
+    stat->PayloadErrors += payloadMismatch;
+    stat->FrameIdErrors += frameIdMismatch;
 }
