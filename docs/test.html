@@ -143,8 +143,8 @@ host2:<span class="w"> </span>./reference<span class="w"> </span>-c<span class="
 </section>
 <section id="interpretation-of-results">
 <h2>Interpretation of results<a class="headerlink" href="#interpretation-of-results" title="Permalink to this heading"></a></h2>
-<p>The following demonstrates an example test scenario performed on Intel Comet
-Lake CPU(s) equipped with Intel i225 NIC(s).</p>
+<p>The following demonstrates an example test scenario performed on Intel Comet Lake CPU(s) equipped with Intel i225
+NIC(s). All scripts and configuration are located in <code class="docutils literal notranslate"><span class="pre">tests/ptm</span></code>.</p>
 <ul class="simple">
 <li><p>Cycle time of 1ms</p></li>
 <li><p>Rx threads scheduled at offset 600us within 1ms period</p></li>
@@ -188,6 +188,8 @@ pre-calculated round-trip time for the real time frames is 1.8ms. This test runs
 was executed over the period of 4 hours. In total 4 billion RT frames have
 been transmitted, received and checked. Not a single one missed its deadline or
 was damaged in any way.</p>
+<p>The following image shows how the expected round-trip time is calculated according to the parameters shown above:</p>
+<a class="reference internal image-reference" href="_images/tsn_testbench_timing_1ms_en.png"><img alt="TSN-Testbench scheduling 1ms" src="_images/tsn_testbench_timing_1ms_en.png" style="width: 600px;" /></a>
 <p>Furthermore, the TSN-<code class="docutils literal notranslate"><span class="pre">Testbench</span></code> can also be utilized to check the Ethernet
 behavior on the wire. Therefore, special hardware equipment such as a
 TSN-Monitor from Fraunhofer or a Profishark 1G+ network TAP is required. The

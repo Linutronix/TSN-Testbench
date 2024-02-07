@@ -112,6 +112,9 @@ default value now + 30s)</p></li>
 <li><p>&lt;Class&gt;XdpZcMode (Boolean): Use XDP zero copy mode</p></li>
 <li><p>&lt;Class&gt;XdpWakeupMode (Boolean): Use XDP wakeup mode</p></li>
 <li><p>&lt;Class&gt;XdpBusyPollMode (Boolean): Drive XDP socket in busy poll mode</p></li>
+<li><p>&lt;Class&gt;TxTimeEnabled (Boolean): Use Tx Launch Time for all transmitted frames (requires ETF Qdisc and is not
+compatible with XDP)</p></li>
+<li><p>&lt;Class&gt;TxTimeOffsetNS (Integer): Optional Tx Launch Time offset relative to Qbv schedule and cycle time</p></li>
 <li><p>&lt;Class&gt;IgnoreRxErrors (Boolean): By default, the applications perform consistency checks for all received frames. This
 option disables these checks. Do not enable this. This is only useful for testing e.g., overload scenarios.</p></li>
 <li><p>&lt;Class&gt;Vid (Integer): VLAN ID used for traffic generation</p></li>

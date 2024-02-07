@@ -37,6 +37,9 @@ Possible parameters include:
 - <Class>XdpZcMode (Boolean): Use XDP zero copy mode
 - <Class>XdpWakeupMode (Boolean): Use XDP wakeup mode
 - <Class>XdpBusyPollMode (Boolean): Drive XDP socket in busy poll mode
+- <Class>TxTimeEnabled (Boolean): Use Tx Launch Time for all transmitted frames (requires ETF Qdisc and is not
+  compatible with XDP)
+- <Class>TxTimeOffsetNS (Integer): Optional Tx Launch Time offset relative to Qbv schedule and cycle time
 - <Class>IgnoreRxErrors (Boolean): By default, the applications perform consistency checks for all received frames. This
   option disables these checks. Do not enable this. This is only useful for testing e.g., overload scenarios.
 - <Class>Vid (Integer): VLAN ID used for traffic generation
