@@ -60,8 +60,8 @@ configuration is required:
 Interpretation of results
 -------------------------
 
-The following demonstrates an example test scenario performed on Intel Comet
-Lake CPU(s) equipped with Intel i225 NIC(s).
+The following demonstrates an example test scenario performed on Intel Comet Lake CPU(s) equipped with Intel i225
+NIC(s). All scripts and configuration are located in ``tests/ptm``.
 
 - Cycle time of 1ms
 - Rx threads scheduled at offset 600us within 1ms period
@@ -105,6 +105,12 @@ pre-calculated round-trip time for the real time frames is 1.8ms. This test runs
 was executed over the period of 4 hours. In total 4 billion RT frames have
 been transmitted, received and checked. Not a single one missed its deadline or
 was damaged in any way.
+
+The following image shows how the expected round-trip time is calculated according to the parameters shown above:
+
+.. image:: images/tsn_testbench_timing_1ms_en.png
+  :width: 600
+  :alt: TSN-Testbench scheduling 1ms
 
 Furthermore, the TSN-``Testbench`` can also be utilized to check the Ethernet
 behavior on the wire. Therefore, special hardware equipment such as a

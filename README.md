@@ -82,7 +82,6 @@ The following list contains ideas for further development:
 - Add support for XDP and Tx Launch Time
 - Add configurations for other hardware platforms and NIC(s)
 - Add a quick start guide
-- Add description about task scheduling model used
 - Make it more user friendly
 
 ## Credits ##
