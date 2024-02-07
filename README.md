@@ -62,6 +62,19 @@ utilizing XDP.
 The documentation includes information on how to build, use and run the TSN-``Testbench``.  The documentation is
 available at https://linutronix.github.io/TSN-Testbench
 
+## Features ##
+
+TSN-``Testbench`` features include:
+
+- Real-time and non-real time protocols
+- Configurable traffic class mapping
+- Configurable cycle time, frames, frame size, vid
+- Real-time security support with configurable algorithms like AES256
+- Multiple middleware simulation like PROFINET and OPC/UA
+- Usage of PTP for time synchronization
+- Flexible Linux Ethernet interface usage like XDP, XDP/ZC, AF/PACKET, busy polling
+- End station Qbv
+
 ## ToDo ##
 
 The following list contains ideas for further development:
