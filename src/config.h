@@ -293,6 +293,19 @@ struct ApplicationConfig
     uint64_t DebugStopTraceRttLimitNS;
     bool DebugMonitorMode;
     unsigned char DebugMonitorDestination[ETH_ALEN];
+    /* Statistics */
+    uint64_t StatsCollectionIntervalNS;
+    /* Log through MQTT */
+    bool LogViaMQTT;
+    int LogViaMQTTThreadPriority;
+    int LogViaMQTTThreadCpu;
+    uint64_t LogViaMQTTThreadPeriodNS;
+    size_t LogViaMQTTBrokerIPLength;
+    char *LogViaMQTTBrokerIP;
+    int LogViaMQTTBrokerPort;
+    int LogViaMQTTKeepAliveSecs;
+    size_t LogViaMQTTMeasurementNameLength;
+    char *LogViaMQTTMeasurementName;
 };
 
 extern struct ApplicationConfig appConfig;

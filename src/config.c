@@ -329,6 +329,17 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_BOOL_PARAM(DebugMonitorMode);
             CONFIG_STORE_MAC_PARAM(DebugMonitorDestination);
 
+            CONFIG_STORE_ULONG_PARAM(StatsCollectionIntervalNS);
+
+            CONFIG_STORE_BOOL_PARAM(LogViaMQTT);
+            CONFIG_STORE_INT_PARAM(LogViaMQTTThreadPriority);
+            CONFIG_STORE_INT_PARAM(LogViaMQTTThreadCpu);
+            CONFIG_STORE_ULONG_PARAM(LogViaMQTTThreadPeriodNS);
+            CONFIG_STORE_STRING_PARAM(LogViaMQTTBrokerIP);
+            CONFIG_STORE_INT_PARAM(LogViaMQTTBrokerPort);
+            CONFIG_STORE_INT_PARAM(LogViaMQTTKeepAliveSecs);
+            CONFIG_STORE_STRING_PARAM(LogViaMQTTMeasurementName);
+
             if (key)
                 free(key);
 
@@ -630,6 +641,17 @@ void ConfigPrintValues(void)
     printf("DebugMonitorMode=%s\n", appConfig.DebugMonitorMode ? "True" : "False");
     printf("DebugMonitorDestination=");
     PrintMacAddress(appConfig.DebugMonitorDestination);
+    printf("--------------------------------------------------------------------------------\n");
+    printf("StatsCollectionIntervalNS=%ld\n", appConfig.StatsCollectionIntervalNS);
+    printf("--------------------------------------------------------------------------------\n");
+    printf("LogViaMQTT=%s\n", appConfig.LogViaMQTT ? "True" : "False");
+    printf("LogViaMQTTThreadPriority=%d\n", appConfig.LogViaMQTTThreadPriority);
+    printf("LogViaMQTTThreadCpu=%d\n", appConfig.LogViaMQTTThreadCpu);
+    printf("LogViaMQTTThreadPeriodNS=%ld\n", appConfig.LogViaMQTTThreadPeriodNS);
+    printf("LogViaMQTTBrokerIP=%s\n", appConfig.LogViaMQTTBrokerIP);
+    printf("LogViaMQTTBrokerPort=%d\n", appConfig.LogViaMQTTBrokerPort);
+    printf("LogViaMQTTKeepAliveSecs=%d\n", appConfig.LogViaMQTTKeepAliveSecs);
+    printf("LogViaMQTTMeasurementName=%s\n", appConfig.LogViaMQTTMeasurementName);
     printf("\n");
     printf("--------------------------------------------------------------------------------\n");
 }
@@ -645,6 +667,10 @@ int ConfigSetDefaults(bool mirrorEnabled)
     static const char *DefaultUdpLowSource = "192.168.2.119";
     static const char *DefaultLogLevel = "Debug";
     static const char *DefaultUdpLowPort = "6666";
+
+    static const char *DefaultLogViaMQTTBrokerIP = "127.0.0.1";
+    static const char *DefaultLogViaMQTTMeasurementName = "testbench";
+
     struct timespec current;
     int ret = -ENOMEM;
 
@@ -949,8 +975,24 @@ int ConfigSetDefaults(bool mirrorEnabled)
     appConfig.DebugMonitorMode = false;
     memcpy((void *)appConfig.DebugMonitorDestination, defaultDebugMontitorDestination, ETH_ALEN);
 
-    return 0;
+    /* Stats */
+    appConfig.StatsCollectionIntervalNS = 1e9;
 
+    /* LogViaMQTT */
+    appConfig.LogViaMQTT = false;
+    appConfig.LogViaMQTTBrokerPort = 1883;
+    appConfig.LogViaMQTTThreadPriority = 1;
+    appConfig.LogViaMQTTThreadCpu = 7;
+    appConfig.LogViaMQTTKeepAliveSecs = 60;
+    appConfig.LogViaMQTTThreadPeriodNS = 1e9;
+    appConfig.LogViaMQTTBrokerIP = strdup(DefaultLogViaMQTTBrokerIP);
+    if (!appConfig.LogViaMQTTBrokerIP)
+        goto out;
+
+    appConfig.LogViaMQTTMeasurementName = strdup(DefaultLogViaMQTTMeasurementName);
+    if (!appConfig.LogViaMQTTMeasurementName)
+        goto out;
+    return 0;
 out:
     ConfigFree();
     return ret;
@@ -1180,4 +1222,9 @@ void ConfigFree(void)
         free(appConfig.LogFile);
     if (appConfig.LogLevel)
         free(appConfig.LogLevel);
+
+    if (appConfig.LogViaMQTTBrokerIP)
+        free(appConfig.LogViaMQTTBrokerIP);
+    if (appConfig.LogViaMQTTMeasurementName)
+        free(appConfig.LogViaMQTTMeasurementName);
 }
