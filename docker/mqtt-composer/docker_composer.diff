@@ -1,0 +1,71 @@
+1c1
+< version: "3"
+---
+> version: "3.9"
+12c12
+<       - iot
+---
+>       - stats
+14,15c14,16
+<       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+<   
+---
+>       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+>     cpuset: "3"
+> 
+17c18
+<     image: influxdb
+---
+>     image: influxdb:1.8-alpine
+23c24
+<       - iot
+---
+>       - stats
+25,26c26,27
+<       - influxdb-data:/var/lib/influxdb2
+<       - influxdb-config:/etc/influxdb2
+---
+>       - ./influxdb-storage:/var/lib/influxdb
+>       - ./influxdb.conf:/etc/influxdb/influxdb.conf:ro
+28,34c29,33
+<       - DOCKER_INFLUXDB_INIT_MODE=setup
+<       - DOCKER_INFLUXDB_INIT_USERNAME=user
+<       - DOCKER_INFLUXDB_INIT_PASSWORD=password1234
+<       - DOCKER_INFLUXDB_INIT_ORG=some_org
+<       - DOCKER_INFLUXDB_INIT_BUCKET=some_data
+<       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=4eYvsu8wZCJ6tKuE2sxvFHkvYFwSMVK0011hEEiojvejzpSaij86vYQomN_12au6eK-2MZ6Knr-Sax201y70w==
+<   
+---
+>       - INFLUXDB_DB="testbench"
+>     security_opt:
+>       - no-new-privileges:true
+>     cpuset: "3"
+> 
+45,46c44,46
+<       - iot
+<   
+---
+>       - stats
+>     cpuset: "3"
+> 
+54c54
+<       - iot
+---
+>       - stats
+57c57,59
+<       - grafana-data:/var/lib/grafana
+---
+>       - ./grafana-data:/var/lib/grafana
+>       - ./grafana.ini:/etc/grafana/grafana.ini
+>       
+59a62
+>     cpuset: "3"
+62c65
+<   iot:
+---
+>   stats:
+67c70
+<   influxdb-config:
+\ No newline at end of file
+---
+>   influxdb-config:
