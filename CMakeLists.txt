@@ -27,6 +27,7 @@ pkg_search_module(YAML yaml-0.1 REQUIRED)
 pkg_search_module(LIBBPF libbpf REQUIRED)
 pkg_search_module(LIBXDP libxdp REQUIRED)
 pkg_search_module(LIBCRYPTO libcrypto>=3.0 REQUIRED)
+pkg_check_modules(MOSQUITTO libmosquitto REQUIRED)
 
 check_symbol_exists(SO_BUSY_POLL "sys/socket.h" HAVE_SO_BUSY_POLL)
 check_symbol_exists(SO_PREFER_BUSY_POLL "sys/socket.h" HAVE_SO_PREFER_BUSY_POLL)
@@ -37,6 +38,7 @@ add_executable(reference
   src/config.c
   src/utils.c
   src/log.c
+  src/logviamqtt.c
   src/stat.c
   src/ring_buffer.c
   src/thread.c
@@ -56,6 +58,7 @@ add_executable(mirror
   src/config.c
   src/utils.c
   src/log.c
+  src/logviamqtt.c
   src/stat.c
   src/ring_buffer.c
   src/thread.c
@@ -76,11 +79,13 @@ target_link_libraries(reference ${YAML_LIBRARIES})
 target_link_libraries(reference ${LIBBPF_LIBRARIES})
 target_link_libraries(reference ${LIBXDP_LIBRARIES})
 target_link_libraries(reference ${LIBCRYPTO_LIBRARIES})
+target_link_libraries(reference ${MOSQUITTO_LIBRARIES})
 target_link_libraries(mirror Threads::Threads)
 target_link_libraries(mirror ${YAML_LIBRARIES})
 target_link_libraries(mirror ${LIBBPF_LIBRARIES})
 target_link_libraries(mirror ${LIBXDP_LIBRARIES})
 target_link_libraries(mirror ${LIBCRYPTO_LIBRARIES})
+target_link_libraries(mirror ${MOSQUITTO_LIBRARIES})
 
 target_include_directories(reference PRIVATE "${PROJECT_BINARY_DIR}")
 target_include_directories(reference PRIVATE "src")
@@ -88,12 +93,14 @@ target_include_directories(reference PUBLIC ${YAML_INCLUDE_DIRS})
 target_include_directories(reference PUBLIC ${LIBBPF_INCLUDE_DIRS})
 target_include_directories(reference PUBLIC ${LIBXDP_INCLUDE_DIRS})
 target_include_directories(reference PUBLIC ${LIBCRYPTO_INCLUDE_DIRS})
+target_include_directories(reference PUBLIC ${MOSQUITTO_INCLUDE_DIRS})
 target_include_directories(mirror PRIVATE "${PROJECT_BINARY_DIR}")
 target_include_directories(mirror PRIVATE "src")
 target_include_directories(mirror PUBLIC ${YAML_INCLUDE_DIRS})
 target_include_directories(mirror PUBLIC ${LIBBPF_INCLUDE_DIRS})
 target_include_directories(mirror PUBLIC ${LIBXDP_INCLUDE_DIRS})
 target_include_directories(mirror PUBLIC ${LIBCRYPTO_INCLUDE_DIRS})
+target_include_directories(mirror PUBLIC ${MOSQUITTO_INCLUDE_DIRS})
 
 set(INSTALL_EBPF_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR}/testbench/ebpf)
 configure_file(

@@ -19,6 +19,7 @@
 #include "layer2_thread.h"
 #include "lldp_thread.h"
 #include "log.h"
+#include "logviamqtt.h"
 #include "rta_thread.h"
 #include "rtc_thread.h"
 #include "stat.h"
@@ -54,6 +55,7 @@ static void PrintVersionAndDie(void)
 int main(int argc, char *argv[])
 {
     struct LogThreadContext *logThread;
+    struct LogViaMQTTThreadContext *logViaMQTTThread;
     struct ThreadContext *g2Threads;
     struct ThreadContext *threads;
     const char *configFile = NULL;
@@ -131,6 +133,13 @@ int main(int argc, char *argv[])
     if (!logThread)
     {
         fprintf(stderr, "Failed to create and start Log Thread!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    logViaMQTTThread = LogViaMQTTThreadCreate();
+    if (!logViaMQTTThread && appConfig.LogViaMQTT)
+    {
+        fprintf(stderr, "Failed to create and start Log via MQTT Thread!\n");
         exit(EXIT_FAILURE);
     }
 
@@ -219,10 +228,12 @@ int main(int argc, char *argv[])
     UdpHighThreadsWaitForFinish(&threads[UDP_HIGH_THREAD]);
     UdpLowThreadsWaitForFinish(&threads[UDP_LOW_THREAD]);
     GenericL2ThreadsWaitForFinish(g2Threads);
+    LogViaMQTTThreadWaitForFinish(logViaMQTTThread);
     LogThreadWaitForFinish(logThread);
 
     StatFree();
     LogFree();
+    LogViaMQTTFree();
     ConfigFree();
     free(threads);
 
