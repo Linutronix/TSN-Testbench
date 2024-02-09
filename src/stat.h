@@ -64,6 +64,7 @@ extern struct RoundTripContext RoundTripContexts[NUM_FRAME_TYPES];
 
 int StatInit(bool logRtt);
 void StatFree(void);
+const char *StatFrameTypeToString(enum StatFrameType frameType);
 void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber);
 void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder, bool payloadMismatch,
                        bool frameIdMismatch);

@@ -26,7 +26,7 @@ static FILE *FileTraceMarker;
 static const char *StatFrameTypeNames[NUM_FRAME_TYPES] = {"TsnHigh", "TsnLow",  "Rtc",    "Rta",      "Dcp",
                                                           "Lldp",    "UdpHigh", "UdpLow", "GenericL2"};
 
-static inline const char *StatFrameTypeToString(enum StatFrameType frameType)
+inline const char *StatFrameTypeToString(enum StatFrameType frameType)
 {
     return StatFrameTypeNames[frameType];
 }
