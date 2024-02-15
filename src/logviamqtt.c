@@ -6,12 +6,16 @@
 
 #include <errno.h>
 #include <inttypes.h>
-#include <mosquitto.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "app_config.h"
+#ifdef WITH_MQTT
+#include <mosquitto.h>
+#endif
 
 #include "config.h"
 #include "logviamqtt.h"
@@ -21,6 +25,26 @@
 #include "utils.h"
 
 #define LOGVIAMQTT_BUFFER_SIZE (8 * 1024)
+
+#ifndef WITH_MQTT
+struct LogViaMQTTThreadContext *LogViaMQTTThreadCreate()
+{
+    return NULL;
+}
+
+void LogViaMQTTThreadWaitForFinish(struct LogViaMQTTThreadContext *threadContext)
+{
+}
+
+void LogViaMQTTStats(enum StatFrameType frameType, struct Statistics *stats)
+{
+}
+
+void LogViaMQTTFree()
+{
+}
+
+#else
 
 static struct RingBuffer *LogViaMQTTGlobalLogRingBuffer;
 
@@ -271,3 +295,4 @@ void LogViaMQTTThreadWaitForFinish(struct LogViaMQTTThreadContext *threadContext
 
     pthread_join(threadContext->MQTTLogTaskId, NULL);
 }
+#endif

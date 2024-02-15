@@ -140,6 +140,7 @@ static inline void StatUpdateMinMax(uint64_t newValue, uint64_t *min, uint64_t *
     *min = (newValue < *min) ? newValue : *min;
 }
 
+#if defined(WITH_MQTT)
 static void StatsResetStats(struct Statistics *stats)
 {
     memset(stats, 0, sizeof(struct Statistics));
@@ -168,7 +169,6 @@ static void StatFrameReceivedPerPeriod(enum StatFrameType frameType, uint64_t cu
 
     if (StatFrameTypeIsRealTime(frameType) && rtTime > RttExpectedRTLimit)
         statPerPeriodPre->RoundTripOutliers++;
-
     StatUpdateMinMax(rtTime, &statPerPeriodPre->RoundTripMin, &statPerPeriodPre->RoundTripMax);
 
     statPerPeriodPre->RoundTripCount++;
@@ -189,6 +189,12 @@ static void StatFrameReceivedPerPeriod(enum StatFrameType frameType, uint64_t cu
         StatsResetStats(&GlobalStatisticsPerPeriodPrep[frameType]);
     }
 }
+#else
+static void StatFrameReceivedPerPeriod(enum StatFrameType frameType, uint64_t currTime, uint64_t rtTime,
+                                       bool outOfOrder, bool payloadMismatch, bool frameIdMismatch)
+{
+}
+#endif
 
 void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder, bool payloadMismatch,
                        bool frameIdMismatch)
