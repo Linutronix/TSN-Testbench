@@ -1139,6 +1139,12 @@ bool ConfigSanityCheck()
         return false;
     }
 
+    if (!ConfigHaveMosquitto() && appConfig.LogViaMQTT)
+    {
+        fprintf(stderr, "Log via Mosquito enabled, but not supported!\n");
+        return false;
+    }
+
     /* Check keys and IV */
     if (!ConfigCheckKeys("TsnHigh", appConfig.TsnHighSecurityMode, appConfig.TsnHighSecurityAlgorithm,
                          appConfig.TsnHighSecurityKeyLength, appConfig.TsnHighSecurityIvPrefixLength))

@@ -166,8 +166,9 @@ static void StatFrameReceivedPerPeriod(enum StatFrameType frameType, uint64_t cu
 
     if (StatFrameTypeIsRealTime(frameType) && rtTime > RttExpectedRTLimit)
         statPerPeriodPre->RoundTripOutliers++;
-
+#if defined (WITH_MQTT)
     StatUpdateMinMax(rtTime, &statPerPeriodPre->RoundTripMin, &statPerPeriodPre->RoundTripMax);
+#endif
 
     statPerPeriodPre->RoundTripCount++;
     statPerPeriodPre->RoundTripSum += rtTime;

@@ -498,4 +498,14 @@ static inline bool ConfigHaveBusyPoll(void)
 #endif
 }
 
+static inline bool ConfigHaveMosquitto(void)
+{
+#if defined(WITH_MQTT)
+    return true;
+#else
+    return false;
+#endif
+}
+
+
 #endif /* _CONFIG_H_ */
