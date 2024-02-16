@@ -55,3 +55,18 @@ have to be set:
 - CONFIG_NET_SCH_ETF
 - CONFIG_NET_SCH_INGRESS
 - CONFIG_NET_CLS_*
+
+Additional Options
+^^^^^^^^^^^^^^^^^^
+
+Some features are added by using additional CMake opitions, the table bellow presents those features and options.
+
+.. list-table:: Features & CMake options
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Feature
+     - Option
+
+   * - MQTT
+     - WITH_MQTT

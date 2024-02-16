@@ -36,6 +36,11 @@ Welcome to TSN-Testbench's documentation!
 .. toctree::
    :maxdepth: 2
 
+   mqtt.rst
+
+.. toctree::
+   :maxdepth: 2
+
    test.rst
 
 .. toctree::
