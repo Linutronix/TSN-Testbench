@@ -41,6 +41,8 @@ static inline bool StatFrameTypeIsRealTime(enum StatFrameType frameType)
 
 struct Statistics
 {
+    uint64_t FirstTimeStamp;
+    uint64_t LastTimeStamp;
     uint64_t FramesSent;
     uint64_t FramesReceived;
     uint64_t OutOfOrderErrors;
@@ -52,8 +54,11 @@ struct Statistics
     uint64_t RoundTripOutliers;
     double RoundTripSum;
     double RoundTripAvg;
+    bool ready;
 };
+
 extern struct Statistics GlobalStatistics[NUM_FRAME_TYPES];
+extern struct Statistics GlobalStatisticsPerPeriod[NUM_FRAME_TYPES];
 
 struct RoundTripContext
 {

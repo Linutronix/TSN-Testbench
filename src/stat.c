@@ -13,10 +13,13 @@
 
 #include "config.h"
 #include "log.h"
+#include "logviamqtt.h"
 #include "stat.h"
 #include "utils.h"
 
 struct Statistics GlobalStatistics[NUM_FRAME_TYPES];
+struct Statistics GlobalStatisticsPerPeriod[NUM_FRAME_TYPES];
+struct Statistics GlobalStatisticsPerPeriodPrep[NUM_FRAME_TYPES];
 struct RoundTripContext RoundTripContexts[NUM_FRAME_TYPES];
 static uint64_t RttExpectedRTLimit;
 static bool LogRtt;
@@ -68,6 +71,9 @@ int StatInit(bool logRtt)
     {
         struct Statistics *currentStats = &GlobalStatistics[i];
 
+        currentStats->RoundTripMin = UINT64_MAX;
+        currentStats->RoundTripMax = 0;
+        currentStats = &GlobalStatisticsPerPeriod[i];
         currentStats->RoundTripMin = UINT64_MAX;
         currentStats->RoundTripMax = 0;
     }
@@ -134,6 +140,53 @@ static inline void StatUpdateMinMax(uint64_t newValue, uint64_t *min, uint64_t *
     *min = (newValue < *min) ? newValue : *min;
 }
 
+static void StatsResetStats(struct Statistics *stats)
+{
+    memset(stats, 0, sizeof(struct Statistics));
+    stats->RoundTripMin = UINT64_MAX;
+}
+
+static void StatFrameReceivedPerPeriod(enum StatFrameType frameType, uint64_t currTime, uint64_t rtTime,
+                                       bool outOfOrder, bool payloadMismatch, bool frameIdMismatch)
+{
+    struct Statistics *statPerPeriodPre = &GlobalStatisticsPerPeriodPrep[frameType];
+    uint64_t elapsedT;
+
+    if (statPerPeriodPre->FirstTimeStamp == 0)
+        statPerPeriodPre->FirstTimeStamp = currTime;
+
+    /* Test if the amount of time specified in the config is arrived.
+     * if true this will be the last point to be taken into stats per period */
+    elapsedT = currTime - statPerPeriodPre->FirstTimeStamp;
+    if (elapsedT >= appConfig.StatsCollectionIntervalNS)
+    {
+        statPerPeriodPre->ready = true;
+        statPerPeriodPre->LastTimeStamp = currTime;
+    }
+
+    if (StatFrameTypeIsRealTime(frameType) && rtTime > RttExpectedRTLimit)
+        statPerPeriodPre->RoundTripOutliers++;
+
+    StatUpdateMinMax(rtTime, &statPerPeriodPre->RoundTripMin, &statPerPeriodPre->RoundTripMax);
+
+    statPerPeriodPre->RoundTripCount++;
+    statPerPeriodPre->RoundTripSum += rtTime;
+    statPerPeriodPre->RoundTripAvg = statPerPeriodPre->RoundTripSum / (double)statPerPeriodPre->RoundTripCount;
+
+    statPerPeriodPre->FramesReceived++;
+    statPerPeriodPre->OutOfOrderErrors += outOfOrder;
+    statPerPeriodPre->PayloadErrors += payloadMismatch;
+    statPerPeriodPre->FrameIdErrors += frameIdMismatch;
+
+    /* Final bits can be used in the logger reseting copying actual values and
+     * reseting the preparation */
+    if (statPerPeriodPre->ready)
+    {
+        LogViaMQTTStats(frameType, &GlobalStatisticsPerPeriodPrep[frameType]);
+        StatsResetStats(&GlobalStatisticsPerPeriodPrep[frameType]);
+    }
+}
+
 void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder, bool payloadMismatch,
                        bool frameIdMismatch)
 {
@@ -141,6 +194,7 @@ void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool 
     struct Statistics *stat = &GlobalStatistics[frameType];
     struct timespec rxTime = {};
     uint64_t rtTime;
+    uint64_t currTime;
 
     LogMessage(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] received\n", StatFrameTypeToString(frameType), cycleNumber);
 
@@ -148,8 +202,11 @@ void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool 
     if (LogRtt)
     {
         clock_gettime(appConfig.ApplicationClockId, &rxTime);
-        rtTime = TsToNs(&rxTime) - rtt->Backlog[cycleNumber % rtt->BacklogLen];
+        currTime = TsToNs(&rxTime);
+        rtTime = currTime - rtt->Backlog[cycleNumber % rtt->BacklogLen];
         rtTime /= 1000;
+
+        StatFrameReceivedPerPeriod(frameType, currTime, rtTime, outOfOrder, payloadMismatch, frameIdMismatch);
 
         StatUpdateMinMax(rtTime, &stat->RoundTripMin, &stat->RoundTripMax);
         if (StatFrameTypeIsRealTime(frameType) && rtTime > RttExpectedRTLimit)

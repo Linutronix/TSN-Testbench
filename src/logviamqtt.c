@@ -53,6 +53,7 @@ void LogViaMQTTStats(enum StatFrameType frameType, struct Statistics *stats)
 {
     struct LogStatistics internal;
     internal.FrameType = frameType;
+    internal.TimeStamp = stats->LastTimeStamp;
     internal.FramesSent = stats->FramesSent;
     internal.FramesReceived = stats->FramesReceived;
     internal.OutOfOrderErrors = stats->OutOfOrderErrors;
