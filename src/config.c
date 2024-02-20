@@ -641,6 +641,7 @@ void ConfigPrintValues(void)
     printf("DebugMonitorMode=%s\n", appConfig.DebugMonitorMode ? "True" : "False");
     printf("DebugMonitorDestination=");
     PrintMacAddress(appConfig.DebugMonitorDestination);
+    printf("\n");
     printf("--------------------------------------------------------------------------------\n");
     printf("StatsCollectionIntervalNS=%ld\n", appConfig.StatsCollectionIntervalNS);
     printf("--------------------------------------------------------------------------------\n");
@@ -652,7 +653,6 @@ void ConfigPrintValues(void)
     printf("LogViaMQTTBrokerPort=%d\n", appConfig.LogViaMQTTBrokerPort);
     printf("LogViaMQTTKeepAliveSecs=%d\n", appConfig.LogViaMQTTKeepAliveSecs);
     printf("LogViaMQTTMeasurementName=%s\n", appConfig.LogViaMQTTMeasurementName);
-    printf("\n");
     printf("--------------------------------------------------------------------------------\n");
 }
 
