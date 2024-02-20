@@ -88,11 +88,13 @@ The following list contains ideas for further development:
 
 Idea and initial funding by Phoenix Contact Electronics GmbH
 
-Supported by Siemens and Intel
+Supported by Siemens AG and Intel Corporation
 
 ## Copyright ##
 
 Copyright (C) 2020-2024 Linutronix GmbH
+
+Copyright (C) 2024 Intel Corporation
 
 ## License ##
 
