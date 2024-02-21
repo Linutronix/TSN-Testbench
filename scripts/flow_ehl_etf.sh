@@ -22,7 +22,7 @@ BASETIME=$3
 
 [ -z $INTERFACE ]    && INTERFACE="eno1"      # default: eno1
 [ -z $CYCLETIME_NS ] && CYCLETIME_NS="500000" # default: 500us
-[ -z $BASETIME ]     && BASETIME=`date '+%s000000000' -d '30 sec'` # default: now + 30s
+[ -z $BASETIME ]     && BASETIME=`date '+%s000000000' -d '60 sec'` # default: now + 60s
 
 # Load needed kernel modules
 modprobe sch_taprio || true
