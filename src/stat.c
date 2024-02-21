@@ -29,7 +29,7 @@ static FILE *FileTraceMarker;
 static const char *StatFrameTypeNames[NUM_FRAME_TYPES] = {"TsnHigh", "TsnLow",  "Rtc",    "Rta",      "Dcp",
                                                           "Lldp",    "UdpHigh", "UdpLow", "GenericL2"};
 
-inline const char *StatFrameTypeToString(enum StatFrameType frameType)
+const char *StatFrameTypeToString(enum StatFrameType frameType)
 {
     return StatFrameTypeNames[frameType];
 }
@@ -228,11 +228,11 @@ void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool 
             rtTime > (appConfig.DebugStopTraceRttLimitNS / 1000))
         {
             fprintf(FileTraceMarker,
-                    "Round-Trip Limit hit: %" PRIu64 " [us] -- Type: %d -- Cycle Counter: %" PRIu64 "\n", rtTime,
-                    frameType, cycleNumber);
+                    "Round-Trip Limit hit: %" PRIu64 " [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n", rtTime,
+                    StatFrameTypeToString(frameType), cycleNumber);
             fprintf(FileTracingOn, "0\n");
-            fprintf(stderr, "Round-Trip Limit hit: %" PRIu64 " [us] -- Type: %d -- Cycle Counter: %" PRIu64 "\n",
-                    rtTime, frameType, cycleNumber);
+            fprintf(stderr, "Round-Trip Limit hit: %" PRIu64 " [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
+                    rtTime, StatFrameTypeToString(frameType), cycleNumber);
             fclose(FileTracingOn);
             fclose(FileTraceMarker);
             exit(EXIT_SUCCESS);
