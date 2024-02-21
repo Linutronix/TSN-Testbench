@@ -233,7 +233,7 @@ static void *UdpRxThreadRoutine(void *data)
         meta = (struct ReferenceMetaData *)frame;
         rxSequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
 
-        outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+        outOfOrder = sequenceCounter != rxSequenceCounter;
         payloadMismatch = memcmp(frame + sizeof(struct ReferenceMetaData), expectedPattern, expectedPatternLength);
         frameIdMismatch = false;
 

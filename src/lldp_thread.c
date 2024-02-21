@@ -244,7 +244,7 @@ static void *LldpRxThreadRoutine(void *data)
         meta = (struct ReferenceMetaData *)(frame + sizeof(struct ethhdr));
         rxSequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
 
-        outOfOrder = sequenceCounter != threadContext->RxSequenceCounter;
+        outOfOrder = sequenceCounter != rxSequenceCounter;
         payloadMismatch =
             memcmp(frame + sizeof(struct ethhdr) + sizeof(rxSequenceCounter), expectedPattern, expectedPatternLength);
         frameIdMismatch = false;
