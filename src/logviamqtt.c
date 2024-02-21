@@ -140,7 +140,7 @@ static void LogViaMQTTAddTrafficClass(struct mosquitto *mosq, const char *MQTTBa
         fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(resultPub));
 }
 
-void onConnect(struct mosquitto *mosq, void *obj, int reason_code)
+static void LogViaMQTTOnConnect(struct mosquitto *mosq, void *obj, int reason_code)
 {
     if (reason_code != 0)
         mosquitto_disconnect(mosq);
@@ -173,7 +173,7 @@ static void *LogViaMQTTThreadRoutine(void *data)
         goto err_mqtt_connect;
     }
 
-    mosquitto_connect_callback_set(mqttContext->mosq, onConnect);
+    mosquitto_connect_callback_set(mqttContext->mosq, LogViaMQTTOnConnect);
 
     ret = mosquitto_loop_start(mqttContext->mosq);
     if (ret != MOSQ_ERR_SUCCESS)
