@@ -41,6 +41,11 @@ echo 1 > /sys/class/net/${INTERFACE}/threaded
 #
 ethtool --per-queue ${INTERFACE} queue_mask 0xff --coalesce tx-usecs 500 tx-frames 16
 
+#
+# Disable VLAN Rx offload.
+#
+ethtool -K ${INTERFACE} rx-vlan-offload off
+
 # #
 # # Calculate schedule according to Section 8.2.1 in Requirements document version
 # # 01.06.2021.

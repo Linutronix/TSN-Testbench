@@ -41,6 +41,11 @@ echo 1 > /sys/class/net/${INTERFACE}/threaded
 ethtool --per-queue ${INTERFACE} queue_mask 0xff --coalesce tx-usecs 500 tx-frames 16
 
 #
+# Disable VLAN Rx offload.
+#
+ethtool -K ${INTERFACE} rx-vlan-offload off
+
+#
 # Qbv configuration.
 #
 ENTRY1_NS=`echo "$CYCLETIME_NS * 12.5 / 100" | bc` # TSN High
