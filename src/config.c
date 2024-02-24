@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -94,6 +94,9 @@ int ConfigReadFromFile(const char *configFile)
 
                 continue;
             }
+
+            if (!key)
+                continue;
 
             /* Switch value */
             CONFIG_STORE_CLOCKID_PARAM(ApplicationClockId);
