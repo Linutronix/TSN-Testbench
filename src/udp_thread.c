@@ -326,9 +326,15 @@ static int UdpThreadsCreate(struct ThreadContext *threadContext, struct UdpThrea
     int ret;
 
     if (!strcmp(udpThreadConfig->UdpSuffix, "High") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(UdpHigh))
+    {
+        ret = 0;
         goto out;
+    }
     if (!strcmp(udpThreadConfig->UdpSuffix, "Low") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(UdpLow))
+    {
+        ret = 0;
         goto out;
+    }
 
     threadContext->PrivateData = udpThreadConfig;
     threadContext->SocketFd =
@@ -411,7 +417,6 @@ static int UdpThreadsCreate(struct ThreadContext *threadContext, struct UdpThrea
         }
     }
 
-out:
     ret = 0;
 
     return ret;
@@ -435,6 +440,8 @@ err_buffer:
 err_tx:
     close(threadContext->SocketFd);
 err:
+out:
+    free(udpThreadConfig);
     return ret;
 }
 
@@ -486,7 +493,6 @@ static void UdpThreadsWaitForFinish(struct ThreadContext *threadContext, bool ud
 int UdpLowThreadsCreate(struct ThreadContext *udpThreadContext)
 {
     struct UdpThreadConfiguration *udpConfig;
-    int ret;
 
     udpConfig = malloc(sizeof(*udpConfig));
     if (!udpConfig)
@@ -514,11 +520,7 @@ int UdpLowThreadsCreate(struct ThreadContext *udpThreadContext)
     udpConfig->UdpDestination = appConfig.UdpLowDestination;
     udpConfig->UdpSource = appConfig.UdpLowSource;
 
-    ret = UdpThreadsCreate(udpThreadContext, udpConfig);
-    if (ret)
-        free(udpConfig);
-
-    return ret;
+    return UdpThreadsCreate(udpThreadContext, udpConfig);
 }
 
 void UdpLowThreadsStop(struct ThreadContext *threadContext)
@@ -540,7 +542,6 @@ void UdpLowThreadsWaitForFinish(struct ThreadContext *threadContext)
 int UdpHighThreadsCreate(struct ThreadContext *udpThreadContext)
 {
     struct UdpThreadConfiguration *udpConfig;
-    int ret;
 
     udpConfig = malloc(sizeof(*udpConfig));
     if (!udpConfig)
@@ -568,11 +569,7 @@ int UdpHighThreadsCreate(struct ThreadContext *udpThreadContext)
     udpConfig->UdpDestination = appConfig.UdpHighDestination;
     udpConfig->UdpSource = appConfig.UdpHighSource;
 
-    ret = UdpThreadsCreate(udpThreadContext, udpConfig);
-    if (ret)
-        free(udpConfig);
-
-    return ret;
+    return UdpThreadsCreate(udpThreadContext, udpConfig);
 }
 
 void UdpHighThreadsFree(struct ThreadContext *threadContext)

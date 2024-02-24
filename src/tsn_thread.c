@@ -718,9 +718,15 @@ int TsnThreadsCreate(struct ThreadContext *threadContext, struct TsnThreadConfig
     int ret;
 
     if (!strcmp(tsnConfig->TsnSuffix, "High") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(TsnHigh))
+    {
+        ret = 0;
         goto out;
+    }
     if (!strcmp(tsnConfig->TsnSuffix, "Low") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(TsnLow))
+    {
+        ret = 0;
         goto out;
+    }
 
     threadContext->PrivateData = tsnConfig;
 
@@ -840,7 +846,6 @@ int TsnThreadsCreate(struct ThreadContext *threadContext, struct TsnThreadConfig
         }
     }
 
-out:
     ret = 0;
 
     return ret;
@@ -865,6 +870,8 @@ err_buffer:
 err_socket:
     free(threadContext->TxFrameData);
 err_tx:
+out:
+    free(tsnConfig);
     return ret;
 }
 
@@ -922,7 +929,6 @@ static void TsnThreadsWaitForFinish(struct ThreadContext *threadContext, int tsn
 int TsnLowThreadsCreate(struct ThreadContext *tsnThreadContext)
 {
     struct TsnThreadConfiguration *tsnConfig;
-    int ret;
 
     tsnConfig = malloc(sizeof(*tsnConfig));
     if (!tsnConfig)
@@ -967,11 +973,7 @@ int TsnLowThreadsCreate(struct ThreadContext *tsnThreadContext)
     tsnConfig->FrameIdRangeStart = 0x0200;
     tsnConfig->FrameIdRangeEnd = 0x03ff;
 
-    ret = TsnThreadsCreate(tsnThreadContext, tsnConfig);
-    if (ret)
-        free(tsnConfig);
-
-    return ret;
+    return TsnThreadsCreate(tsnThreadContext, tsnConfig);
 }
 
 void TsnLowThreadsStop(struct ThreadContext *threadContext)
@@ -992,7 +994,6 @@ void TsnLowThreadsWaitForFinish(struct ThreadContext *threadContext)
 int TsnHighThreadsCreate(struct ThreadContext *tsnThreadContext)
 {
     struct TsnThreadConfiguration *tsnConfig;
-    int ret;
 
     tsnConfig = malloc(sizeof(*tsnConfig));
     if (!tsnConfig)
@@ -1037,11 +1038,7 @@ int TsnHighThreadsCreate(struct ThreadContext *tsnThreadContext)
     tsnConfig->FrameIdRangeStart = 0x0100;
     tsnConfig->FrameIdRangeEnd = 0x01ff;
 
-    ret = TsnThreadsCreate(tsnThreadContext, tsnConfig);
-    if (ret)
-        free(tsnConfig);
-
-    return ret;
+    return TsnThreadsCreate(tsnThreadContext, tsnConfig);
 }
 
 void TsnHighThreadsFree(struct ThreadContext *threadContext)
