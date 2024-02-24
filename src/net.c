@@ -571,6 +571,7 @@ static int DnsLookup(const char *host, const char *port, struct sockaddr_storage
     if (!sa)
     {
         fprintf(stderr, "No DNS record for host %s at %s found!\n", host, port);
+        ret = -EINVAL;
         goto err_dns;
     }
 
