@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2022 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -559,6 +559,8 @@ static int DnsLookup(const char *host, const char *port, struct sockaddr_storage
 
         if (socketFd)
             *socketFd = sock;
+        else
+            close(sock);
 
         if (addr)
             memcpy(addr, sa->ai_addr, sa->ai_addrlen);
