@@ -544,7 +544,8 @@ static int DnsLookup(const char *host, const char *port, struct sockaddr_storage
     ret = getaddrinfo(host, port, &hints, &saHead);
     if (ret)
     {
-        perror("getaddrinfo() failed");
+        fprintf(stderr, "getaddrinfo() for host '%s' failed: %s!\n", host, gai_strerror(ret));
+        ret = -EINVAL;
         goto err_addrinfo;
     }
 
