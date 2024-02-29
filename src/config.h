@@ -33,6 +33,7 @@ struct ApplicationConfig
     char *ApplicationXdpProgram;
     size_t ApplicationXdpProgramLength;
     /* TSN High */
+    bool TsnHighEnabled;
     bool TsnHighRxMirrorEnabled;
     bool TsnHighXdpEnabled;
     bool TsnHighXdpSkbMode;
@@ -63,6 +64,7 @@ struct ApplicationConfig
     char TsnHighInterface[IF_NAMESIZE];
     unsigned char TsnHighDestination[ETH_ALEN];
     /* TSN Low */
+    bool TsnLowEnabled;
     bool TsnLowRxMirrorEnabled;
     bool TsnLowXdpEnabled;
     bool TsnLowXdpSkbMode;
@@ -93,6 +95,7 @@ struct ApplicationConfig
     char TsnLowInterface[IF_NAMESIZE];
     unsigned char TsnLowDestination[ETH_ALEN];
     /* Real Time Cyclic (RTC) */
+    bool RtcEnabled;
     bool RtcRxMirrorEnabled;
     bool RtcXdpEnabled;
     bool RtcXdpSkbMode;
@@ -121,6 +124,7 @@ struct ApplicationConfig
     char RtcInterface[IF_NAMESIZE];
     unsigned char RtcDestination[ETH_ALEN];
     /* Real Time Acyclic (RTA) */
+    bool RtaEnabled;
     bool RtaRxMirrorEnabled;
     bool RtaXdpEnabled;
     bool RtaXdpSkbMode;
@@ -150,6 +154,7 @@ struct ApplicationConfig
     char RtaInterface[IF_NAMESIZE];
     unsigned char RtaDestination[ETH_ALEN];
     /* Discovery and Configuration Protocol (DCP) */
+    bool DcpEnabled;
     bool DcpRxMirrorEnabled;
     bool DcpIgnoreRxErrors;
     int DcpVid;
@@ -168,6 +173,7 @@ struct ApplicationConfig
     char DcpInterface[IF_NAMESIZE];
     unsigned char DcpDestination[ETH_ALEN];
     /* Link Layer Discovery Protocol (LLDP) */
+    bool LldpEnabled;
     bool LldpRxMirrorEnabled;
     bool LldpIgnoreRxErrors;
     uint64_t LldpBurstPeriodNS;
@@ -185,6 +191,7 @@ struct ApplicationConfig
     char LldpInterface[IF_NAMESIZE];
     unsigned char LldpDestination[ETH_ALEN];
     /* User Datagram Protocol (UDP) High */
+    bool UdpHighEnabled;
     bool UdpHighRxMirrorEnabled;
     bool UdpHighIgnoreRxErrors;
     uint64_t UdpHighBurstPeriodNS;
@@ -207,6 +214,7 @@ struct ApplicationConfig
     char *UdpHighSource;
     size_t UdpHighSourceLength;
     /* User Datagram Protocol (UDP) Low */
+    bool UdpLowEnabled;
     bool UdpLowRxMirrorEnabled;
     bool UdpLowIgnoreRxErrors;
     uint64_t UdpLowBurstPeriodNS;
@@ -231,6 +239,7 @@ struct ApplicationConfig
     /* Generic Layer 2 (example: OPC/UA PubSub) */
     char *GenericL2Name;
     size_t GenericL2NameLength;
+    bool GenericL2Enabled;
     bool GenericL2RxMirrorEnabled;
     bool GenericL2XdpEnabled;
     bool GenericL2XdpSkbMode;
@@ -461,7 +470,7 @@ void ConfigFree(void);
 #define CONFIG_IS_TRAFFIC_CLASS_ACTIVE(name)                                                                           \
     ({                                                                                                                 \
         bool __ret = false;                                                                                            \
-        if (appConfig.name##NumFramesPerCycle)                                                                         \
+        if (appConfig.name##Enabled && appConfig.name##NumFramesPerCycle > 0)                                          \
             __ret = true;                                                                                              \
         __ret;                                                                                                         \
     })
