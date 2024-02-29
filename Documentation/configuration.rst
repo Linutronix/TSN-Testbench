@@ -30,6 +30,7 @@ Possible parameters include:
 - ApplicationTxBaseOffsetNS (Integer): Execution offset of Tx threads within Application cycle time
 - ApplicationRxBaseOffsetNS (Integer): Execution offset of Rx threads within Application cycle time
 - ApplicationXdpProgram (String): Application specific XDP program
+- <Class>Enabled (Boolean): Selects whether this traffic is active or not
 - <Class>XdpEnabled (Boolean): Use XDP instead of RAW sockets
 - <Class>XdpSkbMode (Boolean): Use XDP skb mode (for testing XDP code or driver implementation)
 - <Class>XdpZcMode (Boolean): Use XDP zero copy mode
