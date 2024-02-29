@@ -15,8 +15,6 @@ Application:
   ApplicationXdpProgram: xdp_kern_opcua_vid200.o
 GenericL2:
   GenericL2Name: OpcUa
-  GenericL2TxEnabled: True
-  GenericL2RxEnabled: True
   GenericL2XdpEnabled: True
   GenericL2XdpSkbMode: False
   GenericL2XdpZcMode: True

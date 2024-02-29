@@ -14,8 +14,6 @@ Application:
   ApplicationRxBaseOffsetNS: 600000
   ApplicationXdpProgram: xdp_kern_profinet_vid100.o
 TSNHigh:
-  TsnHighTxEnabled: True
-  TsnHighRxEnabled: True
   TsnHighXdpEnabled: True
   TsnHighXdpSkbMode: False
   TsnHighXdpZcMode: True
@@ -35,8 +33,6 @@ TSNHigh:
   TsnHighInterface: eno1
   TsnHighDestination: 00:13:95:48:97:ab
 TSNLow:
-  TsnLowTxEnabled: True
-  TsnLowRxEnabled: True
   TsnLowXdpEnabled: True
   TsnLowXdpSkbMode: False
   TsnLowXdpZcMode: True
@@ -56,8 +52,6 @@ TSNLow:
   TsnLowInterface: eno1
   TsnLowDestination: 00:13:95:48:97:ab
 RTC:
-  RtcTxEnabled: True
-  RtcRxEnabled: True
   RtcXdpEnabled: True
   RtcXdpSkbMode: False
   RtcXdpZcMode: True
@@ -77,9 +71,6 @@ RTC:
   RtcInterface: eno1
   RtcDestination: 00:13:95:48:97:ab
 RTA:
-  RtaTxEnabled: True
-  RtaRxEnabled: True
-  RtaTxGenEnabled: False
   RtaXdpEnabled: True
   RtaXdpSkbMode: False
   RtaXdpZcMode: True
@@ -100,9 +91,6 @@ RTA:
   RtaInterface: eno1
   RtaDestination: 00:13:95:48:97:ab
 DCP:
-  DcpTxEnabled: True
-  DcpRxEnabled: True
-  DcpTxGenEnabled: False
   DcpVid: 100
   DcpBurstPeriodNS: 2000000000
   DcpNumFramesPerCycle: 0
@@ -119,9 +107,6 @@ DCP:
   DcpInterface: eno1
   DcpDestination: 00:13:95:48:97:ab
 LLDP:
-  LldpTxEnabled: True
-  LldpRxEnabled: True
-  LldpTxGenEnabled: False
   LldpBurstPeriodNS: 5000000000
   LldpNumFramesPerCycle: 0
   LldpPayloadPattern: |
@@ -137,9 +122,6 @@ LLDP:
   LldpInterface: eno1
   LldpDestination: 01:80:c2:00:00:0e
 UDPHigh:
-  UdpHighTxEnabled: True
-  UdpHighRxEnabled: True
-  UdpHighTxGenEnabled: False
   UdpHighBurstPeriodNS: 1000000000
   UdpHighNumFramesPerCycle: 0
   UdpHighPayloadPattern: |
@@ -157,9 +139,6 @@ UDPHigh:
   UdpHighDestination: 192.168.0.1
   UdpHighSource: 192.168.0.2
 UDPLow:
-  UdpLowTxEnabled: True
-  UdpLowRxEnabled: True
-  UdpLowTxGenEnabled: False
   UdpLowBurstPeriodNS: 1000000000
   UdpLowNumFramesPerCycle: 0
   UdpLowPayloadPattern: |
