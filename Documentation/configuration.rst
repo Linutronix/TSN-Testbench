@@ -95,8 +95,8 @@ The possible traffic classes are:
 .. Note:: The ``XdpBusyPollMode`` option requires Linux kernel >= v6.5. Previous Linux kernel version do not support
           this feature with ``PREEMPT_RT`` enabled.
 
-.. Note:: The **security settings** are only valid for the PROFINET real time traffic classes. Furthermore, the
-          ``TSN-Testbench`` demonstrates only one exemplary implementation. The PROFINET security specification is still
+.. Note:: The **security settings** are only valid for the PROFINET real time traffic classes. Furthermore, the Linux
+          TSN ``Testbench`` demonstrates only one exemplary implementation. The PROFINET security specification is still
           under development. This implementation is to be used only for performance measurements. For instance, what
           impact does real time frame encryption and decryption has on quantity structures? Key updates and other
           mechanisms are not covered.

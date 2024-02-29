@@ -12,8 +12,8 @@ Quality Assurance
 License Checks
 --------------
 
-The license for the TSN Testbench is the permissive BSD-2-Clause. All files have
-a valid SPDX identifier (see https://spdx.dev/). The provided license
+The license for the Linux TSN ``Testbench`` is the permissive BSD-2-Clause. All
+files have a valid SPDX identifier (see https://spdx.dev/). The provided license
 information can be automatically checked for errors by using the ``spdxcheck``
 tool from the Linux kernel project. Example:
 
@@ -40,8 +40,8 @@ No errors should be printed.
 Coding Style Check
 ------------------
 
-The coding style for the TSN Testbench is the Microsoft style. The rules are
-described here:
+The coding style for the Linux TSN ``Testbench`` is the Microsoft style. The
+rules are described here:
 
 - https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-style-rule-options?view=vs-2022
 

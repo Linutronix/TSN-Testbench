@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: BSD-2-Clause
 ..
-.. Copyright (C) 2022 Linutronix GmbH
+.. Copyright (C) 2022-2024 Linutronix GmbH
 .. Author Kurt Kanzenbach <kurt@linutronix.de>
 ..
 .. Testbench documentation usage file.
@@ -45,8 +45,8 @@ Non-root User
 
 The ``reference`` and ``mirror`` programs are real time applications, which
 require to have permissions to use real time scheduling priorities, to create
-and use RAW and XDP sockets and to perform memory locking. In order to run
-the TSN-``Testbench`` as regular user instead of ``root`` the following Linux
+and use RAW and XDP sockets and to perform memory locking. In order to run the
+Linux TSN ``Testbench`` as regular user instead of ``root`` the following Linux
 capabilities have to be configured:
 
 - CAP_IPC_LOCK: Memory locking

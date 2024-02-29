@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'TSN-Testbench'
+project = 'Linux TSN Testbench'
 copyright = '2022-2024, Linutronix GmbH'
 author = 'Kurt Kanzenbach'
 

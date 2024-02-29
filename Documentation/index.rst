@@ -6,8 +6,8 @@
 .. Testbench documentation master file.
 ..
 
-Welcome to TSN-Testbench's documentation!
-=========================================
+Welcome to Linux TSN Testbench's documentation!
+===============================================
 
 .. toctree::
    :maxdepth: 2
