@@ -717,41 +717,30 @@ int RtcThreadsCreate(struct ThreadContext *threadContext)
         threadContext->RxSecurityContext = NULL;
     }
 
-    if (appConfig.RtcTxEnabled)
+    ret =
+        CreateRtThread(&threadContext->TxTaskId, "RtcTxThread", appConfig.RtcTxThreadPriority, appConfig.RtcTxThreadCpu,
+                       appConfig.RtcXdpEnabled ? RtcXdpTxThreadRoutine : RtcTxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->TxTaskId, "RtcTxThread", appConfig.RtcTxThreadPriority,
-                             appConfig.RtcTxThreadCpu,
-                             appConfig.RtcXdpEnabled ? RtcXdpTxThreadRoutine : RtcTxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Rtc Tx thread!\n");
-            goto err_thread_create1;
-        }
+        fprintf(stderr, "Failed to create Rtc Tx thread!\n");
+        goto err_thread_create1;
     }
 
-    if (appConfig.RtcRxEnabled)
+    ret =
+        CreateRtThread(&threadContext->RxTaskId, "RtcRxThread", appConfig.RtcRxThreadPriority, appConfig.RtcRxThreadCpu,
+                       appConfig.RtcXdpEnabled ? RtcXdpRxThreadRoutine : RtcRxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->RxTaskId, "RtcRxThread", appConfig.RtcRxThreadPriority,
-                             appConfig.RtcRxThreadCpu,
-                             appConfig.RtcXdpEnabled ? RtcXdpRxThreadRoutine : RtcRxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Rtc Rx thread!\n");
-            goto err_thread_create2;
-        }
+        fprintf(stderr, "Failed to create Rtc Rx thread!\n");
+        goto err_thread_create2;
     }
 
 out:
-    ret = 0;
-
-    return ret;
+    return 0;
 
 err_thread_create2:
-    if (appConfig.RtcTxEnabled)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxTaskId, NULL);
 err_thread_create1:
     SecurityExit(threadContext->RxSecurityContext);
 err_rx_sec:
@@ -794,13 +783,11 @@ void RtcThreadsStop(struct ThreadContext *threadContext)
         return;
 
     threadContext->Stop = 1;
-    if (appConfig.RtcRxEnabled)
-    {
-        pthread_kill(threadContext->RxTaskId, SIGTERM);
-        pthread_join(threadContext->RxTaskId, NULL);
-    }
-    if (appConfig.RtcTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
+
+    pthread_kill(threadContext->RxTaskId, SIGTERM);
+
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
 }
 
 void RtcThreadsWaitForFinish(struct ThreadContext *threadContext)
@@ -808,8 +795,6 @@ void RtcThreadsWaitForFinish(struct ThreadContext *threadContext)
     if (!threadContext)
         return;
 
-    if (appConfig.RtcRxEnabled)
-        pthread_join(threadContext->RxTaskId, NULL);
-    if (appConfig.RtcTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
 }

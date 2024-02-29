@@ -374,37 +374,28 @@ int LldpThreadsCreate(struct ThreadContext *threadContext)
         }
     }
 
-    if (appConfig.LldpTxEnabled)
+    ret = CreateRtThread(&threadContext->TxTaskId, "LldpTxThread", appConfig.LldpTxThreadPriority,
+                         appConfig.LldpTxThreadCpu, LldpTxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->TxTaskId, "LldpTxThread", appConfig.LldpTxThreadPriority,
-                             appConfig.LldpTxThreadCpu, LldpTxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
-            goto err_thread;
-        }
+        fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
+        goto err_thread;
     }
 
-    if (appConfig.LldpTxGenEnabled)
+    ret = CreateRtThread(&threadContext->TxGenTaskId, "LldpTxGenThread", appConfig.LldpTxThreadPriority,
+                         appConfig.LldpTxThreadCpu, LldpTxGenerationThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->TxGenTaskId, "LldpTxGenThread", appConfig.LldpTxThreadPriority,
-                             appConfig.LldpTxThreadCpu, LldpTxGenerationThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
-            goto err_thread_txgen;
-        }
+        fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
+        goto err_thread_txgen;
     }
 
-    if (appConfig.LldpRxEnabled)
+    ret = CreateRtThread(&threadContext->RxTaskId, "LldpRxThread", appConfig.LldpRxThreadPriority,
+                         appConfig.LldpRxThreadCpu, LldpRxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->RxTaskId, "LldpRxThread", appConfig.LldpRxThreadPriority,
-                             appConfig.LldpRxThreadCpu, LldpRxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Lldp Rx Thread!\n");
-            goto err_thread_rx;
-        }
+        fprintf(stderr, "Failed to create Lldp Rx Thread!\n");
+        goto err_thread_rx;
     }
 
 out:
@@ -413,17 +404,11 @@ out:
     return ret;
 
 err_thread_rx:
-    if (appConfig.LldpTxGenEnabled)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxGenTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxGenTaskId, NULL);
 err_thread_txgen:
-    if (appConfig.LldpTxEnabled)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxTaskId, NULL);
 err_thread:
     RingBufferFree(threadContext->MirrorBuffer);
 err_buffer:
@@ -451,15 +436,11 @@ void LldpThreadsStop(struct ThreadContext *threadContext)
         return;
 
     threadContext->Stop = 1;
-    if (appConfig.LldpRxEnabled)
-    {
-        pthread_kill(threadContext->RxTaskId, SIGTERM);
-        pthread_join(threadContext->RxTaskId, NULL);
-    }
-    if (appConfig.LldpTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (appConfig.LldpTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+    pthread_kill(threadContext->RxTaskId, SIGTERM);
+
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }
 
 void LldpThreadsWaitForFinish(struct ThreadContext *threadContext)
@@ -467,10 +448,7 @@ void LldpThreadsWaitForFinish(struct ThreadContext *threadContext)
     if (!threadContext)
         return;
 
-    if (appConfig.LldpRxEnabled)
-        pthread_join(threadContext->RxTaskId, NULL);
-    if (appConfig.LldpTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (appConfig.LldpTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }

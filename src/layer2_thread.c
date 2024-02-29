@@ -572,6 +572,7 @@ static void *GenericL2XdpRxThreadRoutine(void *data)
 struct ThreadContext *GenericL2ThreadsCreate(void)
 {
     struct ThreadContext *threadContext;
+    char threadName[128];
     int ret;
 
     threadContext = malloc(sizeof(*threadContext));
@@ -650,47 +651,34 @@ struct ThreadContext *GenericL2ThreadsCreate(void)
         }
     }
 
-    if (appConfig.GenericL2TxEnabled)
+    snprintf(threadName, sizeof(threadName), "%sTxThread", appConfig.GenericL2Name);
+
+    ret = CreateRtThread(
+        &threadContext->TxTaskId, threadName, appConfig.GenericL2TxThreadPriority, appConfig.GenericL2TxThreadCpu,
+        appConfig.GenericL2XdpEnabled ? GenericL2XdpTxThreadRoutine : GenericL2TxThreadRoutine, threadContext);
+    if (ret)
     {
-        char threadName[128];
-
-        snprintf(threadName, sizeof(threadName), "%sTxThread", appConfig.GenericL2Name);
-
-        ret = CreateRtThread(
-            &threadContext->TxTaskId, threadName, appConfig.GenericL2TxThreadPriority, appConfig.GenericL2TxThreadCpu,
-            appConfig.GenericL2XdpEnabled ? GenericL2XdpTxThreadRoutine : GenericL2TxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create GenericL2 Tx Thread!\n");
-            goto err_thread;
-        }
+        fprintf(stderr, "Failed to create GenericL2 Tx Thread!\n");
+        goto err_thread;
     }
 
-    if (appConfig.GenericL2RxEnabled)
+    snprintf(threadName, sizeof(threadName), "%sRxThread", appConfig.GenericL2Name);
+
+    ret = CreateRtThread(
+        &threadContext->RxTaskId, threadName, appConfig.GenericL2RxThreadPriority, appConfig.GenericL2RxThreadCpu,
+        appConfig.GenericL2XdpEnabled ? GenericL2XdpRxThreadRoutine : GenericL2RxThreadRoutine, threadContext);
+    if (ret)
     {
-        char threadName[128];
-
-        snprintf(threadName, sizeof(threadName), "%sRxThread", appConfig.GenericL2Name);
-
-        ret = CreateRtThread(
-            &threadContext->RxTaskId, threadName, appConfig.GenericL2RxThreadPriority, appConfig.GenericL2RxThreadCpu,
-            appConfig.GenericL2XdpEnabled ? GenericL2XdpRxThreadRoutine : GenericL2RxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create GenericL2 Rx Thread!\n");
-            goto err_thread_rx;
-        }
+        fprintf(stderr, "Failed to create GenericL2 Rx Thread!\n");
+        goto err_thread_rx;
     }
 
 out:
     return threadContext;
 
 err_thread_rx:
-    if (threadContext->TxTaskId)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxTaskId, NULL);
 err_thread:
     RingBufferFree(threadContext->MirrorBuffer);
 err_buffer:
@@ -732,13 +720,11 @@ void GenericL2ThreadsStop(struct ThreadContext *threadContext)
         return;
 
     threadContext->Stop = 1;
-    if (appConfig.GenericL2RxEnabled)
-    {
-        pthread_kill(threadContext->RxTaskId, SIGTERM);
-        pthread_join(threadContext->RxTaskId, NULL);
-    }
-    if (appConfig.GenericL2TxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
+
+    pthread_kill(threadContext->RxTaskId, SIGTERM);
+
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
 }
 
 void GenericL2ThreadsWaitForFinish(struct ThreadContext *threadContext)
@@ -746,8 +732,6 @@ void GenericL2ThreadsWaitForFinish(struct ThreadContext *threadContext)
     if (!threadContext)
         return;
 
-    if (appConfig.GenericL2RxEnabled)
-        pthread_join(threadContext->RxTaskId, NULL);
-    if (appConfig.GenericL2TxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
 }

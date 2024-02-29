@@ -726,58 +726,41 @@ int RtaThreadsCreate(struct ThreadContext *threadContext)
         threadContext->RxSecurityContext = NULL;
     }
 
-    if (appConfig.RtaTxEnabled)
+    ret =
+        CreateRtThread(&threadContext->TxTaskId, "RtaTxThread", appConfig.RtaTxThreadPriority, appConfig.RtaTxThreadCpu,
+                       appConfig.RtaXdpEnabled ? RtaXdpTxThreadRoutine : RtaTxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->TxTaskId, "RtaTxThread", appConfig.RtaTxThreadPriority,
-                             appConfig.RtaTxThreadCpu,
-                             appConfig.RtaXdpEnabled ? RtaXdpTxThreadRoutine : RtaTxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Rta Tx Thread!\n");
-            goto err_thread;
-        }
+        fprintf(stderr, "Failed to create Rta Tx Thread!\n");
+        goto err_thread;
     }
 
-    if (appConfig.RtaTxGenEnabled)
+    ret = CreateRtThread(&threadContext->TxGenTaskId, "RtaTxGenThread", appConfig.RtaTxThreadPriority,
+                         appConfig.RtaTxThreadCpu, RtaTxGenerationThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->TxGenTaskId, "RtaTxGenThread", appConfig.RtaTxThreadPriority,
-                             appConfig.RtaTxThreadCpu, RtaTxGenerationThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Rta Tx Thread!\n");
-            goto err_thread_txgen;
-        }
+        fprintf(stderr, "Failed to create Rta Tx Thread!\n");
+        goto err_thread_txgen;
     }
 
-    if (appConfig.RtaRxEnabled)
+    ret =
+        CreateRtThread(&threadContext->RxTaskId, "RtaRxThread", appConfig.RtaRxThreadPriority, appConfig.RtaRxThreadCpu,
+                       appConfig.RtaXdpEnabled ? RtaXdpRxThreadRoutine : RtaRxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->RxTaskId, "RtaRxThread", appConfig.RtaRxThreadPriority,
-                             appConfig.RtaRxThreadCpu,
-                             appConfig.RtaXdpEnabled ? RtaXdpRxThreadRoutine : RtaRxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Rta Rx Thread!\n");
-            goto err_thread_rx;
-        }
+        fprintf(stderr, "Failed to create Rta Rx Thread!\n");
+        goto err_thread_rx;
     }
 
 out:
-    ret = 0;
-
-    return ret;
+    return 0;
 
 err_thread_rx:
-    if (appConfig.RtaTxGenEnabled)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxGenTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxGenTaskId, NULL);
 err_thread_txgen:
-    if (appConfig.RtaTxEnabled)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxTaskId, NULL);
 err_thread:
     SecurityExit(threadContext->RxSecurityContext);
 err_rx_sec:
@@ -820,15 +803,12 @@ void RtaThreadsStop(struct ThreadContext *threadContext)
         return;
 
     threadContext->Stop = 1;
-    if (appConfig.RtaRxEnabled)
-    {
-        pthread_kill(threadContext->RxTaskId, SIGTERM);
-        pthread_join(threadContext->RxTaskId, NULL);
-    }
-    if (appConfig.RtaTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (appConfig.RtaTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+
+    pthread_kill(threadContext->RxTaskId, SIGTERM);
+
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }
 
 void RtaThreadsWaitForFinish(struct ThreadContext *threadContext)
@@ -836,10 +816,7 @@ void RtaThreadsWaitForFinish(struct ThreadContext *threadContext)
     if (!threadContext)
         return;
 
-    if (appConfig.RtaRxEnabled)
-        pthread_join(threadContext->RxTaskId, NULL);
-    if (appConfig.RtaTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (appConfig.RtaTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }

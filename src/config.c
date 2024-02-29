@@ -106,8 +106,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_ULONG_PARAM(ApplicationRxBaseOffsetNS);
             CONFIG_STORE_STRING_PARAM(ApplicationXdpProgram);
 
-            CONFIG_STORE_BOOL_PARAM(TsnHighTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(TsnHighRxEnabled);
             CONFIG_STORE_BOOL_PARAM(TsnHighXdpEnabled);
             CONFIG_STORE_BOOL_PARAM(TsnHighXdpSkbMode);
             CONFIG_STORE_BOOL_PARAM(TsnHighXdpZcMode);
@@ -134,8 +132,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_INTERFACE_PARAM(TsnHighInterface);
             CONFIG_STORE_MAC_PARAM(TsnHighDestination);
 
-            CONFIG_STORE_BOOL_PARAM(TsnLowTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(TsnLowRxEnabled);
             CONFIG_STORE_BOOL_PARAM(TsnLowXdpEnabled);
             CONFIG_STORE_BOOL_PARAM(TsnLowXdpSkbMode);
             CONFIG_STORE_BOOL_PARAM(TsnLowXdpZcMode);
@@ -162,8 +158,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_INTERFACE_PARAM(TsnLowInterface);
             CONFIG_STORE_MAC_PARAM(TsnLowDestination);
 
-            CONFIG_STORE_BOOL_PARAM(RtcTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(RtcRxEnabled);
             CONFIG_STORE_BOOL_PARAM(RtcXdpEnabled);
             CONFIG_STORE_BOOL_PARAM(RtcXdpSkbMode);
             CONFIG_STORE_BOOL_PARAM(RtcXdpZcMode);
@@ -188,9 +182,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_INTERFACE_PARAM(RtcInterface);
             CONFIG_STORE_MAC_PARAM(RtcDestination);
 
-            CONFIG_STORE_BOOL_PARAM(RtaTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(RtaRxEnabled);
-            CONFIG_STORE_BOOL_PARAM(RtaTxGenEnabled);
             CONFIG_STORE_BOOL_PARAM(RtaXdpEnabled);
             CONFIG_STORE_BOOL_PARAM(RtaXdpSkbMode);
             CONFIG_STORE_BOOL_PARAM(RtaXdpZcMode);
@@ -216,9 +207,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_INTERFACE_PARAM(RtaInterface);
             CONFIG_STORE_MAC_PARAM(RtaDestination);
 
-            CONFIG_STORE_BOOL_PARAM(DcpTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(DcpRxEnabled);
-            CONFIG_STORE_BOOL_PARAM(DcpTxGenEnabled);
             CONFIG_STORE_BOOL_PARAM(DcpIgnoreRxErrors);
             CONFIG_STORE_INT_PARAM(DcpVid);
             CONFIG_STORE_ULONG_PARAM(DcpBurstPeriodNS);
@@ -235,9 +223,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_INTERFACE_PARAM(DcpInterface);
             CONFIG_STORE_MAC_PARAM(DcpDestination);
 
-            CONFIG_STORE_BOOL_PARAM(LldpTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(LldpRxEnabled);
-            CONFIG_STORE_BOOL_PARAM(LldpTxGenEnabled);
             CONFIG_STORE_BOOL_PARAM(LldpIgnoreRxErrors);
             CONFIG_STORE_ULONG_PARAM(LldpBurstPeriodNS);
             CONFIG_STORE_ULONG_PARAM(LldpNumFramesPerCycle);
@@ -253,9 +238,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_INTERFACE_PARAM(LldpInterface);
             CONFIG_STORE_MAC_PARAM(LldpDestination);
 
-            CONFIG_STORE_BOOL_PARAM(UdpHighTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(UdpHighRxEnabled);
-            CONFIG_STORE_BOOL_PARAM(UdpHighTxGenEnabled);
             CONFIG_STORE_BOOL_PARAM(UdpHighIgnoreRxErrors);
             CONFIG_STORE_ULONG_PARAM(UdpHighBurstPeriodNS);
             CONFIG_STORE_ULONG_PARAM(UdpHighNumFramesPerCycle);
@@ -273,9 +255,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_STRING_PARAM(UdpHighDestination);
             CONFIG_STORE_STRING_PARAM(UdpHighSource);
 
-            CONFIG_STORE_BOOL_PARAM(UdpLowTxEnabled);
-            CONFIG_STORE_BOOL_PARAM(UdpLowRxEnabled);
-            CONFIG_STORE_BOOL_PARAM(UdpLowTxGenEnabled);
             CONFIG_STORE_BOOL_PARAM(UdpLowIgnoreRxErrors);
             CONFIG_STORE_ULONG_PARAM(UdpLowBurstPeriodNS);
             CONFIG_STORE_ULONG_PARAM(UdpLowNumFramesPerCycle);
@@ -294,8 +273,6 @@ int ConfigReadFromFile(const char *configFile)
             CONFIG_STORE_STRING_PARAM(UdpLowSource);
 
             CONFIG_STORE_STRING_PARAM(GenericL2Name);
-            CONFIG_STORE_BOOL_PARAM(GenericL2TxEnabled);
-            CONFIG_STORE_BOOL_PARAM(GenericL2RxEnabled);
             CONFIG_STORE_BOOL_PARAM(GenericL2XdpEnabled);
             CONFIG_STORE_BOOL_PARAM(GenericL2XdpSkbMode);
             CONFIG_STORE_BOOL_PARAM(GenericL2XdpZcMode);
@@ -377,8 +354,6 @@ void ConfigPrintValues(void)
     printf("ApplicationRxBaseOffsetNS=%" PRIu64 "\n", appConfig.ApplicationRxBaseOffsetNS);
     printf("ApplicationXdpProgram=%s\n", appConfig.ApplicationXdpProgram);
     printf("--------------------------------------------------------------------------------\n");
-    printf("TsnHighTxEnabled=%s\n", appConfig.TsnHighTxEnabled ? "True" : "False");
-    printf("TsnHighRxEnabled=%s\n", appConfig.TsnHighRxEnabled ? "True" : "False");
     printf("TsnHighRxMirrorEnabled=%s\n", appConfig.TsnHighRxMirrorEnabled ? "True" : "False");
     printf("TsnHighXdpEnabled=%s\n", appConfig.TsnHighXdpEnabled ? "True" : "False");
     printf("TsnHighXdpSkbMode=%s\n", appConfig.TsnHighXdpSkbMode ? "True" : "False");
@@ -410,8 +385,6 @@ void ConfigPrintValues(void)
     PrintMacAddress(appConfig.TsnHighDestination);
     printf("\n");
     printf("--------------------------------------------------------------------------------\n");
-    printf("TsnLowTxEnabled=%s\n", appConfig.TsnLowTxEnabled ? "True" : "False");
-    printf("TsnLowRxEnabled=%s\n", appConfig.TsnLowRxEnabled ? "True" : "False");
     printf("TsnLowRxMirrorEnabled=%s\n", appConfig.TsnLowRxMirrorEnabled ? "True" : "False");
     printf("TsnLowXdpEnabled=%s\n", appConfig.TsnLowXdpEnabled ? "True" : "False");
     printf("TsnLowXdpSkbMode=%s\n", appConfig.TsnLowXdpSkbMode ? "True" : "False");
@@ -443,8 +416,6 @@ void ConfigPrintValues(void)
     PrintMacAddress(appConfig.TsnLowDestination);
     printf("\n");
     printf("--------------------------------------------------------------------------------\n");
-    printf("RtcTxEnabled=%s\n", appConfig.RtcTxEnabled ? "True" : "False");
-    printf("RtcRxEnabled=%s\n", appConfig.RtcRxEnabled ? "True" : "False");
     printf("RtcRxMirrorEnabled=%s\n", appConfig.RtcRxMirrorEnabled ? "True" : "False");
     printf("RtcXdpEnabled=%s\n", appConfig.RtcXdpEnabled ? "True" : "False");
     printf("RtcXdpSkbMode=%s\n", appConfig.RtcXdpSkbMode ? "True" : "False");
@@ -474,9 +445,6 @@ void ConfigPrintValues(void)
     PrintMacAddress(appConfig.RtcDestination);
     printf("\n");
     printf("--------------------------------------------------------------------------------\n");
-    printf("RtaTxEnabled=%s\n", appConfig.RtaTxEnabled ? "True" : "False");
-    printf("RtaRxEnabled=%s\n", appConfig.RtaRxEnabled ? "True" : "False");
-    printf("RtaTxGenEnabled=%s\n", appConfig.RtaTxGenEnabled ? "True" : "False");
     printf("RtaRxMirrorEnabled=%s\n", appConfig.RtaRxMirrorEnabled ? "True" : "False");
     printf("RtaXdpEnabled=%s\n", appConfig.RtaXdpEnabled ? "True" : "False");
     printf("RtaXdpSkbMode=%s\n", appConfig.RtaXdpSkbMode ? "True" : "False");
@@ -507,9 +475,6 @@ void ConfigPrintValues(void)
     PrintMacAddress(appConfig.RtaDestination);
     printf("\n");
     printf("--------------------------------------------------------------------------------\n");
-    printf("DcpTxEnabled=%s\n", appConfig.DcpTxEnabled ? "True" : "False");
-    printf("DcpRxEnabled=%s\n", appConfig.DcpRxEnabled ? "True" : "False");
-    printf("DcpTxGenEnabled=%s\n", appConfig.DcpTxGenEnabled ? "True" : "False");
     printf("DcpRxMirrorEnabled=%s\n", appConfig.DcpRxMirrorEnabled ? "True" : "False");
     printf("DcpIgnoreRxErrors=%s\n", appConfig.DcpIgnoreRxErrors ? "True" : "False");
     printf("DcpVid=%d\n", appConfig.DcpVid);
@@ -531,9 +496,6 @@ void ConfigPrintValues(void)
     PrintMacAddress(appConfig.DcpDestination);
     printf("\n");
     printf("--------------------------------------------------------------------------------\n");
-    printf("LldpTxEnabled=%s\n", appConfig.LldpTxEnabled ? "True" : "False");
-    printf("LldpRxEnabled=%s\n", appConfig.LldpRxEnabled ? "True" : "False");
-    printf("LldpTxGenEnabled=%s\n", appConfig.LldpTxGenEnabled ? "True" : "False");
     printf("LldpRxMirrorEnabled=%s\n", appConfig.LldpRxMirrorEnabled ? "True" : "False");
     printf("LldpIgnoreRxErrors=%s\n", appConfig.DcpIgnoreRxErrors ? "True" : "False");
     printf("LldpBurstPeriodNS=%" PRIu64 "\n", appConfig.LldpBurstPeriodNS);
@@ -554,9 +516,6 @@ void ConfigPrintValues(void)
     PrintMacAddress(appConfig.LldpDestination);
     printf("\n");
     printf("--------------------------------------------------------------------------------\n");
-    printf("UdpHighTxEnabled=%s\n", appConfig.UdpHighTxEnabled ? "True" : "False");
-    printf("UdpHighRxEnabled=%s\n", appConfig.UdpHighRxEnabled ? "True" : "False");
-    printf("UdpHighTxGenEnabled=%s\n", appConfig.UdpHighTxGenEnabled ? "True" : "False");
     printf("UdpHighRxMirrorEnabled=%s\n", appConfig.UdpHighRxMirrorEnabled ? "True" : "False");
     printf("UdpHighIgnoreRxErrors=%s\n", appConfig.UdpHighIgnoreRxErrors ? "True" : "False");
     printf("UdpHighBurstPeriodNS=%" PRIu64 "\n", appConfig.UdpHighBurstPeriodNS);
@@ -577,9 +536,6 @@ void ConfigPrintValues(void)
     printf("UdpHighDestination=%s\n", appConfig.UdpHighDestination);
     printf("UdpHighSource=%s\n", appConfig.UdpHighSource);
     printf("--------------------------------------------------------------------------------\n");
-    printf("UdpLowTxEnabled=%s\n", appConfig.UdpLowTxEnabled ? "True" : "False");
-    printf("UdpLowRxEnabled=%s\n", appConfig.UdpLowRxEnabled ? "True" : "False");
-    printf("UdpLowTxGenEnabled=%s\n", appConfig.UdpLowTxGenEnabled ? "True" : "False");
     printf("UdpLowRxMirrorEnabled=%s\n", appConfig.UdpLowRxMirrorEnabled ? "True" : "False");
     printf("UdpLowIgnoreRxErrors=%s\n", appConfig.UdpLowIgnoreRxErrors ? "True" : "False");
     printf("UdpLowBurstPeriodNS=%" PRIu64 "\n", appConfig.UdpLowBurstPeriodNS);
@@ -601,8 +557,6 @@ void ConfigPrintValues(void)
     printf("UdpLowSource=%s\n", appConfig.UdpLowSource);
     printf("--------------------------------------------------------------------------------\n");
     printf("GenericL2Name=%s\n", appConfig.GenericL2Name);
-    printf("GenericL2TxEnabled=%s\n", appConfig.GenericL2TxEnabled ? "True" : "False");
-    printf("GenericL2RxEnabled=%s\n", appConfig.GenericL2RxEnabled ? "True" : "False");
     printf("GenericL2RxMirrorEnabled=%s\n", appConfig.GenericL2RxMirrorEnabled ? "True" : "False");
     printf("GenericL2XdpEnabled=%s\n", appConfig.GenericL2XdpEnabled ? "True" : "False");
     printf("GenericL2XdpSkbMode=%s\n", appConfig.GenericL2XdpSkbMode ? "True" : "False");
@@ -688,8 +642,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     appConfig.ApplicationXdpProgram = NULL;
 
     /* TSN High */
-    appConfig.TsnHighTxEnabled = false;
-    appConfig.TsnHighRxEnabled = false;
     appConfig.TsnHighRxMirrorEnabled = mirrorEnabled;
     appConfig.TsnHighXdpEnabled = false;
     appConfig.TsnHighXdpSkbMode = false;
@@ -721,8 +673,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     memcpy((void *)appConfig.TsnHighDestination, defaultDestination, ETH_ALEN);
 
     /* TSN Low */
-    appConfig.TsnLowTxEnabled = false;
-    appConfig.TsnLowRxEnabled = false;
     appConfig.TsnLowRxMirrorEnabled = mirrorEnabled;
     appConfig.TsnLowXdpEnabled = false;
     appConfig.TsnLowXdpSkbMode = false;
@@ -754,8 +704,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     memcpy((void *)appConfig.TsnLowDestination, defaultDestination, ETH_ALEN);
 
     /* Real Time Cyclic (RTC) */
-    appConfig.RtcTxEnabled = false;
-    appConfig.RtcRxEnabled = false;
     appConfig.RtcRxMirrorEnabled = mirrorEnabled;
     appConfig.RtcXdpEnabled = false;
     appConfig.RtcXdpSkbMode = false;
@@ -785,9 +733,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     memcpy((void *)appConfig.RtcDestination, defaultDestination, ETH_ALEN);
 
     /* Real Time Acyclic (RTA) */
-    appConfig.RtaTxEnabled = false;
-    appConfig.RtaRxEnabled = false;
-    appConfig.RtaTxGenEnabled = false;
     appConfig.RtaRxMirrorEnabled = mirrorEnabled;
     appConfig.RtaXdpEnabled = false;
     appConfig.RtaXdpSkbMode = false;
@@ -818,9 +763,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     memcpy((void *)appConfig.RtaDestination, defaultDestination, ETH_ALEN);
 
     /* Discovery and Configuration Protocol (DCP) */
-    appConfig.DcpTxEnabled = false;
-    appConfig.DcpRxEnabled = false;
-    appConfig.DcpTxGenEnabled = false;
     appConfig.DcpIgnoreRxErrors = false;
     appConfig.DcpRxMirrorEnabled = mirrorEnabled;
     appConfig.DcpVid = PROFINET_RT_VID_VALUE;
@@ -842,9 +784,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     memcpy((void *)appConfig.DcpDestination, defaultDcpIdentify, ETH_ALEN);
 
     /* Link Layer Discovery Protocol (LLDP) */
-    appConfig.LldpTxEnabled = false;
-    appConfig.LldpRxEnabled = false;
-    appConfig.LldpTxGenEnabled = false;
     appConfig.LldpIgnoreRxErrors = false;
     appConfig.LldpRxMirrorEnabled = mirrorEnabled;
     appConfig.LldpBurstPeriodNS = 5000000000;
@@ -865,9 +804,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     memcpy((void *)appConfig.LldpDestination, defaultLldpDestination, ETH_ALEN);
 
     /* User Datagram Protocol (UDP) High */
-    appConfig.UdpHighTxEnabled = false;
-    appConfig.UdpHighRxEnabled = false;
-    appConfig.UdpHighTxGenEnabled = false;
     appConfig.UdpHighIgnoreRxErrors = false;
     appConfig.UdpHighRxMirrorEnabled = mirrorEnabled;
     appConfig.UdpHighBurstPeriodNS = 1000000000;
@@ -896,9 +832,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
         goto out;
 
     /* User Datagram Protocol (UDP) Low */
-    appConfig.UdpLowTxEnabled = false;
-    appConfig.UdpLowRxEnabled = false;
-    appConfig.UdpLowTxGenEnabled = false;
     appConfig.UdpLowIgnoreRxErrors = false;
     appConfig.UdpLowRxMirrorEnabled = mirrorEnabled;
     appConfig.UdpLowBurstPeriodNS = 1000000000;
@@ -930,8 +863,6 @@ int ConfigSetDefaults(bool mirrorEnabled)
     appConfig.GenericL2Name = strdup("GenericL2");
     if (!appConfig.GenericL2Name)
         goto out;
-    appConfig.GenericL2TxEnabled = false;
-    appConfig.GenericL2RxEnabled = false;
     appConfig.GenericL2RxMirrorEnabled = mirrorEnabled;
     appConfig.GenericL2XdpEnabled = false;
     appConfig.GenericL2XdpSkbMode = false;

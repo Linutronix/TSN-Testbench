@@ -715,6 +715,7 @@ static void *TsnXdpRxThreadRoutine(void *data)
 
 int TsnThreadsCreate(struct ThreadContext *threadContext, struct TsnThreadConfiguration *tsnConfig)
 {
+    char threadName[128];
     int ret;
 
     if (!strcmp(tsnConfig->TsnSuffix, "High") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(TsnHigh))
@@ -814,48 +815,33 @@ int TsnThreadsCreate(struct ThreadContext *threadContext, struct TsnThreadConfig
         threadContext->RxSecurityContext = NULL;
     }
 
-    if (tsnConfig->TsnTxEnabled)
+    snprintf(threadName, sizeof(threadName), "Tsn%sTxThread", tsnConfig->TsnSuffix);
+
+    ret =
+        CreateRtThread(&threadContext->TxTaskId, threadName, tsnConfig->TsnTxThreadPriority, tsnConfig->TsnTxThreadCpu,
+                       tsnConfig->TsnXdpEnabled ? TsnXdpTxThreadRoutine : TsnTxThreadRoutine, threadContext);
+    if (ret)
     {
-        char threadName[128];
-
-        snprintf(threadName, sizeof(threadName), "Tsn%sTxThread", tsnConfig->TsnSuffix);
-
-        ret = CreateRtThread(&threadContext->TxTaskId, threadName, tsnConfig->TsnTxThreadPriority,
-                             tsnConfig->TsnTxThreadCpu,
-                             tsnConfig->TsnXdpEnabled ? TsnXdpTxThreadRoutine : TsnTxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Tsn Tx Thread!\n");
-            goto err_thread;
-        }
+        fprintf(stderr, "Failed to create Tsn Tx Thread!\n");
+        goto err_thread;
     }
 
-    if (tsnConfig->TsnRxEnabled)
+    snprintf(threadName, sizeof(threadName), "Tsn%sRxThread", tsnConfig->TsnSuffix);
+
+    ret =
+        CreateRtThread(&threadContext->RxTaskId, threadName, tsnConfig->TsnRxThreadPriority, tsnConfig->TsnRxThreadCpu,
+                       tsnConfig->TsnXdpEnabled ? TsnXdpRxThreadRoutine : TsnRxThreadRoutine, threadContext);
+    if (ret)
     {
-        char threadName[128];
-
-        snprintf(threadName, sizeof(threadName), "Tsn%sRxThread", tsnConfig->TsnSuffix);
-
-        ret = CreateRtThread(&threadContext->RxTaskId, threadName, tsnConfig->TsnRxThreadPriority,
-                             tsnConfig->TsnRxThreadCpu,
-                             tsnConfig->TsnXdpEnabled ? TsnXdpRxThreadRoutine : TsnRxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Tsn Rx Thread!\n");
-            goto err_thread_rx;
-        }
+        fprintf(stderr, "Failed to create Tsn Rx Thread!\n");
+        goto err_thread_rx;
     }
 
-    ret = 0;
-
-    return ret;
+    return 0;
 
 err_thread_rx:
-    if (threadContext->TxTaskId)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxTaskId, NULL);
 err_thread:
     SecurityExit(threadContext->RxSecurityContext);
 err_rx_sec:
@@ -900,30 +886,26 @@ static void TsnThreadsFree(struct ThreadContext *threadContext)
     free((void *)tsnConfig);
 }
 
-static void TsnThreadsStop(struct ThreadContext *threadContext, int tsnLowRxEnabled, int tsnLowTxEnabled)
+static void TsnThreadsStop(struct ThreadContext *threadContext)
 {
     if (!threadContext)
         return;
 
     threadContext->Stop = 1;
-    if (tsnLowRxEnabled)
-    {
-        pthread_kill(threadContext->RxTaskId, SIGTERM);
-        pthread_join(threadContext->RxTaskId, NULL);
-    }
-    if (tsnLowTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
+
+    pthread_kill(threadContext->RxTaskId, SIGTERM);
+
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
 }
 
-static void TsnThreadsWaitForFinish(struct ThreadContext *threadContext, int tsnLowRxEnabled, int tsnLowTxEnabled)
+static void TsnThreadsWaitForFinish(struct ThreadContext *threadContext)
 {
     if (!threadContext)
         return;
 
-    if (tsnLowRxEnabled)
-        pthread_join(threadContext->RxTaskId, NULL);
-    if (tsnLowTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
 }
 
 int TsnLowThreadsCreate(struct ThreadContext *tsnThreadContext)
@@ -937,8 +919,6 @@ int TsnLowThreadsCreate(struct ThreadContext *tsnThreadContext)
     memset(tsnConfig, '\0', sizeof(*tsnConfig));
     tsnConfig->FrameType = TSN_LOW_FRAME_TYPE;
     tsnConfig->TsnSuffix = "Low";
-    tsnConfig->TsnTxEnabled = appConfig.TsnLowTxEnabled;
-    tsnConfig->TsnRxEnabled = appConfig.TsnLowRxEnabled;
     tsnConfig->TsnRxMirrorEnabled = appConfig.TsnLowRxMirrorEnabled;
     tsnConfig->TsnXdpEnabled = appConfig.TsnLowXdpEnabled;
     tsnConfig->TsnXdpSkbMode = appConfig.TsnLowXdpSkbMode;
@@ -978,7 +958,7 @@ int TsnLowThreadsCreate(struct ThreadContext *tsnThreadContext)
 
 void TsnLowThreadsStop(struct ThreadContext *threadContext)
 {
-    TsnThreadsStop(threadContext, appConfig.TsnLowRxEnabled, appConfig.TsnLowTxEnabled);
+    TsnThreadsStop(threadContext);
 }
 
 void TsnLowThreadsFree(struct ThreadContext *threadContext)
@@ -988,7 +968,7 @@ void TsnLowThreadsFree(struct ThreadContext *threadContext)
 
 void TsnLowThreadsWaitForFinish(struct ThreadContext *threadContext)
 {
-    TsnThreadsWaitForFinish(threadContext, appConfig.TsnLowRxEnabled, appConfig.TsnLowTxEnabled);
+    TsnThreadsWaitForFinish(threadContext);
 }
 
 int TsnHighThreadsCreate(struct ThreadContext *tsnThreadContext)
@@ -1002,8 +982,6 @@ int TsnHighThreadsCreate(struct ThreadContext *tsnThreadContext)
     memset(tsnConfig, '\0', sizeof(*tsnConfig));
     tsnConfig->FrameType = TSN_HIGH_FRAME_TYPE;
     tsnConfig->TsnSuffix = "High";
-    tsnConfig->TsnTxEnabled = appConfig.TsnHighTxEnabled;
-    tsnConfig->TsnRxEnabled = appConfig.TsnHighRxEnabled;
     tsnConfig->TsnRxMirrorEnabled = appConfig.TsnHighRxMirrorEnabled;
     tsnConfig->TsnXdpEnabled = appConfig.TsnHighXdpEnabled;
     tsnConfig->TsnXdpSkbMode = appConfig.TsnHighXdpSkbMode;
@@ -1048,10 +1026,10 @@ void TsnHighThreadsFree(struct ThreadContext *threadContext)
 
 void TsnHighThreadsStop(struct ThreadContext *threadContext)
 {
-    TsnThreadsStop(threadContext, appConfig.TsnHighRxEnabled, appConfig.TsnHighTxEnabled);
+    TsnThreadsStop(threadContext);
 }
 
 void TsnHighThreadsWaitForFinish(struct ThreadContext *threadContext)
 {
-    TsnThreadsWaitForFinish(threadContext, appConfig.TsnHighRxEnabled, appConfig.TsnHighTxEnabled);
+    TsnThreadsWaitForFinish(threadContext);
 }

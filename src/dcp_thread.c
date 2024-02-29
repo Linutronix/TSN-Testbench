@@ -370,56 +370,39 @@ int DcpThreadsCreate(struct ThreadContext *threadContext)
         }
     }
 
-    if (appConfig.DcpTxEnabled)
+    ret = CreateRtThread(&threadContext->TxTaskId, "DcpTxThread", appConfig.DcpTxThreadPriority,
+                         appConfig.DcpTxThreadCpu, DcpTxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->TxTaskId, "DcpTxThread", appConfig.DcpTxThreadPriority,
-                             appConfig.DcpTxThreadCpu, DcpTxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Dcp Tx Thread!\n");
-            goto err_thread;
-        }
+        fprintf(stderr, "Failed to create Dcp Tx Thread!\n");
+        goto err_thread;
     }
 
-    if (appConfig.DcpTxGenEnabled)
+    ret = CreateRtThread(&threadContext->TxGenTaskId, "DcpTxGenThread", appConfig.DcpTxThreadPriority,
+                         appConfig.DcpTxThreadCpu, DcpTxGenerationThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->TxGenTaskId, "DcpTxGenThread", appConfig.DcpTxThreadPriority,
-                             appConfig.DcpTxThreadCpu, DcpTxGenerationThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Dcp Tx Thread!\n");
-            goto err_thread_txgen;
-        }
+        fprintf(stderr, "Failed to create Dcp Tx Thread!\n");
+        goto err_thread_txgen;
     }
 
-    if (appConfig.DcpRxEnabled)
+    ret = CreateRtThread(&threadContext->RxTaskId, "DcpRxThread", appConfig.DcpRxThreadPriority,
+                         appConfig.DcpRxThreadCpu, DcpRxThreadRoutine, threadContext);
+    if (ret)
     {
-        ret = CreateRtThread(&threadContext->RxTaskId, "DcpRxThread", appConfig.DcpRxThreadPriority,
-                             appConfig.DcpRxThreadCpu, DcpRxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Dcp Rx Thread!\n");
-            goto err_thread_rx;
-        }
+        fprintf(stderr, "Failed to create Dcp Rx Thread!\n");
+        goto err_thread_rx;
     }
 
 out:
-    ret = 0;
-
-    return ret;
+    return 0;
 
 err_thread_rx:
-    if (appConfig.DcpTxGenEnabled)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxGenTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxGenTaskId, NULL);
 err_thread_txgen:
-    if (appConfig.DcpTxEnabled)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxTaskId, NULL);
 err_thread:
     RingBufferFree(threadContext->MirrorBuffer);
 err_mac:
@@ -447,15 +430,12 @@ void DcpThreadsStop(struct ThreadContext *threadContext)
         return;
 
     threadContext->Stop = 1;
-    if (appConfig.DcpRxEnabled)
-    {
-        pthread_kill(threadContext->RxTaskId, SIGTERM);
-        pthread_join(threadContext->RxTaskId, NULL);
-    }
-    if (appConfig.DcpTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (appConfig.DcpTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+
+    pthread_kill(threadContext->RxTaskId, SIGTERM);
+
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }
 
 void DcpThreadsWaitForFinish(struct ThreadContext *threadContext)
@@ -463,10 +443,7 @@ void DcpThreadsWaitForFinish(struct ThreadContext *threadContext)
     if (!threadContext)
         return;
 
-    if (appConfig.DcpRxEnabled)
-        pthread_join(threadContext->RxTaskId, NULL);
-    if (appConfig.DcpTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (appConfig.DcpTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }

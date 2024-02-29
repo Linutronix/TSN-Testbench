@@ -23,9 +23,6 @@ struct UdpThreadConfiguration
     /* UDP configuration */
     enum StatFrameType FrameType;
     const char *UdpSuffix;
-    bool UdpTxEnabled;
-    bool UdpRxEnabled;
-    bool UdpTxGenEnabled;
     bool UdpRxMirrorEnabled;
     bool UdpIgnoreRxErrors;
     uint64_t UdpBurstPeriodNS;

@@ -323,6 +323,7 @@ static void *UdpTxGenerationThreadRoutine(void *data)
 
 static int UdpThreadsCreate(struct ThreadContext *threadContext, struct UdpThreadConfiguration *udpThreadConfig)
 {
+    char threadName[128];
     int ret;
 
     if (!strcmp(udpThreadConfig->UdpSuffix, "High") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(UdpHigh))
@@ -372,67 +373,44 @@ static int UdpThreadsCreate(struct ThreadContext *threadContext, struct UdpThrea
         }
     }
 
-    if (udpThreadConfig->UdpTxEnabled)
+    snprintf(threadName, sizeof(threadName), "Udp%sTxThread", udpThreadConfig->UdpSuffix);
+
+    ret = CreateRtThread(&threadContext->TxTaskId, threadName, udpThreadConfig->UdpTxThreadPriority,
+                         udpThreadConfig->UdpTxThreadCpu, UdpTxThreadRoutine, threadContext);
+    if (ret)
     {
-        char threadName[128];
-
-        snprintf(threadName, sizeof(threadName), "Udp%sTxThread", udpThreadConfig->UdpSuffix);
-
-        ret = CreateRtThread(&threadContext->TxTaskId, threadName, udpThreadConfig->UdpTxThreadPriority,
-                             udpThreadConfig->UdpTxThreadCpu, UdpTxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Udp Tx Thread!\n");
-            goto err_thread;
-        }
+        fprintf(stderr, "Failed to create Udp Tx Thread!\n");
+        goto err_thread;
     }
 
-    if (udpThreadConfig->UdpTxGenEnabled)
+    snprintf(threadName, sizeof(threadName), "Udp%sTxGenThread", udpThreadConfig->UdpSuffix);
+
+    ret = CreateRtThread(&threadContext->TxGenTaskId, "UdpLowTxGenThread", udpThreadConfig->UdpTxThreadPriority,
+                         udpThreadConfig->UdpTxThreadCpu, UdpTxGenerationThreadRoutine, threadContext);
+    if (ret)
     {
-        char threadName[128];
-
-        snprintf(threadName, sizeof(threadName), "Udp%sTxGenThread", udpThreadConfig->UdpSuffix);
-
-        ret = CreateRtThread(&threadContext->TxGenTaskId, "UdpLowTxGenThread", udpThreadConfig->UdpTxThreadPriority,
-                             udpThreadConfig->UdpTxThreadCpu, UdpTxGenerationThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Udp TxGen Thread!\n");
-            goto err_thread_txgen;
-        }
+        fprintf(stderr, "Failed to create Udp TxGen Thread!\n");
+        goto err_thread_txgen;
     }
 
-    if (udpThreadConfig->UdpRxEnabled)
+    snprintf(threadName, sizeof(threadName), "Udp%sRxThread", udpThreadConfig->UdpSuffix);
+
+    ret = CreateRtThread(&threadContext->RxTaskId, threadName, udpThreadConfig->UdpRxThreadPriority,
+                         udpThreadConfig->UdpRxThreadCpu, UdpRxThreadRoutine, threadContext);
+    if (ret)
     {
-        char threadName[128];
-
-        snprintf(threadName, sizeof(threadName), "Udp%sRxThread", udpThreadConfig->UdpSuffix);
-
-        ret = CreateRtThread(&threadContext->RxTaskId, threadName, udpThreadConfig->UdpRxThreadPriority,
-                             udpThreadConfig->UdpRxThreadCpu, UdpRxThreadRoutine, threadContext);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to create Udp Rx Thread!\n");
-            goto err_thread_rx;
-        }
+        fprintf(stderr, "Failed to create Udp Rx Thread!\n");
+        goto err_thread_rx;
     }
 
-    ret = 0;
-
-    return ret;
+    return 0;
 
 err_thread_rx:
-    if (threadContext->TxGenTaskId)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxGenTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxGenTaskId, NULL);
 err_thread_txgen:
-    if (threadContext->TxTaskId)
-    {
-        threadContext->Stop = 1;
-        pthread_join(threadContext->TxTaskId, NULL);
-    }
+    threadContext->Stop = 1;
+    pthread_join(threadContext->TxTaskId, NULL);
 err_thread:
     RingBufferFree(threadContext->MirrorBuffer);
 err_buffer:
@@ -458,36 +436,28 @@ static void UdpThreadsFree(struct ThreadContext *threadContext)
     free((void *)threadContext->PrivateData);
 }
 
-static void UdpThreadsStop(struct ThreadContext *threadContext, bool udpLowRxEnabled, bool udpLowTxEnabled,
-                           bool udpLowTxGenEnabled)
+static void UdpThreadsStop(struct ThreadContext *threadContext)
 {
     if (!threadContext)
         return;
 
     threadContext->Stop = 1;
-    if (udpLowRxEnabled)
-    {
-        pthread_kill(threadContext->RxTaskId, SIGTERM);
-        pthread_join(threadContext->RxTaskId, NULL);
-    }
-    if (udpLowTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (udpLowTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+
+    pthread_kill(threadContext->RxTaskId, SIGTERM);
+
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }
 
-static void UdpThreadsWaitForFinish(struct ThreadContext *threadContext, bool udpLowRxEnabled, bool udpLowTxEnabled,
-                                    bool udpLowTxGenEnabled)
+static void UdpThreadsWaitForFinish(struct ThreadContext *threadContext)
 {
     if (!threadContext)
         return;
 
-    if (udpLowRxEnabled)
-        pthread_join(threadContext->RxTaskId, NULL);
-    if (udpLowTxEnabled)
-        pthread_join(threadContext->TxTaskId, NULL);
-    if (udpLowTxGenEnabled)
-        pthread_join(threadContext->TxGenTaskId, NULL);
+    pthread_join(threadContext->RxTaskId, NULL);
+    pthread_join(threadContext->TxTaskId, NULL);
+    pthread_join(threadContext->TxGenTaskId, NULL);
 }
 
 int UdpLowThreadsCreate(struct ThreadContext *udpThreadContext)
@@ -501,9 +471,6 @@ int UdpLowThreadsCreate(struct ThreadContext *udpThreadContext)
     memset(udpConfig, '\0', sizeof(*udpConfig));
     udpConfig->FrameType = UDP_LOW_FRAME_TYPE;
     udpConfig->UdpSuffix = "Low";
-    udpConfig->UdpTxEnabled = appConfig.UdpLowTxEnabled;
-    udpConfig->UdpRxEnabled = appConfig.UdpLowRxEnabled;
-    udpConfig->UdpTxGenEnabled = appConfig.UdpLowTxGenEnabled;
     udpConfig->UdpRxMirrorEnabled = appConfig.UdpLowRxMirrorEnabled;
     udpConfig->UdpIgnoreRxErrors = appConfig.UdpLowIgnoreRxErrors;
     udpConfig->UdpBurstPeriodNS = appConfig.UdpLowBurstPeriodNS;
@@ -525,7 +492,7 @@ int UdpLowThreadsCreate(struct ThreadContext *udpThreadContext)
 
 void UdpLowThreadsStop(struct ThreadContext *threadContext)
 {
-    UdpThreadsStop(threadContext, appConfig.UdpLowRxEnabled, appConfig.UdpLowTxEnabled, appConfig.UdpLowTxGenEnabled);
+    UdpThreadsStop(threadContext);
 }
 
 void UdpLowThreadsFree(struct ThreadContext *threadContext)
@@ -535,8 +502,7 @@ void UdpLowThreadsFree(struct ThreadContext *threadContext)
 
 void UdpLowThreadsWaitForFinish(struct ThreadContext *threadContext)
 {
-    UdpThreadsWaitForFinish(threadContext, appConfig.UdpLowRxEnabled, appConfig.UdpLowTxEnabled,
-                            appConfig.UdpLowTxGenEnabled);
+    UdpThreadsWaitForFinish(threadContext);
 }
 
 int UdpHighThreadsCreate(struct ThreadContext *udpThreadContext)
@@ -550,9 +516,6 @@ int UdpHighThreadsCreate(struct ThreadContext *udpThreadContext)
     memset(udpConfig, '\0', sizeof(*udpConfig));
     udpConfig->FrameType = UDP_HIGH_FRAME_TYPE;
     udpConfig->UdpSuffix = "High";
-    udpConfig->UdpTxEnabled = appConfig.UdpHighTxEnabled;
-    udpConfig->UdpRxEnabled = appConfig.UdpHighRxEnabled;
-    udpConfig->UdpTxGenEnabled = appConfig.UdpHighTxGenEnabled;
     udpConfig->UdpRxMirrorEnabled = appConfig.UdpHighRxMirrorEnabled;
     udpConfig->UdpIgnoreRxErrors = appConfig.UdpHighIgnoreRxErrors;
     udpConfig->UdpBurstPeriodNS = appConfig.UdpHighBurstPeriodNS;
@@ -579,12 +542,10 @@ void UdpHighThreadsFree(struct ThreadContext *threadContext)
 
 void UdpHighThreadsStop(struct ThreadContext *threadContext)
 {
-    UdpThreadsStop(threadContext, appConfig.UdpHighRxEnabled, appConfig.UdpHighTxEnabled,
-                   appConfig.UdpHighTxGenEnabled);
+    UdpThreadsStop(threadContext);
 }
 
 void UdpHighThreadsWaitForFinish(struct ThreadContext *threadContext)
 {
-    UdpThreadsWaitForFinish(threadContext, appConfig.UdpHighRxEnabled, appConfig.UdpHighTxEnabled,
-                            appConfig.UdpHighTxGenEnabled);
+    UdpThreadsWaitForFinish(threadContext);
 }
