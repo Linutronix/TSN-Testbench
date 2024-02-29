@@ -13,49 +13,8 @@ Application:
   ApplicationTxBaseOffsetNS: 800000
   ApplicationRxBaseOffsetNS: 200000
   ApplicationXdpProgram: xdp_kern_profinet_vid100.o
-TSNHigh:
-  TsnHighXdpEnabled: True
-  TsnHighXdpSkbMode: False
-  TsnHighXdpZcMode: True
-  TsnHighXdpWakeupMode: True
-  TsnHighTxTimeEnabled: False
-  TsnHighTxTimeOffsetNS: 0
-  TsnHighVid: 100
-  TsnHighNumFramesPerCycle: 0
-  TsnHighPayloadPattern: |
-    TsnHighPayloadPattern
-  TsnHighFrameLength: 128
-  TsnHighRxQueue: 0
-  TsnHighTxQueue: 0
-  TsnHighSocketPriority: 7
-  TsnHighTxThreadPriority: 98
-  TsnHighRxThreadPriority: 98
-  TsnHighTxThreadCpu: 0
-  TsnHighRxThreadCpu: 0
-  TsnHighInterface: enp2s0
-  TsnHighDestination: 00:a0:c9:00:00:00
-TSNLow:
-  TsnLowXdpEnabled: True
-  TsnLowXdpSkbMode: False
-  TsnLowXdpZcMode: True
-  TsnLowXdpWakeupMode: True
-  TsnLowTxTimeEnabled: False
-  TsnLowTxTimeOffsetNS: 0
-  TsnLowVid: 100
-  TsnLowNumFramesPerCycle: 0
-  TsnLowPayloadPattern: |
-    TsnLowPayloadPattern
-  TsnLowFrameLength: 128
-  TsnLowRxQueue: 1
-  TsnLowTxQueue: 1
-  TsnLowSocketPriority: 6
-  TsnLowTxThreadPriority: 97
-  TsnLowRxThreadPriority: 97
-  TsnLowTxThreadCpu: 0
-  TsnLowRxThreadCpu: 0
-  TsnLowInterface: enp2s0
-  TsnLowDestination: 00:a0:c9:00:00:00
 RTC:
+  RtcEnabled: True
   RtcXdpEnabled: True
   RtcXdpSkbMode: False
   RtcXdpZcMode: True
@@ -75,6 +34,7 @@ RTC:
   RtcInterface: enp2s0
   RtcDestination: 00:a0:c9:00:00:00
 RTA:
+  RtaEnabled: True
   RtaXdpEnabled: True
   RtaXdpSkbMode: False
   RtaXdpZcMode: True
@@ -95,6 +55,7 @@ RTA:
   RtaInterface: enp2s0
   RtaDestination: 00:a0:c9:00:00:00
 DCP:
+  DcpEnabled: True
   DcpVid: 100
   DcpBurstPeriodNS: 2000000000
   DcpNumFramesPerCycle: 1
@@ -111,6 +72,7 @@ DCP:
   DcpInterface: enp2s0
   DcpDestination: 00:a0:c9:00:00:00
 LLDP:
+  LlldpEnabled: True
   LldpBurstPeriodNS: 5000000000
   LldpNumFramesPerCycle: 1
   LldpPayloadPattern: |
@@ -126,6 +88,7 @@ LLDP:
   LldpInterface: enp2s0
   LldpDestination: 01:80:c2:00:00:0e
 UDPHigh:
+  UdpHighEnabled: True
   UdpHighBurstPeriodNS: 1000000000
   UdpHighNumFramesPerCycle: 1
   UdpHighPayloadPattern: |
@@ -143,6 +106,7 @@ UDPHigh:
   UdpHighDestination: 192.168.1.1
   UdpHighSource: 192.168.1.2
 UDPLow:
+  UdpLowEnabled: True
   UdpLowBurstPeriodNS: 1000000000
   UdpLowNumFramesPerCycle: 1
   UdpLowPayloadPattern: |

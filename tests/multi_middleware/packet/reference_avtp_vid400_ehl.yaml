@@ -15,6 +15,7 @@ Application:
   ApplicationXdpProgram: xdp_kern_avtp_vid400.o
 GenericL2:
   GenericL2Name: Avtp
+  GenericL2Enabled: True
   GenericL2XdpEnabled: False
   GenericL2XdpSkbMode: False
   GenericL2XdpZcMode: True
