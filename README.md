@@ -108,3 +108,5 @@ Project home: https://github.com/Linutronix/TSN-Testbench
 Project documentation: https://linutronix.github.io/TSN-Testbench
 
 Contribution: Use Github Issues and Pull Requests
+
+This project is maintained by: [Linutronix](https://www.linutronix.de/)
