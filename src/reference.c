@@ -80,14 +80,20 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to set default config values!\n");
         exit(EXIT_FAILURE);
     }
-    if (configFile)
+
+    if (!configFile)
     {
-        ret = ConfigReadFromFile(configFile);
-        if (ret)
-        {
-            fprintf(stderr, "Failed to parse configuration file!\n");
-            exit(EXIT_FAILURE);
-        }
+        fprintf(
+            stderr,
+            "Specifying an configuration file is mandatory. See configurations/ or test/ directory for examples!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    ret = ConfigReadFromFile(configFile);
+    if (ret)
+    {
+        fprintf(stderr, "Failed to parse configuration file!\n");
+        exit(EXIT_FAILURE);
     }
 
     ConfigPrintValues();
