@@ -57,11 +57,15 @@ applications utilizing XDP.
 
 <img src="Documentation/images/ref_test_app_architecture_xdp.png" width="600" alt="Linux TSN Testbench XDP Architecture" />
 
-## Documentation ##
+## Resources ##
 
-The documentation includes information on how to build, use and run the Linux
-TSN ``Testbench``.  The documentation is available at
-https://linutronix.github.io/TSN-Testbench
+Project home: https://github.com/Linutronix/TSN-Testbench
+
+Project documentation: https://linutronix.github.io/TSN-Testbench
+
+Contribution: Use Github Issues and Pull Requests
+
+This project is maintained by: [Linutronix](https://www.linutronix.de/)
 
 ## Features ##
 
@@ -85,6 +89,12 @@ The following list contains ideas for further development:
 - Add a quick start guide
 - Make it more user friendly
 
+## Documentation ##
+
+The documentation includes information on how to build, use and run the Linux
+TSN ``Testbench``.  The documentation is available at
+https://linutronix.github.io/TSN-Testbench
+
 ## Credits ##
 
 Idea and initial funding by Phoenix Contact Electronics GmbH
@@ -100,13 +110,3 @@ Copyright (C) 2024 Intel Corporation
 ## License ##
 
 BSD-2 Clause and Dual BSD/GPL for all eBPF programs
-
-## Resources ##
-
-Project home: https://github.com/Linutronix/TSN-Testbench
-
-Project documentation: https://linutronix.github.io/TSN-Testbench
-
-Contribution: Use Github Issues and Pull Requests
-
-This project is maintained by: [Linutronix](https://www.linutronix.de/)
