@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configuration &mdash; TSN-Testbench v4.0 documentation</title>
+  <title>Configuration &mdash; Linux TSN Testbench v4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   
@@ -30,7 +30,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            TSN-Testbench
+            Linux TSN Testbench
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -72,7 +72,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">TSN-Testbench</a>
+          <a href="index.html">Linux TSN Testbench</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -108,8 +108,7 @@ default value now + 30s)</p></li>
 <li><p>ApplicationTxBaseOffsetNS (Integer): Execution offset of Tx threads within Application cycle time</p></li>
 <li><p>ApplicationRxBaseOffsetNS (Integer): Execution offset of Rx threads within Application cycle time</p></li>
 <li><p>ApplicationXdpProgram (String): Application specific XDP program</p></li>
-<li><p>&lt;Class&gt;TxEnabled (Boolean): Tx enabled</p></li>
-<li><p>&lt;Class&gt;RxEnabled (Boolean): Rx enabled</p></li>
+<li><p>&lt;Class&gt;Enabled (Boolean): Selects whether this traffic is active or not</p></li>
 <li><p>&lt;Class&gt;XdpEnabled (Boolean): Use XDP instead of RAW sockets</p></li>
 <li><p>&lt;Class&gt;XdpSkbMode (Boolean): Use XDP skb mode (for testing XDP code or driver implementation)</p></li>
 <li><p>&lt;Class&gt;XdpZcMode (Boolean): Use XDP zero copy mode</p></li>
@@ -181,8 +180,8 @@ this feature with <code class="docutils literal notranslate"><span class="pre">P
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The <strong>security settings</strong> are only valid for the PROFINET real time traffic classes. Furthermore, the
-<code class="docutils literal notranslate"><span class="pre">TSN-Testbench</span></code> demonstrates only one exemplary implementation. The PROFINET security specification is still
+<p>The <strong>security settings</strong> are only valid for the PROFINET real time traffic classes. Furthermore, the Linux
+TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> demonstrates only one exemplary implementation. The PROFINET security specification is still
 under development. This implementation is to be used only for performance measurements. For instance, what
 impact does real time frame encryption and decryption has on quantity structures? Key updates and other
 mechanisms are not covered.</p>

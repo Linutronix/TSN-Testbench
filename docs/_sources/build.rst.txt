@@ -40,9 +40,9 @@ For Debian based systems do:
 
 .. Note:: For Debian Bullseye ``libxdp`` is packaged in backports.
 
-Furthermore, the TSN Testbench requires Linux kernel version >= v5.12.
-PREEMPT_RT is recommended. In addition, the following configuration options
-have to be set:
+Furthermore, the Linux TSN ``Testbench`` requires Linux kernel version >= v5.12.
+PREEMPT_RT is recommended. In addition, the following configuration options have
+to be set:
 
 - CONFIG_PTP_1588_CLOCK
 - CONFIG_BPF

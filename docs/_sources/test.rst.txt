@@ -110,16 +110,16 @@ The following image shows how the expected round-trip time is calculated accordi
 
 .. image:: images/tsn_testbench_timing_1ms_en.png
   :width: 600
-  :alt: TSN-Testbench scheduling 1ms
+  :alt: Linux TSN Testbench scheduling 1ms
 
-Furthermore, the TSN-``Testbench`` can also be utilized to check the Ethernet
-behavior on the wire. Therefore, special hardware equipment such as a
+Furthermore, the Linux TSN ``Testbench`` can also be utilized to check the
+Ethernet behavior on the wire. Therefore, special hardware equipment such as a
 TSN-Monitor from Fraunhofer or a Profishark 1G+ network TAP is required. The
 image below shows a burst of real time traffic:
 
 .. image:: images/ipg_256x128bytes.png
   :width: 600
-  :alt: TSN-Testbench burst
+  :alt: Linux TSN Testbench burst
 
 Predefined Test Scenarios
 -------------------------
@@ -127,8 +127,8 @@ Predefined Test Scenarios
 Multi Middleware
 ^^^^^^^^^^^^^^^^
 
-The TSN Testbench is able to simulate different Middlewares such as OPC/UA
-PubSub or PROFINET. The multi middleware scenario is useful for analyzing
+The Linux TSN ``Testbench`` is able to simulate different Middlewares such as
+OPC/UA PubSub or PROFINET. The multi middleware scenario is useful for analyzing
 whether it is possible to execute multiple time aware applications at the same
 time using the same network interface on real time Linux.
 
@@ -454,8 +454,8 @@ Hardware: Intel CPU with Intel i225/i226
 Tested Hardware
 ---------------
 
-The TSN-``Testbench`` has been successfully tested on the following hardware
-platforms and TSN NIC(s).
+The Linux TSN ``Testbench`` has been successfully tested on the following
+hardware platforms and TSN NIC(s).
 
 Hardware platforms:
 
@@ -473,13 +473,13 @@ TSN NIC(s):
 Switches
 --------
 
-The TSN-``Testbench`` relies on precise time synchronization between all
+The Linux TSN ``Testbench`` relies on precise time synchronization between all
 involved nodes. Therefore, the PTP is leveraged. As a consequence it is
 recommended to use Ethernet switches which do support PTP based on 802.1AS.
 
 Furthermore, when using Ethernet switches, disable the LLDP traffic class by
-setting ``LldpNumFramesPerCycle`` to 0. The TSN-``Testbench`` simulates LLDP
-traffic with its own special crafted Ethernet frames, which are not valid LLDP
-messages in terms of the 802.1AB protocol.  As LLDP is link local traffic and
-interpreted by Ethernet switches, that will confuse the applications and the
+setting ``LldpNumFramesPerCycle`` to 0. The Linux TSN ``Testbench`` simulates
+LLDP traffic with its own special crafted Ethernet frames, which are not valid
+LLDP messages in terms of the 802.1AB protocol.  As LLDP is link local traffic
+and interpreted by Ethernet switches, that will confuse the applications and the
 switches. Still LLDP can be enabled in the whole network.

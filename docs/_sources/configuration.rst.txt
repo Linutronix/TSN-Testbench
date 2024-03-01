@@ -30,8 +30,7 @@ Possible parameters include:
 - ApplicationTxBaseOffsetNS (Integer): Execution offset of Tx threads within Application cycle time
 - ApplicationRxBaseOffsetNS (Integer): Execution offset of Rx threads within Application cycle time
 - ApplicationXdpProgram (String): Application specific XDP program
-- <Class>TxEnabled (Boolean): Tx enabled
-- <Class>RxEnabled (Boolean): Rx enabled
+- <Class>Enabled (Boolean): Selects whether this traffic is active or not
 - <Class>XdpEnabled (Boolean): Use XDP instead of RAW sockets
 - <Class>XdpSkbMode (Boolean): Use XDP skb mode (for testing XDP code or driver implementation)
 - <Class>XdpZcMode (Boolean): Use XDP zero copy mode
@@ -95,8 +94,8 @@ The possible traffic classes are:
 .. Note:: The ``XdpBusyPollMode`` option requires Linux kernel >= v6.5. Previous Linux kernel version do not support
           this feature with ``PREEMPT_RT`` enabled.
 
-.. Note:: The **security settings** are only valid for the PROFINET real time traffic classes. Furthermore, the
-          ``TSN-Testbench`` demonstrates only one exemplary implementation. The PROFINET security specification is still
+.. Note:: The **security settings** are only valid for the PROFINET real time traffic classes. Furthermore, the Linux
+          TSN ``Testbench`` demonstrates only one exemplary implementation. The PROFINET security specification is still
           under development. This implementation is to be used only for performance measurements. For instance, what
           impact does real time frame encryption and decryption has on quantity structures? Key updates and other
           mechanisms are not covered.
