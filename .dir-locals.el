@@ -1,10 +1,10 @@
 ;;
-;; Microsoft Coding Style.
+;; Linux Kernel Coding Style.
 ;;
-((nil . ((indent-tabs-mode . nil)
-         (fill-column . 120)
-         (tab-width . 4)))
+((nil . ((indent-tabs-mode . t)
+         (fill-column . 100)
+         (tab-width . 8))
  (c-mode . ((c-file-style . "linux")
-            (c-basic-offset . 4)))
+            (c-basic-offset . 8)))
  (c++-mode . ((c-file-style . "linux")
-              (c-basic-offset . 4))))
+              (c-basic-offset . 8))))
