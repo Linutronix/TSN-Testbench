@@ -260,15 +260,15 @@ err_thread:
 
 void LogViaMQTTThreadFree(struct LogViaMQTTThreadContext *threadContext)
 {
+    if (!threadContext)
+        return;
+
     if (appConfig.LogViaMQTT)
     {
         if (threadContext->mosq)
             mosquitto_destroy(threadContext->mosq);
         mosquitto_lib_cleanup();
     }
-
-    if (!threadContext)
-        return;
 
     free(threadContext);
 }
