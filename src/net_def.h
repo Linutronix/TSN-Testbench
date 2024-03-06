@@ -44,78 +44,78 @@
 /*
  * VLAN 802.1Q frame.
  */
-struct VLANEthernetHeader {
-	unsigned char Destination[ETH_ALEN];
-	unsigned char Source[ETH_ALEN];
-	__be16 VLANProto;
-	__be16 VLANTCI;
-	__be16 VLANEncapsulatedProto;
+struct vlan_ethernet_header {
+	unsigned char destination[ETH_ALEN];
+	unsigned char source[ETH_ALEN];
+	__be16 vlan_proto;
+	__be16 vlantci;
+	__be16 vlan_encapsulated_proto;
 } __attribute__((packed));
 
 /*
  * VLAN header.
  */
-struct VLANHeader {
-	__be16 VLANProto;
-	__be16 VLANTCI;
+struct vlan_header {
+	__be16 vlan_proto;
+	__be16 vlantci;
 } __attribute__((packed));
 
 /*
  * MetaData for testing, error checking and coordination.
  */
-struct ReferenceMetaData {
-	__be32 FrameCounter;
-	__be32 CycleCounter;
+struct reference_meta_data {
+	__be32 frame_counter;
+	__be32 cycle_counter;
 } __attribute__((packed));
 
 /*
  * PROFINET RT header.
  */
-struct ProfinetRtHeader {
-	__be16 FrameId;
-	struct ReferenceMetaData MetaData;
+struct profinet_rt_header {
+	__be16 frame_id;
+	struct reference_meta_data meta_data;
 } __attribute__((packed));
 
-struct SecurityMetaData {
+struct security_meta_data {
 	/*
 	 * Bit 0:   SecurityInformation.ProtectionMode
 	 * Bit 1-7: Reserved
 	 */
-	__u8 SecurityInformation;
+	__u8 security_information;
 	/*
 	 * Bit 0-3: NextContextID
 	 * Bit 4-7: CurrentContextID
 	 */
-	__u8 SecurityControl;
+	__u8 security_control;
 	/*
 	 * Bit 0-31: SequenceCounter
 	 */
-	__be32 SecuritySequenceCounter;
+	__be32 security_sequence_counter;
 	/*
 	 * Bit 0-10:  Length
 	 * Bit 11-15: Reserved
 	 */
-	__be16 SecurityLength;
+	__be16 security_length;
 } __attribute__((packed));
 
-struct SecurityChecksum {
-	__u8 Checksum[16];
+struct security_checksum {
+	__u8 checksum[16];
 } __attribute__((packed));
 
 /*
  * PROFINET Secure header.
  */
-struct ProfinetSecureHeader {
-	__be16 FrameId;
-	struct SecurityMetaData SecurityMetaData;
-	struct ReferenceMetaData MetaData;
+struct profinet_secure_header {
+	__be16 frame_id;
+	struct security_meta_data security_meta_data;
+	struct reference_meta_data meta_data;
 } __attribute__((packed));
 
 /*
  * Generic Layer 2 header.
  */
-struct GenericL2Header {
-	struct ReferenceMetaData MetaData;
+struct generic_l2_header {
+	struct reference_meta_data meta_data;
 } __attribute__((packed));
 
 #endif /* _NET_DEF_H_ */

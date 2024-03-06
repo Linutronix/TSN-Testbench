@@ -17,21 +17,21 @@
 #include "stat.h"
 #include "utils.h"
 
-struct Statistics GlobalStatistics[NUM_FRAME_TYPES];
-struct Statistics GlobalStatisticsPerPeriod[NUM_FRAME_TYPES];
-struct Statistics GlobalStatisticsPerPeriodPrep[NUM_FRAME_TYPES];
-struct RoundTripContext RoundTripContexts[NUM_FRAME_TYPES];
-static uint64_t RttExpectedRTLimit;
-static bool LogRtt;
-static FILE *FileTracingOn;
-static FILE *FileTraceMarker;
+struct statistics global_statistics[NUM_FRAME_TYPES];
+struct statistics global_statistics_per_period[NUM_FRAME_TYPES];
+struct statistics global_statistics_per_period_prep[NUM_FRAME_TYPES];
+struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
+static uint64_t rtt_expected_rt_limit;
+static bool log_rtt;
+static FILE *file_tracing_on;
+static FILE *file_trace_marker;
 
-static const char *StatFrameTypeNames[NUM_FRAME_TYPES] = {
+static const char *stat_frame_type_names[NUM_FRAME_TYPES] = {
 	"TsnHigh", "TsnLow", "Rtc", "Rta", "Dcp", "Lldp", "UdpHigh", "UdpLow", "GenericL2"};
 
-const char *StatFrameTypeToString(enum StatFrameType frameType)
+const char *stat_frame_type_to_string(enum stat_frame_type frame_type)
 {
-	return StatFrameTypeNames[frameType];
+	return stat_frame_type_names[frame_type];
 }
 
 /*
@@ -42,56 +42,56 @@ const char *StatFrameTypeToString(enum StatFrameType frameType)
  */
 #define STAT_MAX_BACKLOG 2048
 
-int StatInit(bool logRtt)
+int stat_init(bool local_log_rtt)
 {
-	bool allocationError = false;
+	bool allocation_error = false;
 
-	RoundTripContexts[TSN_HIGH_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.TsnHighNumFramesPerCycle;
-	RoundTripContexts[TSN_LOW_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.TsnLowNumFramesPerCycle;
-	RoundTripContexts[RTC_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.RtcNumFramesPerCycle;
-	RoundTripContexts[RTA_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.RtaNumFramesPerCycle;
-	RoundTripContexts[DCP_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.DcpNumFramesPerCycle;
-	RoundTripContexts[LLDP_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.LldpNumFramesPerCycle;
-	RoundTripContexts[UDP_HIGH_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.UdpHighNumFramesPerCycle;
-	RoundTripContexts[UDP_LOW_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.UdpLowNumFramesPerCycle;
-	RoundTripContexts[GENERICL2_FRAME_TYPE].BacklogLen =
-		STAT_MAX_BACKLOG * appConfig.GenericL2NumFramesPerCycle;
+	round_trip_contexts[TSN_HIGH_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.tsn_high_num_frames_per_cycle;
+	round_trip_contexts[TSN_LOW_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.tsn_low_num_frames_per_cycle;
+	round_trip_contexts[RTC_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.rtc_num_frames_per_cycle;
+	round_trip_contexts[RTA_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.rta_num_frames_per_cycle;
+	round_trip_contexts[DCP_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.dcp_num_frames_per_cycle;
+	round_trip_contexts[LLDP_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.lldp_num_frames_per_cycle;
+	round_trip_contexts[UDP_HIGH_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.udp_high_num_frames_per_cycle;
+	round_trip_contexts[UDP_LOW_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.udp_low_num_frames_per_cycle;
+	round_trip_contexts[GENERICL2_FRAME_TYPE].backlog_len =
+		STAT_MAX_BACKLOG * app_config.generic_l2_num_frames_per_cycle;
 
 	for (int i = 0; i < NUM_FRAME_TYPES; i++) {
-		struct RoundTripContext *currentContext = &RoundTripContexts[i];
+		struct round_trip_context *current_context = &round_trip_contexts[i];
 
-		currentContext->Backlog = calloc(currentContext->BacklogLen, sizeof(int64_t));
-		allocationError |= !currentContext->Backlog;
+		current_context->backlog = calloc(current_context->backlog_len, sizeof(int64_t));
+		allocation_error |= !current_context->backlog;
 	}
 
-	if (allocationError)
+	if (allocation_error)
 		return -ENOMEM;
 
 	for (int i = 0; i < NUM_FRAME_TYPES; i++) {
-		struct Statistics *currentStats = &GlobalStatistics[i];
+		struct statistics *current_stats = &global_statistics[i];
 
-		currentStats->RoundTripMin = UINT64_MAX;
-		currentStats->RoundTripMax = 0;
-		currentStats = &GlobalStatisticsPerPeriod[i];
-		currentStats->RoundTripMin = UINT64_MAX;
-		currentStats->RoundTripMax = 0;
+		current_stats->round_trip_min = UINT64_MAX;
+		current_stats->round_trip_max = 0;
+		current_stats = &global_statistics_per_period[i];
+		current_stats->round_trip_min = UINT64_MAX;
+		current_stats->round_trip_max = 0;
 	}
 
-	if (appConfig.DebugStopTraceOnRtt) {
-		FileTracingOn = fopen("/sys/kernel/debug/tracing/tracing_on", "w");
-		if (!FileTracingOn)
+	if (app_config.debug_stop_trace_on_rtt) {
+		file_tracing_on = fopen("/sys/kernel/debug/tracing/tracing_on", "w");
+		if (!file_tracing_on)
 			return -errno;
-		FileTraceMarker = fopen("/sys/kernel/debug/tracing/trace_marker", "w");
-		if (!FileTraceMarker) {
-			fclose(FileTracingOn);
+		file_trace_marker = fopen("/sys/kernel/debug/tracing/trace_marker", "w");
+		if (!file_trace_marker) {
+			fclose(file_tracing_on);
 			return -errno;
 		}
 	}
@@ -100,158 +100,158 @@ int StatInit(bool logRtt)
 	 * The expected round trip limit for RT traffic classes is below < 2 * cycle time. Stored in
 	 * us.
 	 */
-	RttExpectedRTLimit = appConfig.ApplicationBaseCycleTimeNS * 2;
-	RttExpectedRTLimit /= 1000;
+	rtt_expected_rt_limit = app_config.application_base_cycle_time_ns * 2;
+	rtt_expected_rt_limit /= 1000;
 
-	LogRtt = logRtt;
+	log_rtt = local_log_rtt;
 
 	return 0;
 }
 
-void StatFree(void)
+void stat_free(void)
 {
 
 	for (int i = 0; i < NUM_FRAME_TYPES; i++)
-		free(RoundTripContexts[i].Backlog);
+		free(round_trip_contexts[i].backlog);
 
-	if (appConfig.DebugStopTraceOnRtt) {
-		fclose(FileTracingOn);
-		fclose(FileTraceMarker);
+	if (app_config.debug_stop_trace_on_rtt) {
+		fclose(file_tracing_on);
+		fclose(file_trace_marker);
 	}
 }
 
-void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber)
+void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number)
 {
-	struct RoundTripContext *rtt = &RoundTripContexts[frameType];
-	struct Statistics *stat = &GlobalStatistics[frameType];
-	struct timespec txTime = {};
+	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
+	struct statistics *stat = &global_statistics[frame_type];
+	struct timespec tx_time = {};
 
-	LogMessage(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] sent\n",
-		   StatFrameTypeToString(frameType), cycleNumber);
+	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] sent\n",
+		   stat_frame_type_to_string(frame_type), cycle_number);
 
-	if (LogRtt) {
+	if (log_rtt) {
 		/* Record Tx timestamp in */
-		clock_gettime(appConfig.ApplicationClockId, &txTime);
-		rtt->Backlog[cycleNumber % rtt->BacklogLen] = TsToNs(&txTime);
+		clock_gettime(app_config.application_clock_id, &tx_time);
+		rtt->backlog[cycle_number % rtt->backlog_len] = ts_to_ns(&tx_time);
 	}
 
 	/* Increment stats */
-	stat->FramesSent++;
+	stat->frames_sent++;
 }
 
-static inline void StatUpdateMinMax(uint64_t newValue, uint64_t *min, uint64_t *max)
+static inline void stat_update_min_max(uint64_t new_value, uint64_t *min, uint64_t *max)
 {
-	*max = (newValue > *max) ? newValue : *max;
-	*min = (newValue < *min) ? newValue : *min;
+	*max = (new_value > *max) ? new_value : *max;
+	*min = (new_value < *min) ? new_value : *min;
 }
 
 #if defined(WITH_MQTT)
-static void StatsResetStats(struct Statistics *stats)
+static void stats_reset_stats(struct statistics *stats)
 {
-	memset(stats, 0, sizeof(struct Statistics));
-	stats->RoundTripMin = UINT64_MAX;
+	memset(stats, 0, sizeof(struct statistics));
+	stats->round_trip_min = UINT64_MAX;
 }
 
-static void StatFrameReceivedPerPeriod(enum StatFrameType frameType, uint64_t currTime,
-				       uint64_t rtTime, bool outOfOrder, bool payloadMismatch,
-				       bool frameIdMismatch)
+static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
+				       uint64_t rt_time, bool out_of_order, bool payload_mismatch,
+				       bool frame_id_mismatch)
 {
-	struct Statistics *statPerPeriodPre = &GlobalStatisticsPerPeriodPrep[frameType];
-	uint64_t elapsedT;
+	struct statistics *stat_per_period_pre = &global_statistics_per_period_prep[frame_type];
+	uint64_t elapsed_t;
 
-	if (statPerPeriodPre->FirstTimeStamp == 0)
-		statPerPeriodPre->FirstTimeStamp = currTime;
+	if (stat_per_period_pre->first_time_stamp == 0)
+		stat_per_period_pre->first_time_stamp = curr_time;
 
 	/*
 	 * Test if the amount of time specified in the config is arrived.  if true this will be the
 	 * last point to be taken into stats per period
 	 */
-	elapsedT = currTime - statPerPeriodPre->FirstTimeStamp;
-	if (elapsedT >= appConfig.StatsCollectionIntervalNS) {
-		statPerPeriodPre->ready = true;
-		statPerPeriodPre->LastTimeStamp = currTime;
+	elapsed_t = curr_time - stat_per_period_pre->first_time_stamp;
+	if (elapsed_t >= app_config.stats_collection_interval_ns) {
+		stat_per_period_pre->ready = true;
+		stat_per_period_pre->last_time_stamp = curr_time;
 	}
 
-	if (StatFrameTypeIsRealTime(frameType) && rtTime > RttExpectedRTLimit)
-		statPerPeriodPre->RoundTripOutliers++;
-	StatUpdateMinMax(rtTime, &statPerPeriodPre->RoundTripMin, &statPerPeriodPre->RoundTripMax);
+	if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
+		stat_per_period_pre->round_trip_outliers++;
+	stat_update_min_max(rt_time, &stat_per_period_pre->round_trip_min, &stat_per_period_pre->round_trip_max);
 
-	statPerPeriodPre->RoundTripCount++;
-	statPerPeriodPre->RoundTripSum += rtTime;
-	statPerPeriodPre->RoundTripAvg =
-		statPerPeriodPre->RoundTripSum / (double)statPerPeriodPre->RoundTripCount;
+	stat_per_period_pre->round_trip_count++;
+	stat_per_period_pre->round_trip_sum += rt_time;
+	stat_per_period_pre->round_trip_avg =
+		stat_per_period_pre->round_trip_sum / (double)stat_per_period_pre->round_trip_count;
 
-	statPerPeriodPre->FramesReceived++;
-	statPerPeriodPre->OutOfOrderErrors += outOfOrder;
-	statPerPeriodPre->PayloadErrors += payloadMismatch;
-	statPerPeriodPre->FrameIdErrors += frameIdMismatch;
+	stat_per_period_pre->frames_received++;
+	stat_per_period_pre->out_of_order_errors += out_of_order;
+	stat_per_period_pre->payload_errors += payload_mismatch;
+	stat_per_period_pre->frame_id_errors += frame_id_mismatch;
 
 	/*
 	 * Final bits can be used in the logger reseting copying actual values and reseting the
 	 * preparation
 	 */
-	if (statPerPeriodPre->ready) {
-		LogViaMQTTStats(frameType, &GlobalStatisticsPerPeriodPrep[frameType]);
-		StatsResetStats(&GlobalStatisticsPerPeriodPrep[frameType]);
+	if (stat_per_period_pre->ready) {
+		log_via_mqtt_stats(frame_type, &global_statistics_per_period_prep[frame_type]);
+		stats_reset_stats(&global_statistics_per_period_prep[frame_type]);
 	}
 }
 #else
-static void StatFrameReceivedPerPeriod(enum StatFrameType frameType, uint64_t currTime,
-				       uint64_t rtTime, bool outOfOrder, bool payloadMismatch,
-				       bool frameIdMismatch)
+static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
+				       uint64_t rt_time, bool out_of_order, bool payload_mismatch,
+				       bool frame_id_mismatch)
 {
 }
 #endif
 
-void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder,
-		       bool payloadMismatch, bool frameIdMismatch)
+void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number, bool out_of_order,
+		       bool payload_mismatch, bool frame_id_mismatch)
 {
-	struct RoundTripContext *rtt = &RoundTripContexts[frameType];
-	struct Statistics *stat = &GlobalStatistics[frameType];
-	struct timespec rxTime = {};
-	uint64_t rtTime, currTime;
+	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
+	struct statistics *stat = &global_statistics[frame_type];
+	struct timespec rx_time = {};
+	uint64_t rt_time, curr_time;
 
-	LogMessage(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] received\n",
-		   StatFrameTypeToString(frameType), cycleNumber);
+	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] received\n",
+		   stat_frame_type_to_string(frame_type), cycle_number);
 
 	/* Record Rx timestamp in us */
-	if (LogRtt) {
-		clock_gettime(appConfig.ApplicationClockId, &rxTime);
-		currTime = TsToNs(&rxTime);
-		rtTime = currTime - rtt->Backlog[cycleNumber % rtt->BacklogLen];
-		rtTime /= 1000;
+	if (log_rtt) {
+		clock_gettime(app_config.application_clock_id, &rx_time);
+		curr_time = ts_to_ns(&rx_time);
+		rt_time = curr_time - rtt->backlog[cycle_number % rtt->backlog_len];
+		rt_time /= 1000;
 
-		StatFrameReceivedPerPeriod(frameType, currTime, rtTime, outOfOrder, payloadMismatch,
-					   frameIdMismatch);
+		stat_frame_received_per_period(frame_type, curr_time, rt_time, out_of_order, payload_mismatch,
+					   frame_id_mismatch);
 
-		StatUpdateMinMax(rtTime, &stat->RoundTripMin, &stat->RoundTripMax);
-		if (StatFrameTypeIsRealTime(frameType) && rtTime > RttExpectedRTLimit)
-			stat->RoundTripOutliers++;
-		stat->RoundTripCount++;
-		stat->RoundTripSum += rtTime;
-		stat->RoundTripAvg = stat->RoundTripSum / (double)stat->RoundTripCount;
+		stat_update_min_max(rt_time, &stat->round_trip_min, &stat->round_trip_max);
+		if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
+			stat->round_trip_outliers++;
+		stat->round_trip_count++;
+		stat->round_trip_sum += rt_time;
+		stat->round_trip_avg = stat->round_trip_sum / (double)stat->round_trip_count;
 
 		/* Stop tracing after certain amount of time */
-		if (appConfig.DebugStopTraceOnRtt && StatFrameTypeIsRealTime(frameType) &&
-		    rtTime > (appConfig.DebugStopTraceRttLimitNS / 1000)) {
-			fprintf(FileTraceMarker,
+		if (app_config.debug_stop_trace_on_rtt && stat_frame_type_is_real_time(frame_type) &&
+		    rt_time > (app_config.debug_stop_trace_rtt_limit_ns / 1000)) {
+			fprintf(file_trace_marker,
 				"Round-Trip Limit hit: %" PRIu64
 				" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
-				rtTime, StatFrameTypeToString(frameType), cycleNumber);
-			fprintf(FileTracingOn, "0\n");
+				rt_time, stat_frame_type_to_string(frame_type), cycle_number);
+			fprintf(file_tracing_on, "0\n");
 			fprintf(stderr,
 				"Round-Trip Limit hit: %" PRIu64
 				" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
-				rtTime, StatFrameTypeToString(frameType), cycleNumber);
-			fclose(FileTracingOn);
-			fclose(FileTraceMarker);
+				rt_time, stat_frame_type_to_string(frame_type), cycle_number);
+			fclose(file_tracing_on);
+			fclose(file_trace_marker);
 			exit(EXIT_SUCCESS);
 		}
 	}
 
 	/* Increment stats */
-	stat->FramesReceived++;
-	stat->OutOfOrderErrors += outOfOrder;
-	stat->PayloadErrors += payloadMismatch;
-	stat->FrameIdErrors += frameIdMismatch;
+	stat->frames_received++;
+	stat->out_of_order_errors += out_of_order;
+	stat->payload_errors += payload_mismatch;
+	stat->frame_id_errors += frame_id_mismatch;
 }

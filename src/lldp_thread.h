@@ -13,9 +13,9 @@
 
 #define LLDP_TX_FRAME_LENGTH (4096)
 
-int LldpThreadsCreate(struct ThreadContext *threadContext);
-void LldpThreadsStop(struct ThreadContext *threadContext);
-void LldpThreadsFree(struct ThreadContext *threadContext);
-void LldpThreadsWaitForFinish(struct ThreadContext *threadContext);
+int lldp_threads_create(struct thread_context *thread_context);
+void lldp_threads_stop(struct thread_context *thread_context);
+void lldp_threads_free(struct thread_context *thread_context);
+void lldp_threads_wait_for_finish(struct thread_context *thread_context);
 
 #endif /* _LLDP_THREAD_H_ */

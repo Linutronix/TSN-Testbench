@@ -17,47 +17,47 @@
 
 #include <linux/if_ether.h>
 
-struct RingBuffer;
-struct XdpSocket;
-struct SecurityContext;
+struct ring_buffer;
+struct xdp_socket;
+struct security_context;
 
-struct ThreadContext {
+struct thread_context {
 	/* Task related */
-	pthread_t RxTaskId;         /* Receiver Thread */
-	uint64_t RxSequenceCounter; /* Rx cycle counter */
-	pthread_t TxTaskId;         /* Sender Thread */
-	pthread_t TxGenTaskId;      /* Sender generation thread */
-	volatile int Stop;          /* Done? */
+	pthread_t rx_task_id;         /* Receiver Thread */
+	uint64_t rx_sequence_counter; /* Rx cycle counter */
+	pthread_t tx_task_id;         /* Sender Thread */
+	pthread_t tx_gen_task_id;      /* Sender generation thread */
+	volatile int stop;          /* Done? */
 
 	/* RAW socket related */
-	int SocketFd;                        /* Shared RAW socket */
-	unsigned char *TxFrameData;          /* Tx frame data */
-	unsigned char *RxFrameData;          /* Rx frame data */
-	unsigned char Source[ETH_ALEN];      /* Source MAC Address */
-	struct sockaddr_storage Destination; /* Where to send L3 frames to */
-	struct RingBuffer *MirrorBuffer;     /* Rx frames to be mirrored */
+	int socket_fd;                        /* Shared RAW socket */
+	unsigned char *tx_frame_data;          /* Tx frame data */
+	unsigned char *rx_frame_data;          /* Rx frame data */
+	unsigned char source[ETH_ALEN];      /* Source MAC Address */
+	struct sockaddr_storage destination; /* Where to send L3 frames to */
+	struct ring_buffer *mirror_buffer;     /* Rx frames to be mirrored */
 
 	/* XDP socket related */
-	struct XdpSocket *Xsk;        /* XDP socket reference */
-	unsigned int ReceivedFrames;  /* Amount of frames received within cycle */
-	pthread_mutex_t XdpDataMutex; /* Protect concurrent access to Xsk */
+	struct xdp_socket *xsk;        /* XDP socket reference */
+	unsigned int received_frames;  /* Amount of frames received within cycle */
+	pthread_mutex_t xdp_data_mutex; /* Protect concurrent access to Xsk */
 
 	/* Data flow related */
-	struct ThreadContext *Next; /* Pointer to next traffic class */
-	pthread_mutex_t DataMutex;  /* Mutex to protect frame data */
-	pthread_cond_t DataCondVar; /* Cond var to signal Tx thread */
-	size_t NumFramesAvailable;  /* How many frames are ready to be sent? */
-	bool IsFirst;               /* Is this the first active traffic class? */
+	struct thread_context *next; /* Pointer to next traffic class */
+	pthread_mutex_t data_mutex;  /* Mutex to protect frame data */
+	pthread_cond_t data_cond_var; /* Cond var to signal Tx thread */
+	size_t num_frames_available;  /* How many frames are ready to be sent? */
+	bool is_first;               /* Is this the first active traffic class? */
 
 	/* Security related */
-	struct SecurityContext *TxSecurityContext; /* Tx context for Auth and Crypt */
-	struct SecurityContext *RxSecurityContext; /* Rx context for Auth and Crypt */
+	struct security_context *tx_security_context; /* Tx context for Auth and Crypt */
+	struct security_context *rx_security_context; /* Rx context for Auth and Crypt */
 
 	/* Thread private data */
-	void *PrivateData; /* Pointer to private data e.g, a structure */
+	void *private_data; /* Pointer to private data e.g, a structure */
 };
 
-enum PNThreadType {
+enum pn_thread_type {
 	TSN_HIGH_THREAD = 0,
 	TSN_LOW_THREAD,
 	RTC_THREAD,
@@ -69,10 +69,10 @@ enum PNThreadType {
 	NUM_PN_THREAD_TYPES,
 };
 
-int CreateRtThread(pthread_t *taskId, const char *threadName, int priority, int cpuCore,
-		   void *(*threadRoutine)(void *), void *data);
-void InitMutex(pthread_mutex_t *mutex);
-void InitConditionVariable(pthread_cond_t *condVar);
-int LinkPNThreads(struct ThreadContext *pnThreads);
+int create_rt_thread(pthread_t *task_id, const char *thread_name, int priority, int cpu_core,
+		   void *(*thread_routine)(void *), void *data);
+void init_mutex(pthread_mutex_t *mutex);
+void init_condition_variable(pthread_cond_t *cond_var);
+int link_pn_threads(struct thread_context *pn_threads);
 
 #endif /* _THREAD_H_ */

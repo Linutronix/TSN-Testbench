@@ -15,9 +15,9 @@
 
 #define RTA_TX_FRAME_LENGTH XDP_FRAME_SIZE
 
-int RtaThreadsCreate(struct ThreadContext *threadContext);
-void RtaThreadsStop(struct ThreadContext *threadContext);
-void RtaThreadsFree(struct ThreadContext *threadContext);
-void RtaThreadsWaitForFinish(struct ThreadContext *threadContext);
+int rta_threads_create(struct thread_context *thread_context);
+void rta_threads_stop(struct thread_context *thread_context);
+void rta_threads_free(struct thread_context *thread_context);
+void rta_threads_wait_for_finish(struct thread_context *thread_context);
 
 #endif /* _RTA_THREAD_H_ */

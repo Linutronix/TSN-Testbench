@@ -11,7 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum StatFrameType {
+enum stat_frame_type {
 	TSN_HIGH_FRAME_TYPE = 0,
 	TSN_LOW_FRAME_TYPE,
 	RTC_FRAME_TYPE,
@@ -24,9 +24,9 @@ enum StatFrameType {
 	NUM_FRAME_TYPES,
 };
 
-static inline bool StatFrameTypeIsRealTime(enum StatFrameType frameType)
+static inline bool stat_frame_type_is_real_time(enum stat_frame_type frame_type)
 {
-	switch (frameType) {
+	switch (frame_type) {
 	case TSN_HIGH_FRAME_TYPE:
 	case TSN_LOW_FRAME_TYPE:
 	case RTC_FRAME_TYPE:
@@ -37,37 +37,37 @@ static inline bool StatFrameTypeIsRealTime(enum StatFrameType frameType)
 	}
 }
 
-struct Statistics {
-	uint64_t FirstTimeStamp;
-	uint64_t LastTimeStamp;
-	uint64_t FramesSent;
-	uint64_t FramesReceived;
-	uint64_t OutOfOrderErrors;
-	uint64_t FrameIdErrors;
-	uint64_t PayloadErrors;
-	uint64_t RoundTripMin;
-	uint64_t RoundTripMax;
-	uint64_t RoundTripCount;
-	uint64_t RoundTripOutliers;
-	double RoundTripSum;
-	double RoundTripAvg;
+struct statistics {
+	uint64_t first_time_stamp;
+	uint64_t last_time_stamp;
+	uint64_t frames_sent;
+	uint64_t frames_received;
+	uint64_t out_of_order_errors;
+	uint64_t frame_id_errors;
+	uint64_t payload_errors;
+	uint64_t round_trip_min;
+	uint64_t round_trip_max;
+	uint64_t round_trip_count;
+	uint64_t round_trip_outliers;
+	double round_trip_sum;
+	double round_trip_avg;
 	bool ready;
 };
 
-extern struct Statistics GlobalStatistics[NUM_FRAME_TYPES];
-extern struct Statistics GlobalStatisticsPerPeriod[NUM_FRAME_TYPES];
+extern struct statistics global_statistics[NUM_FRAME_TYPES];
+extern struct statistics global_statistics_per_period[NUM_FRAME_TYPES];
 
-struct RoundTripContext {
-	int64_t *Backlog;
-	size_t BacklogLen;
+struct round_trip_context {
+	int64_t *backlog;
+	size_t backlog_len;
 };
-extern struct RoundTripContext RoundTripContexts[NUM_FRAME_TYPES];
+extern struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
 
-int StatInit(bool logRtt);
-void StatFree(void);
-const char *StatFrameTypeToString(enum StatFrameType frameType);
-void StatFrameSent(enum StatFrameType frameType, uint64_t cycleNumber);
-void StatFrameReceived(enum StatFrameType frameType, uint64_t cycleNumber, bool outOfOrder,
-		       bool payloadMismatch, bool frameIdMismatch);
+int stat_init(bool log_rtt);
+void stat_free(void);
+const char *stat_frame_type_to_string(enum stat_frame_type frame_type);
+void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number);
+void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number, bool out_of_order,
+		       bool payload_mismatch, bool frame_id_mismatch);
 
 #endif /* _STAT_H_ */

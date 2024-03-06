@@ -16,29 +16,29 @@
 /* 4 MiB / core */
 #define LOG_BUFFER_SIZE (32 * 1024 * 1024)
 
-enum LogLevel {
+enum log_level {
 	LOG_LEVEL_ERROR = 1,
 	LOG_LEVEL_WARNING,
 	LOG_LEVEL_INFO,
 	LOG_LEVEL_DEBUG
 };
 
-struct LogThreadContext {
-	pthread_t LogTaskId;
-	struct RingBuffer *LogRingBuffer;
-	unsigned char *LogData;
-	volatile int Stop;
-	FILE *FileHandle;
+struct log_thread_context {
+	pthread_t log_task_id;
+	struct ring_buffer *log_ring_buffer;
+	unsigned char *log_data;
+	volatile int stop;
+	FILE *file_handle;
 };
 
-struct LogThreadContext *LogThreadCreate();
-void LogThreadStop(struct LogThreadContext *threadContext);
-void LogThreadFree(struct LogThreadContext *threadContext);
-void LogThreadWaitForFinish(struct LogThreadContext *threadContext);
+struct log_thread_context *log_thread_create();
+void log_thread_stop(struct log_thread_context *thread_context);
+void log_thread_free(struct log_thread_context *thread_context);
+void log_thread_wait_for_finish(struct log_thread_context *thread_context);
 
-int LogInit(void);
-void LogMessage(enum LogLevel level, const char *format, ...)
+int log_init(void);
+void log_message(enum log_level level, const char *format, ...)
 	__attribute__((__format__(printf, 2, 3)));
-void LogFree(void);
+void log_free(void);
 
 #endif /* _LOG_H_ */

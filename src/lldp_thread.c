@@ -25,9 +25,9 @@
 #include "thread.h"
 #include "utils.h"
 
-static void LldpBuildFrameFromRx(unsigned char *frameData, const unsigned char *source)
+static void lldp_build_frame_from_rx(unsigned char *frame_data, const unsigned char *source)
 {
-	struct ethhdr *eth = (struct ethhdr *)frameData;
+	struct ethhdr *eth = (struct ethhdr *)frame_data;
 
 	/*
 	 * One task: Swap source.
@@ -36,11 +36,11 @@ static void LldpBuildFrameFromRx(unsigned char *frameData, const unsigned char *
 	memcpy(eth->h_source, source, ETH_ALEN);
 }
 
-static void LldpInitializeFrame(unsigned char *frameData, const unsigned char *source,
+static void lldp_initialize_frame(unsigned char *frame_data, const unsigned char *source,
 				const unsigned char *destination)
 {
-	struct ReferenceMetaData *meta;
-	size_t payloadOffset;
+	struct reference_meta_data *meta;
+	size_t payload_offset;
 	struct ethhdr *eth;
 
 	/*
@@ -53,7 +53,7 @@ static void LldpInitializeFrame(unsigned char *frameData, const unsigned char *s
 	 *   Padding to maxFrame
 	 */
 
-	eth = (struct ethhdr *)frameData;
+	eth = (struct ethhdr *)frame_data;
 
 	/* Ethernet header */
 	memcpy(eth->h_dest, destination, ETH_ALEN);
@@ -61,85 +61,85 @@ static void LldpInitializeFrame(unsigned char *frameData, const unsigned char *s
 	eth->h_proto = htons(ETH_P_LLDP);
 
 	/* Payload: SequenceCounter + Data */
-	meta = (struct ReferenceMetaData *)(frameData + sizeof(*eth));
+	meta = (struct reference_meta_data *)(frame_data + sizeof(*eth));
 	memset(meta, '\0', sizeof(*meta));
-	payloadOffset = sizeof(*eth) + sizeof(*meta);
-	memcpy(frameData + payloadOffset, appConfig.LldpPayloadPattern,
-	       appConfig.LldpPayloadPatternLength);
+	payload_offset = sizeof(*eth) + sizeof(*meta);
+	memcpy(frame_data + payload_offset, app_config.lldp_payload_pattern,
+	       app_config.lldp_payload_pattern_length);
 
 	/* Padding: '\0' */
 }
 
-static void LldpSendFrame(const unsigned char *frameData, size_t frameLength,
-			  size_t numFramesPerCycle, int socketFd)
+static void lldp_send_frame(const unsigned char *frame_data, size_t frame_length,
+			  size_t num_frames_per_cycle, int socket_fd)
 {
-	struct ReferenceMetaData *meta;
-	uint64_t sequenceCounter;
+	struct reference_meta_data *meta;
+	uint64_t sequence_counter;
 	struct ethhdr *eth;
 	ssize_t ret;
 
 	/* Fetch meta data */
-	meta = (struct ReferenceMetaData *)(frameData + sizeof(*eth));
-	sequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
+	meta = (struct reference_meta_data *)(frame_data + sizeof(*eth));
+	sequence_counter = meta_data_to_sequence_counter(meta, num_frames_per_cycle);
 
 	/* Send it */
-	ret = send(socketFd, frameData, frameLength, 0);
+	ret = send(socket_fd, frame_data, frame_length, 0);
 	if (ret < 0) {
-		LogMessage(LOG_LEVEL_ERROR, "LldpTx: send() for %" PRIu64 " failed: %s\n",
-			   sequenceCounter, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "LldpTx: send() for %" PRIu64 " failed: %s\n",
+			   sequence_counter, strerror(errno));
 		return;
 	}
 
-	StatFrameSent(LLDP_FRAME_TYPE, sequenceCounter);
+	stat_frame_sent(LLDP_FRAME_TYPE, sequence_counter);
 }
 
-static void LldpGenAndSendFrame(unsigned char *frameData, size_t frameLength,
-				size_t numFramesPerCycle, int socketFd, uint64_t sequenceCounter)
+static void lldp_gen_and_send_frame(unsigned char *frame_data, size_t frame_length,
+				size_t num_frames_per_cycle, int socket_fd, uint64_t sequence_counter)
 {
-	struct ReferenceMetaData *meta;
+	struct reference_meta_data *meta;
 	struct ethhdr *eth;
 	ssize_t ret;
 
 	/* Adjust meta data */
-	meta = (struct ReferenceMetaData *)(frameData + sizeof(*eth));
-	SequenceCounterToMetaData(meta, sequenceCounter, numFramesPerCycle);
+	meta = (struct reference_meta_data *)(frame_data + sizeof(*eth));
+	sequence_counter_to_meta_data(meta, sequence_counter, num_frames_per_cycle);
 
 	/* Send it */
-	ret = send(socketFd, frameData, frameLength, 0);
+	ret = send(socket_fd, frame_data, frame_length, 0);
 	if (ret < 0) {
-		LogMessage(LOG_LEVEL_ERROR, "LldpTx: send() for %" PRIu64 " failed: %s\n",
-			   sequenceCounter, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "LldpTx: send() for %" PRIu64 " failed: %s\n",
+			   sequence_counter, strerror(errno));
 		return;
 	}
 
-	StatFrameSent(LLDP_FRAME_TYPE, sequenceCounter);
+	stat_frame_sent(LLDP_FRAME_TYPE, sequence_counter);
 }
 
-static void *LldpTxThreadRoutine(void *data)
+static void *lldp_tx_thread_routine(void *data)
 {
-	struct ThreadContext *threadContext = data;
-	unsigned char receivedFrames[LLDP_TX_FRAME_LENGTH * appConfig.LldpNumFramesPerCycle];
-	const bool mirrorEnabled = appConfig.LldpRxMirrorEnabled;
-	pthread_mutex_t *mutex = &threadContext->DataMutex;
-	pthread_cond_t *cond = &threadContext->DataCondVar;
+	struct thread_context *thread_context = data;
+	unsigned char received_frames[LLDP_TX_FRAME_LENGTH * app_config.lldp_num_frames_per_cycle];
+	const bool mirror_enabled = app_config.lldp_rx_mirror_enabled;
+	pthread_mutex_t *mutex = &thread_context->data_mutex;
+	pthread_cond_t *cond = &thread_context->data_cond_var;
 	unsigned char source[ETH_ALEN];
-	uint64_t sequenceCounter = 0;
+	uint64_t sequence_counter = 0;
 	unsigned char *frame;
-	int ret, socketFd;
+	int ret, socket_fd;
 
-	socketFd = threadContext->SocketFd;
+	socket_fd = thread_context->socket_fd;
 
-	ret = GetInterfaceMacAddress(appConfig.LldpInterface, source, ETH_ALEN);
+	ret = get_interface_mac_address(app_config.lldp_interface, source, ETH_ALEN);
 	if (ret < 0) {
-		LogMessage(LOG_LEVEL_ERROR, "LldpTx: Failed to get Source MAC address!\n");
+		log_message(LOG_LEVEL_ERROR, "LldpTx: Failed to get Source MAC address!\n");
 		return NULL;
 	}
 
-	frame = threadContext->TxFrameData;
-	LldpInitializeFrame(frame, source, appConfig.LldpDestination);
+	frame = thread_context->tx_frame_data;
+	lldp_initialize_frame(frame, source, app_config.lldp_destination);
 
-	while (!threadContext->Stop) {
-		size_t numFrames, i;
+	while (!thread_context->stop) {
+		size_t num_frames, i;
 
 		/*
 		 * Wait until signalled. These LLDP frames have to be sent after
@@ -148,8 +148,8 @@ static void *LldpTxThreadRoutine(void *data)
 		 */
 		pthread_mutex_lock(mutex);
 		pthread_cond_wait(cond, mutex);
-		numFrames = threadContext->NumFramesAvailable;
-		threadContext->NumFramesAvailable = 0;
+		num_frames = thread_context->num_frames_available;
+		thread_context->num_frames_available = 0;
 		pthread_mutex_unlock(mutex);
 
 		/*
@@ -157,79 +157,79 @@ static void *LldpTxThreadRoutine(void *data)
 		 *  a) Generate it, or
 		 *  b) Use received ones if mirror enabled
 		 */
-		if (!mirrorEnabled) {
+		if (!mirror_enabled) {
 			/* Send LldpFrames */
-			for (i = 0; i < numFrames; ++i)
-				LldpGenAndSendFrame(frame, appConfig.LldpFrameLength,
-						    appConfig.LldpNumFramesPerCycle, socketFd,
-						    sequenceCounter++);
+			for (i = 0; i < num_frames; ++i)
+				lldp_gen_and_send_frame(frame, app_config.lldp_frame_length,
+						    app_config.lldp_num_frames_per_cycle, socket_fd,
+						    sequence_counter++);
 		} else {
 			size_t len;
 
-			RingBufferFetch(threadContext->MirrorBuffer, receivedFrames,
-					sizeof(receivedFrames), &len);
+			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
+					sizeof(received_frames), &len);
 
 			/* Len should be a multiple of frame size */
-			for (i = 0; i < len / appConfig.LldpFrameLength; ++i)
-				LldpSendFrame(receivedFrames + i * appConfig.LldpFrameLength,
-					      appConfig.LldpFrameLength,
-					      appConfig.LldpNumFramesPerCycle, socketFd);
+			for (i = 0; i < len / app_config.lldp_frame_length; ++i)
+				lldp_send_frame(received_frames + i * app_config.lldp_frame_length,
+					      app_config.lldp_frame_length,
+					      app_config.lldp_num_frames_per_cycle, socket_fd);
 
-			pthread_mutex_lock(&threadContext->DataMutex);
-			threadContext->NumFramesAvailable = 0;
-			pthread_mutex_unlock(&threadContext->DataMutex);
+			pthread_mutex_lock(&thread_context->data_mutex);
+			thread_context->num_frames_available = 0;
+			pthread_mutex_unlock(&thread_context->data_mutex);
 		}
 
 		/* Signal next Tx thread */
-		if (threadContext->Next) {
-			pthread_mutex_lock(&threadContext->Next->DataMutex);
-			if (threadContext->Next->NumFramesAvailable)
-				pthread_cond_signal(&threadContext->Next->DataCondVar);
-			pthread_mutex_unlock(&threadContext->Next->DataMutex);
+		if (thread_context->next) {
+			pthread_mutex_lock(&thread_context->next->data_mutex);
+			if (thread_context->next->num_frames_available)
+				pthread_cond_signal(&thread_context->next->data_cond_var);
+			pthread_mutex_unlock(&thread_context->next->data_mutex);
 		}
 	}
 
 	return NULL;
 }
 
-static void *LldpRxThreadRoutine(void *data)
+static void *lldp_rx_thread_routine(void *data)
 {
-	struct ThreadContext *threadContext = data;
-	const unsigned char *expectedPattern = (const unsigned char *)appConfig.LldpPayloadPattern;
-	const size_t expectedPatternLength = appConfig.LldpPayloadPatternLength;
-	const size_t numFramesPerCycle = appConfig.LldpNumFramesPerCycle;
+	struct thread_context *thread_context = data;
+	const unsigned char *expected_pattern = (const unsigned char *)app_config.lldp_payload_pattern;
+	const size_t expected_pattern_length = app_config.lldp_payload_pattern_length;
+	const size_t num_frames_per_cycle = app_config.lldp_num_frames_per_cycle;
 	unsigned char frame[LLDP_TX_FRAME_LENGTH], source[ETH_ALEN];
-	const bool mirrorEnabled = appConfig.LldpRxMirrorEnabled;
-	const bool ignoreRxErrors = appConfig.LldpIgnoreRxErrors;
-	const ssize_t frameLength = appConfig.LldpFrameLength;
-	uint64_t sequenceCounter = 0;
-	int socketFd, ret;
+	const bool mirror_enabled = app_config.lldp_rx_mirror_enabled;
+	const bool ignore_rx_errors = app_config.lldp_ignore_rx_errors;
+	const ssize_t frame_length = app_config.lldp_frame_length;
+	uint64_t sequence_counter = 0;
+	int socket_fd, ret;
 
-	socketFd = threadContext->SocketFd;
+	socket_fd = thread_context->socket_fd;
 
-	ret = GetInterfaceMacAddress(appConfig.LldpInterface, source, ETH_ALEN);
+	ret = get_interface_mac_address(app_config.lldp_interface, source, ETH_ALEN);
 	if (ret < 0) {
-		LogMessage(LOG_LEVEL_ERROR, "LldpTx: Failed to get Source MAC address!\n");
+		log_message(LOG_LEVEL_ERROR, "LldpTx: Failed to get Source MAC address!\n");
 		return NULL;
 	}
 
-	while (!threadContext->Stop) {
-		bool outOfOrder, payloadMismatch, frameIdMismatch;
-		struct ReferenceMetaData *meta;
-		uint64_t rxSequenceCounter;
+	while (!thread_context->stop) {
+		bool out_of_order, payload_mismatch, frame_id_mismatch;
+		struct reference_meta_data *meta;
+		uint64_t rx_sequence_counter;
 		ssize_t len;
 
 		/* Wait for LLDP frame */
-		len = recv(socketFd, frame, sizeof(frame), 0);
+		len = recv(socket_fd, frame, sizeof(frame), 0);
 		if (len < 0) {
-			LogMessage(LOG_LEVEL_ERROR, "LldpRx: recv() failed: %s\n", strerror(errno));
+			log_message(LOG_LEVEL_ERROR, "LldpRx: recv() failed: %s\n", strerror(errno));
 			return NULL;
 		}
 		if (len == 0)
 			return NULL;
 
-		if (len != frameLength) {
-			LogMessage(LOG_LEVEL_WARNING,
+		if (len != frame_length) {
+			log_message(LOG_LEVEL_WARNING,
 				   "LldpRx: Frame with wrong length received!\n");
 			continue;
 		}
@@ -238,64 +238,64 @@ static void *LldpRxThreadRoutine(void *data)
 		 * Check cycle counter and payload. The ether type is checked by
 		 * the attached BPF filter.
 		 */
-		meta = (struct ReferenceMetaData *)(frame + sizeof(struct ethhdr));
-		rxSequenceCounter = MetaDataToSequenceCounter(meta, numFramesPerCycle);
+		meta = (struct reference_meta_data *)(frame + sizeof(struct ethhdr));
+		rx_sequence_counter = meta_data_to_sequence_counter(meta, num_frames_per_cycle);
 
-		outOfOrder = sequenceCounter != rxSequenceCounter;
-		payloadMismatch = memcmp(frame + sizeof(struct ethhdr) + sizeof(rxSequenceCounter),
-					 expectedPattern, expectedPatternLength);
-		frameIdMismatch = false;
+		out_of_order = sequence_counter != rx_sequence_counter;
+		payload_mismatch = memcmp(frame + sizeof(struct ethhdr) + sizeof(rx_sequence_counter),
+					 expected_pattern, expected_pattern_length);
+		frame_id_mismatch = false;
 
-		StatFrameReceived(LLDP_FRAME_TYPE, rxSequenceCounter, outOfOrder, payloadMismatch,
-				  frameIdMismatch);
+		stat_frame_received(LLDP_FRAME_TYPE, rx_sequence_counter, out_of_order, payload_mismatch,
+				  frame_id_mismatch);
 
-		if (outOfOrder) {
-			if (!ignoreRxErrors)
-				LogMessage(LOG_LEVEL_WARNING,
+		if (out_of_order) {
+			if (!ignore_rx_errors)
+				log_message(LOG_LEVEL_WARNING,
 					   "LldpRx: frame[%" PRIu64
 					   "] SequenceCounter mismatch: %" PRIu64 "!\n",
-					   rxSequenceCounter, sequenceCounter);
-			sequenceCounter++;
+					   rx_sequence_counter, sequence_counter);
+			sequence_counter++;
 		}
 
-		if (payloadMismatch)
-			LogMessage(LOG_LEVEL_WARNING,
+		if (payload_mismatch)
+			log_message(LOG_LEVEL_WARNING,
 				   "LldpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
-				   rxSequenceCounter);
+				   rx_sequence_counter);
 
-		sequenceCounter++;
+		sequence_counter++;
 
 		/*
 		 * If mirror enabled, assemble and store the frame for Tx later.
 		 */
-		if (!mirrorEnabled)
+		if (!mirror_enabled)
 			continue;
 
 		/*
 		 * Build new frame for Tx without VLAN info.
 		 */
-		LldpBuildFrameFromRx(frame, source);
+		lldp_build_frame_from_rx(frame, source);
 
 		/*
 		 * Store the new frame.
 		 */
-		RingBufferAdd(threadContext->MirrorBuffer, frame, len);
+		ring_buffer_add(thread_context->mirror_buffer, frame, len);
 
-		pthread_mutex_lock(&threadContext->DataMutex);
-		threadContext->NumFramesAvailable++;
-		pthread_mutex_unlock(&threadContext->DataMutex);
+		pthread_mutex_lock(&thread_context->data_mutex);
+		thread_context->num_frames_available++;
+		pthread_mutex_unlock(&thread_context->data_mutex);
 	}
 
 	return NULL;
 }
 
-static void *LldpTxGenerationThreadRoutine(void *data)
+static void *lldp_tx_generation_thread_routine(void *data)
 {
-	struct ThreadContext *threadContext = data;
-	uint64_t numFrames = appConfig.LldpNumFramesPerCycle;
-	pthread_mutex_t *mutex = &threadContext->DataMutex;
-	uint64_t cycleTimeNS = appConfig.LldpBurstPeriodNS;
-	struct timespec wakeupTime;
+	struct thread_context *thread_context = data;
+	uint64_t num_frames = app_config.lldp_num_frames_per_cycle;
+	pthread_mutex_t *mutex = &thread_context->data_mutex;
+	uint64_t cycle_time_ns = app_config.lldp_burst_period_ns;
+	struct timespec wakeup_time;
 	int ret;
 
 	/*
@@ -303,94 +303,94 @@ static void *LldpTxGenerationThreadRoutine(void *data)
 	 * thread is responsible for generating it.
 	 */
 
-	ret = GetThreadStartTime(0, &wakeupTime);
+	ret = get_thread_start_time(0, &wakeup_time);
 	if (ret) {
-		LogMessage(LOG_LEVEL_ERROR,
+		log_message(LOG_LEVEL_ERROR,
 			   "LldpTxGen: Failed to calculate thread start time: %s!\n",
 			   strerror(errno));
 		return NULL;
 	}
 
-	while (!threadContext->Stop) {
+	while (!thread_context->stop) {
 		/* Wait until next period */
-		IncrementPeriod(&wakeupTime, cycleTimeNS);
+		increment_period(&wakeup_time, cycle_time_ns);
 
 		do {
-			ret = clock_nanosleep(appConfig.ApplicationClockId, TIMER_ABSTIME,
-					      &wakeupTime, NULL);
+			ret = clock_nanosleep(app_config.application_clock_id, TIMER_ABSTIME,
+					      &wakeup_time, NULL);
 		} while (ret == EINTR);
 
 		if (ret) {
-			LogMessage(LOG_LEVEL_ERROR, "LldpTxGen: clock_nanosleep() failed: %s\n",
+			log_message(LOG_LEVEL_ERROR, "LldpTxGen: clock_nanosleep() failed: %s\n",
 				   strerror(ret));
 			return NULL;
 		}
 
 		/* Generate frames */
 		pthread_mutex_lock(mutex);
-		threadContext->NumFramesAvailable = numFrames;
+		thread_context->num_frames_available = num_frames;
 		pthread_mutex_unlock(mutex);
 	}
 
 	return NULL;
 }
 
-int LldpThreadsCreate(struct ThreadContext *threadContext)
+int lldp_threads_create(struct thread_context *thread_context)
 {
 	int ret;
 
-	if (!CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Lldp))
+	if (!CONFIG_IS_TRAFFIC_CLASS_ACTIVE(lldp))
 		goto out;
 
-	threadContext->SocketFd = CreateLLDPSocket();
-	if (threadContext->SocketFd < 0) {
+	thread_context->socket_fd = create_lldp_socket();
+	if (thread_context->socket_fd < 0) {
 		fprintf(stderr, "Failed to create LldpSocket!\n");
 		ret = -errno;
 		goto err;
 	}
 
-	InitMutex(&threadContext->DataMutex);
-	InitConditionVariable(&threadContext->DataCondVar);
+	init_mutex(&thread_context->data_mutex);
+	init_condition_variable(&thread_context->data_cond_var);
 
-	threadContext->TxFrameData = calloc(1, LLDP_TX_FRAME_LENGTH);
-	if (!threadContext->TxFrameData) {
+	thread_context->tx_frame_data = calloc(1, LLDP_TX_FRAME_LENGTH);
+	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate Lldp TxFrameData!\n");
 		ret = -ENOMEM;
 		goto err_tx;
 	}
 
-	if (appConfig.LldpRxMirrorEnabled) {
+	if (app_config.lldp_rx_mirror_enabled) {
 		/*
 		 * Per period the expectation is: LldpNumFramesPerCycle * MAX_FRAME
 		 */
-		threadContext->MirrorBuffer =
-			RingBufferAllocate(LLDP_TX_FRAME_LENGTH * appConfig.LldpNumFramesPerCycle);
-		if (!threadContext->MirrorBuffer) {
+		thread_context->mirror_buffer =
+			ring_buffer_allocate(LLDP_TX_FRAME_LENGTH * app_config.lldp_num_frames_per_cycle);
+		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Lldp Mirror RingBuffer!\n");
 			ret = -ENOMEM;
 			goto err_buffer;
 		}
 	}
 
-	ret = CreateRtThread(&threadContext->TxTaskId, "LldpTxThread",
-			     appConfig.LldpTxThreadPriority, appConfig.LldpTxThreadCpu,
-			     LldpTxThreadRoutine, threadContext);
+	ret = create_rt_thread(&thread_context->tx_task_id, "LldpTxThread",
+			     app_config.lldp_tx_thread_priority, app_config.lldp_tx_thread_cpu,
+			     lldp_tx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
 		goto err_thread;
 	}
 
-	ret = CreateRtThread(&threadContext->TxGenTaskId, "LldpTxGenThread",
-			     appConfig.LldpTxThreadPriority, appConfig.LldpTxThreadCpu,
-			     LldpTxGenerationThreadRoutine, threadContext);
+	ret = create_rt_thread(&thread_context->tx_gen_task_id, "LldpTxGenThread",
+			     app_config.lldp_tx_thread_priority, app_config.lldp_tx_thread_cpu,
+			     lldp_tx_generation_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
 		goto err_thread_txgen;
 	}
 
-	ret = CreateRtThread(&threadContext->RxTaskId, "LldpRxThread",
-			     appConfig.LldpRxThreadPriority, appConfig.LldpRxThreadCpu,
-			     LldpRxThreadRoutine, threadContext);
+	ret = create_rt_thread(&thread_context->rx_task_id, "LldpRxThread",
+			     app_config.lldp_rx_thread_priority, app_config.lldp_rx_thread_cpu,
+			     lldp_rx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Lldp Rx Thread!\n");
 		goto err_thread_rx;
@@ -402,51 +402,51 @@ out:
 	return ret;
 
 err_thread_rx:
-	threadContext->Stop = 1;
-	pthread_join(threadContext->TxGenTaskId, NULL);
+	thread_context->stop = 1;
+	pthread_join(thread_context->tx_gen_task_id, NULL);
 err_thread_txgen:
-	threadContext->Stop = 1;
-	pthread_join(threadContext->TxTaskId, NULL);
+	thread_context->stop = 1;
+	pthread_join(thread_context->tx_task_id, NULL);
 err_thread:
-	RingBufferFree(threadContext->MirrorBuffer);
+	ring_buffer_free(thread_context->mirror_buffer);
 err_buffer:
-	free(threadContext->TxFrameData);
+	free(thread_context->tx_frame_data);
 err_tx:
-	close(threadContext->SocketFd);
+	close(thread_context->socket_fd);
 err:
 	return ret;
 }
 
-void LldpThreadsFree(struct ThreadContext *threadContext)
+void lldp_threads_free(struct thread_context *thread_context)
 {
-	if (!threadContext)
+	if (!thread_context)
 		return;
 
-	RingBufferFree(threadContext->MirrorBuffer);
+	ring_buffer_free(thread_context->mirror_buffer);
 
-	if (threadContext->SocketFd > 0)
-		close(threadContext->SocketFd);
+	if (thread_context->socket_fd > 0)
+		close(thread_context->socket_fd);
 }
 
-void LldpThreadsStop(struct ThreadContext *threadContext)
+void lldp_threads_stop(struct thread_context *thread_context)
 {
-	if (!threadContext)
+	if (!thread_context)
 		return;
 
-	threadContext->Stop = 1;
-	pthread_kill(threadContext->RxTaskId, SIGTERM);
+	thread_context->stop = 1;
+	pthread_kill(thread_context->rx_task_id, SIGTERM);
 
-	pthread_join(threadContext->RxTaskId, NULL);
-	pthread_join(threadContext->TxTaskId, NULL);
-	pthread_join(threadContext->TxGenTaskId, NULL);
+	pthread_join(thread_context->rx_task_id, NULL);
+	pthread_join(thread_context->tx_task_id, NULL);
+	pthread_join(thread_context->tx_gen_task_id, NULL);
 }
 
-void LldpThreadsWaitForFinish(struct ThreadContext *threadContext)
+void lldp_threads_wait_for_finish(struct thread_context *thread_context)
 {
-	if (!threadContext)
+	if (!thread_context)
 		return;
 
-	pthread_join(threadContext->RxTaskId, NULL);
-	pthread_join(threadContext->TxTaskId, NULL);
-	pthread_join(threadContext->TxGenTaskId, NULL);
+	pthread_join(thread_context->rx_task_id, NULL);
+	pthread_join(thread_context->tx_task_id, NULL);
+	pthread_join(thread_context->tx_gen_task_id, NULL);
 }

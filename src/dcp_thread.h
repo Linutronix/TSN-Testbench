@@ -16,9 +16,9 @@
 
 #define DCP_TX_FRAME_LENGTH (4096)
 
-int DcpThreadsCreate(struct ThreadContext *threadContext);
-void DcpThreadsStop(struct ThreadContext *threadContext);
-void DcpThreadsFree(struct ThreadContext *threadContext);
-void DcpThreadsWaitForFinish(struct ThreadContext *threadContext);
+int dcp_threads_create(struct thread_context *thread_context);
+void dcp_threads_stop(struct thread_context *thread_context);
+void dcp_threads_free(struct thread_context *thread_context);
+void dcp_threads_wait_for_finish(struct thread_context *thread_context);
 
 #endif /* _DCP_THREAD_H_ */

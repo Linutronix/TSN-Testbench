@@ -14,19 +14,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum SecurityMode {
+enum security_mode {
 	SECURITY_MODE_NONE, /* No authentification or enryption */
 	SECURITY_MODE_AO,   /* Authentification only */
 	SECURITY_MODE_AE,   /* Authentification and encryption */
 };
 
-enum SecurityAlgorithm {
+enum security_algorithm {
 	SECURITY_ALGORITHM_AES256_GCM,
 	SECURITY_ALGORITHM_AES128_GCM,
 	SECURITY_ALGORITHM_CHACHA20_POLY1305,
 };
 
-static inline const char *SecurityModeToString(enum SecurityMode mode)
+static inline const char *security_mode_to_string(enum security_mode mode)
 {
 	switch (mode) {
 	case SECURITY_MODE_NONE:
@@ -40,7 +40,7 @@ static inline const char *SecurityModeToString(enum SecurityMode mode)
 	}
 }
 
-static inline const char *SecurityAlgorithmToString(enum SecurityAlgorithm algorithm)
+static inline const char *security_algorithm_to_string(enum security_algorithm algorithm)
 {
 	switch (algorithm) {
 	case SECURITY_ALGORITHM_AES256_GCM:
@@ -58,28 +58,28 @@ static inline const char *SecurityAlgorithmToString(enum SecurityAlgorithm algor
 #define SECURITY_IV_PREFIX_LEN 6
 #define SECURITY_IV_COUNTER_LEN 6
 
-struct SecurityIv {
-	unsigned char IvPrefix[SECURITY_IV_PREFIX_LEN];
-	uint64_t Counter;
+struct security_iv {
+	unsigned char iv_prefix[SECURITY_IV_PREFIX_LEN];
+	uint64_t counter;
 } __attribute__((packed));
 
-struct SecurityContext {
-	enum SecurityAlgorithm Algorithm;
-	EVP_CIPHER_CTX *Ctx;
-	EVP_CIPHER *Cipher;
+struct security_context {
+	enum security_algorithm algorithm;
+	EVP_CIPHER_CTX *ctx;
+	EVP_CIPHER *cipher;
 };
 
-struct SecurityContext *SecurityInit(enum SecurityAlgorithm algorithm, const unsigned char *key);
-void SecurityExit(struct SecurityContext *context);
+struct security_context *security_init(enum security_algorithm algorithm, const unsigned char *key);
+void security_exit(struct security_context *context);
 
-int SecurityEncrypt(struct SecurityContext *context, const unsigned char *plaintext,
-		    size_t plaintextLength, const unsigned char *associatedData,
-		    size_t associatedDataLength, const unsigned char *iv, unsigned char *ciphertext,
+int security_encrypt(struct security_context *context, const unsigned char *plaintext,
+		    size_t plaintext_length, const unsigned char *associated_data,
+		    size_t associated_data_length, const unsigned char *iv, unsigned char *ciphertext,
 		    unsigned char *tag);
 
-int SecurityDecrypt(struct SecurityContext *context, const unsigned char *ciphertext,
-		    size_t ciphertextLength, const unsigned char *associatedData,
-		    size_t associatedDataLength, unsigned char *tag, const unsigned char *iv,
+int security_decrypt(struct security_context *context, const unsigned char *ciphertext,
+		    size_t ciphertext_length, const unsigned char *associated_data,
+		    size_t associated_data_length, unsigned char *tag, const unsigned char *iv,
 		    unsigned char *plaintext);
 
 #endif /* _SECURITY_H_ */

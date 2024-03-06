@@ -25,14 +25,14 @@
 #include "udp_thread.h"
 #include "utils.h"
 
-static struct option longOptions[] = {
+static struct option long_options[] = {
 	{"config", optional_argument, NULL, 'c'},
 	{"help", no_argument, NULL, 'h'},
 	{"version", no_argument, NULL, 'V'},
 	{NULL},
 };
 
-static void PrintUsageAndDie(void)
+static void print_usage_and_die(void)
 {
 	fprintf(stderr, "usage: reference [options]\n");
 	fprintf(stderr, "  options:\n");
@@ -43,7 +43,7 @@ static void PrintUsageAndDie(void)
 	exit(EXIT_SUCCESS);
 }
 
-static void PrintVersionAndDie(void)
+static void print_version_and_die(void)
 {
 	printf("reference: version \"%s\"\n", VERSION);
 	exit(EXIT_SUCCESS);
@@ -51,48 +51,48 @@ static void PrintVersionAndDie(void)
 
 int main(int argc, char *argv[])
 {
-	struct LogViaMQTTThreadContext *logViaMQTTThread;
-	struct LogThreadContext *logThread;
-	struct ThreadContext *g2Threads;
-	struct ThreadContext *threads;
-	const char *configFile = NULL;
+	struct log_via_mqtt_thread_context *log_via_mqtt_thread;
+	struct log_thread_context *log_thread;
+	struct thread_context *g2_threads;
+	struct thread_context *threads;
+	const char *config_file = NULL;
 	int c, ret;
 
-	while ((c = getopt_long(argc, argv, "c:hV", longOptions, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "c:hV", long_options, NULL)) != -1) {
 		switch (c) {
 		case 'V':
-			PrintVersionAndDie();
+			print_version_and_die();
 			break;
 		case 'c':
-			configFile = optarg;
+			config_file = optarg;
 			break;
 		case 'h':
 		default:
-			PrintUsageAndDie();
+			print_usage_and_die();
 		}
 	}
 
-	ret = ConfigSetDefaults(false);
+	ret = config_set_defaults(false);
 	if (ret) {
 		fprintf(stderr, "Failed to set default config values!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	if (!configFile) {
+	if (!config_file) {
 		fprintf(stderr, "Specifying an configuration file is mandatory. See "
 				"configurations/ or test/ directory for examples!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = ConfigReadFromFile(configFile);
+	ret = config_read_from_file(config_file);
 	if (ret) {
 		fprintf(stderr, "Failed to parse configuration file!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ConfigPrintValues();
+	config_print_values();
 
-	if (!ConfigSanityCheck()) {
+	if (!config_sanity_check()) {
 		fprintf(stderr, "Configuration failed sanity checks!\n");
 		exit(EXIT_FAILURE);
 	}
@@ -102,116 +102,116 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	ConfigureCpuLatency();
+	configure_cpu_latency();
 
-	ret = LogInit();
+	ret = log_init();
 	if (ret) {
 		fprintf(stderr, "Failed to initialize logging!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = StatInit(true);
+	ret = stat_init(true);
 	if (ret) {
 		fprintf(stderr, "Failed to initialize statistics!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	logThread = LogThreadCreate();
-	if (!logThread) {
+	log_thread = log_thread_create();
+	if (!log_thread) {
 		fprintf(stderr, "Failed to create and start Log Thread!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	logViaMQTTThread = LogViaMQTTThreadCreate();
-	if (!logViaMQTTThread && appConfig.LogViaMQTT) {
+	log_via_mqtt_thread = log_via_mqtt_thread_create();
+	if (!log_via_mqtt_thread && app_config.log_via_mqtt) {
 		fprintf(stderr, "Failed to create and start Log via MQTT Thread!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	g2Threads = GenericL2ThreadsCreate();
-	if (!g2Threads) {
+	g2_threads = generic_l2_threads_create();
+	if (!g2_threads) {
 		fprintf(stderr, "Failed to create and start Generic L2 Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	threads = calloc(NUM_PN_THREAD_TYPES, sizeof(struct ThreadContext));
+	threads = calloc(NUM_PN_THREAD_TYPES, sizeof(struct thread_context));
 	if (!threads) {
 		fprintf(stderr, "Failed to allocate PN threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	if (LinkPNThreads(threads)) {
+	if (link_pn_threads(threads)) {
 		fprintf(stderr, "Failed to determine PN traffic classes order!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = UdpLowThreadsCreate(&threads[UDP_LOW_THREAD]);
+	ret = udp_low_threads_create(&threads[UDP_LOW_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start UDP Low Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = UdpHighThreadsCreate(&threads[UDP_HIGH_THREAD]);
+	ret = udp_high_threads_create(&threads[UDP_HIGH_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start UDP High Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = LldpThreadsCreate(&threads[LLDP_THREAD]);
+	ret = lldp_threads_create(&threads[LLDP_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start LLDP Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = DcpThreadsCreate(&threads[DCP_THREAD]);
+	ret = dcp_threads_create(&threads[DCP_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start DCP Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = RtaThreadsCreate(&threads[RTA_THREAD]);
+	ret = rta_threads_create(&threads[RTA_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start RTA Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = RtcThreadsCreate(&threads[RTC_THREAD]);
+	ret = rtc_threads_create(&threads[RTC_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start RTC Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = TsnLowThreadsCreate(&threads[TSN_LOW_THREAD]);
+	ret = tsn_low_threads_create(&threads[TSN_LOW_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start TSN Low Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	ret = TsnHighThreadsCreate(&threads[TSN_HIGH_THREAD]);
+	ret = tsn_high_threads_create(&threads[TSN_HIGH_THREAD]);
 	if (ret) {
 		fprintf(stderr, "Failed to create and start TSN High Threads!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	TsnHighThreadsWaitForFinish(&threads[TSN_HIGH_THREAD]);
-	TsnLowThreadsWaitForFinish(&threads[TSN_LOW_THREAD]);
-	RtcThreadsWaitForFinish(&threads[RTC_THREAD]);
-	RtaThreadsWaitForFinish(&threads[RTA_THREAD]);
-	DcpThreadsWaitForFinish(&threads[DCP_THREAD]);
-	LldpThreadsWaitForFinish(&threads[LLDP_THREAD]);
-	UdpHighThreadsWaitForFinish(&threads[UDP_HIGH_THREAD]);
-	UdpLowThreadsWaitForFinish(&threads[UDP_LOW_THREAD]);
-	GenericL2ThreadsWaitForFinish(g2Threads);
-	LogViaMQTTThreadWaitForFinish(logViaMQTTThread);
-	LogThreadWaitForFinish(logThread);
+	tsn_high_threads_wait_for_finish(&threads[TSN_HIGH_THREAD]);
+	tsn_low_threads_wait_for_finish(&threads[TSN_LOW_THREAD]);
+	rtc_threads_wait_for_finish(&threads[RTC_THREAD]);
+	rta_threads_wait_for_finish(&threads[RTA_THREAD]);
+	dcp_threads_wait_for_finish(&threads[DCP_THREAD]);
+	lldp_threads_wait_for_finish(&threads[LLDP_THREAD]);
+	udp_high_threads_wait_for_finish(&threads[UDP_HIGH_THREAD]);
+	udp_low_threads_wait_for_finish(&threads[UDP_LOW_THREAD]);
+	generic_l2_threads_wait_for_finish(g2_threads);
+	log_via_mqtt_thread_wait_for_finish(log_via_mqtt_thread);
+	log_thread_wait_for_finish(log_thread);
 
-	StatFree();
-	LogFree();
-	LogViaMQTTFree();
-	ConfigFree();
+	stat_free();
+	log_free();
+	log_via_mqtt_free();
+	config_free();
 	free(threads);
 
-	RestoreCpuLatency();
+	restore_cpu_latency();
 
 	return EXIT_SUCCESS;
 }

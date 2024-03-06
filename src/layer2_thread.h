@@ -18,9 +18,9 @@
 
 #define GENL2_TX_FRAME_LENGTH XDP_FRAME_SIZE
 
-struct ThreadContext *GenericL2ThreadsCreate(void);
-void GenericL2ThreadsStop(struct ThreadContext *threadContext);
-void GenericL2ThreadsFree(struct ThreadContext *threadContext);
-void GenericL2ThreadsWaitForFinish(struct ThreadContext *threadContext);
+struct thread_context *generic_l2_threads_create(void);
+void generic_l2_threads_stop(struct thread_context *thread_context);
+void generic_l2_threads_free(struct thread_context *thread_context);
+void generic_l2_threads_wait_for_finish(struct thread_context *thread_context);
 
 #endif /* _LAYER2_THREAD_H_ */

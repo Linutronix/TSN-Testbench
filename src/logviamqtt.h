@@ -7,23 +7,23 @@
 #ifndef _LOGVIAMQTT_H_
 #define _LOGVIAMQTT_H_
 
-struct Statistics;
-enum StatFrameType;
+struct statistics;
+enum stat_frame_type;
 
-struct LogViaMQTTThreadContext {
-	pthread_t MQTTLogTaskId;
+struct log_via_mqtt_thread_context {
+	pthread_t mqtt_log_task_id;
 	struct mosquitto *mosq;
-	struct RingBuffer *MQTTLogRingBuffer;
-	unsigned char *MQTTLogData;
-	volatile int Stop;
+	struct ring_buffer *mqtt_log_ring_buffer;
+	unsigned char *mqtt_log_data;
+	volatile int stop;
 };
 
-struct LogViaMQTTThreadContext *LogViaMQTTThreadCreate();
-void LogViaMQTTStats(enum StatFrameType frameType, struct Statistics *stats);
-void LogViaMQTTThreadStop(struct LogViaMQTTThreadContext *threadContext);
-void LogViaMQTTThreadFree(struct LogViaMQTTThreadContext *threadContext);
-void LogViaMQTTThreadWaitForFinish(struct LogViaMQTTThreadContext *threadContext);
+struct log_via_mqtt_thread_context *log_via_mqtt_thread_create();
+void log_via_mqtt_stats(enum stat_frame_type frame_type, struct statistics *stats);
+void log_via_mqtt_thread_stop(struct log_via_mqtt_thread_context *thread_context);
+void log_via_mqtt_thread_free(struct log_via_mqtt_thread_context *thread_context);
+void log_via_mqtt_thread_wait_for_finish(struct log_via_mqtt_thread_context *thread_context);
 
-void LogViaMQTTFree(void);
+void log_via_mqtt_free(void);
 
 #endif /*LOGVIAMQTT*/

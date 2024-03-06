@@ -15,8 +15,8 @@
 #include "thread.h"
 #include "utils.h"
 
-int CreateRtThread(pthread_t *taskId, const char *threadName, int threadPriority, int cpuCore,
-		   void *(*threadRoutine)(void *), void *data)
+int create_rt_thread(pthread_t *task_id, const char *thread_name, int thread_priority, int cpu_core,
+		   void *(*thread_routine)(void *), void *data)
 {
 	struct sched_param param;
 	pthread_attr_t attr;
@@ -25,51 +25,51 @@ int CreateRtThread(pthread_t *taskId, const char *threadName, int threadPriority
 
 	ret = pthread_attr_init(&attr);
 	if (ret) {
-		PthreadError(ret, "pthread_attr_init() failed");
+		pthread_error(ret, "pthread_attr_init() failed");
 		goto err;
 	}
 
 	/* 2 MiB stack should be enough for all threads. */
 	ret = pthread_attr_setstacksize(&attr, 2 * 1024 * 1024);
 	if (ret) {
-		PthreadError(ret, "pthread_attr_setstacksize() failed");
+		pthread_error(ret, "pthread_attr_setstacksize() failed");
 		goto err;
 	}
 
 	ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
 	if (ret) {
-		PthreadError(ret, "pthread_attr_setschedpolicy() failed");
+		pthread_error(ret, "pthread_attr_setschedpolicy() failed");
 		goto err;
 	}
 
-	param.sched_priority = threadPriority;
+	param.sched_priority = thread_priority;
 	ret = pthread_attr_setschedparam(&attr, &param);
 	if (ret) {
-		PthreadError(ret, "pthread_attr_setschedparam() failed");
+		pthread_error(ret, "pthread_attr_setschedparam() failed");
 		goto err;
 	}
 
 	ret = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 	if (ret) {
-		PthreadError(ret, "pthread_attr_setinheritsched() failed");
+		pthread_error(ret, "pthread_attr_setinheritsched() failed");
 		goto err;
 	}
 
 	CPU_ZERO(&cpus);
-	CPU_SET(cpuCore, &cpus);
+	CPU_SET(cpu_core, &cpus);
 	ret = pthread_attr_setaffinity_np(&attr, sizeof(cpus), &cpus);
 	if (ret) {
-		PthreadError(ret, "pthread_attr_setaffinity_np() failed");
+		pthread_error(ret, "pthread_attr_setaffinity_np() failed");
 		goto err;
 	}
 
-	ret = pthread_create(taskId, &attr, threadRoutine, data);
+	ret = pthread_create(task_id, &attr, thread_routine, data);
 	if (ret) {
-		PthreadError(ret, "pthread_create() failed");
+		pthread_error(ret, "pthread_create() failed");
 		goto err;
 	}
 
-	pthread_setname_np(*taskId, threadName);
+	pthread_setname_np(*task_id, thread_name);
 
 	return 0;
 
@@ -77,7 +77,7 @@ err:
 	return -ret;
 }
 
-void InitMutex(pthread_mutex_t *mutex)
+void init_mutex(pthread_mutex_t *mutex)
 {
 	pthread_mutexattr_t mattr;
 
@@ -90,35 +90,35 @@ void InitMutex(pthread_mutex_t *mutex)
 	pthread_mutex_init(mutex, &mattr);
 }
 
-void InitConditionVariable(pthread_cond_t *condVar)
+void init_condition_variable(pthread_cond_t *cond_var)
 {
-	pthread_cond_init(condVar, NULL);
+	pthread_cond_init(cond_var, NULL);
 }
 
-static struct ThreadContext *FindNextPNThread(struct ThreadContext *pnThreads, int start)
+static struct thread_context *find_next_pn_thread(struct thread_context *pn_threads, int start)
 {
 	switch (start) {
 	case TSN_HIGH_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(TsnLow))
-			return &pnThreads[TSN_LOW_THREAD];
+		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_low))
+			return &pn_threads[TSN_LOW_THREAD];
 	case TSN_LOW_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Rtc))
-			return &pnThreads[RTC_THREAD];
+		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc))
+			return &pn_threads[RTC_THREAD];
 	case RTC_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Rta))
-			return &pnThreads[RTA_THREAD];
+		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rta))
+			return &pn_threads[RTA_THREAD];
 	case RTA_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Dcp))
-			return &pnThreads[DCP_THREAD];
+		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(dcp))
+			return &pn_threads[DCP_THREAD];
 	case DCP_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Lldp))
-			return &pnThreads[LLDP_THREAD];
+		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(lldp))
+			return &pn_threads[LLDP_THREAD];
 	case LLDP_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(UdpHigh))
-			return &pnThreads[UDP_HIGH_THREAD];
+		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_high))
+			return &pn_threads[UDP_HIGH_THREAD];
 	case UDP_HIGH_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(UdpLow))
-			return &pnThreads[UDP_LOW_THREAD];
+		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_low))
+			return &pn_threads[UDP_LOW_THREAD];
 	case UDP_LOW_THREAD:
 		return NULL;
 	}
@@ -126,7 +126,7 @@ static struct ThreadContext *FindNextPNThread(struct ThreadContext *pnThreads, i
 	return NULL;
 }
 
-int LinkPNThreads(struct ThreadContext *pnThreads)
+int link_pn_threads(struct thread_context *pn_threads)
 {
 	/*
 	 * The Profinet traffic classes have a dedicated order:
@@ -136,9 +136,9 @@ int LinkPNThreads(struct ThreadContext *pnThreads)
 	 * skipped.
 	 */
 	for (int i = 0; i < NUM_PN_THREAD_TYPES; i++) {
-		struct ThreadContext *current = &pnThreads[i];
+		struct thread_context *current = &pn_threads[i];
 
-		current->Next = FindNextPNThread(pnThreads, i);
+		current->next = find_next_pn_thread(pn_threads, i);
 	}
 
 	/*
@@ -148,11 +148,11 @@ int LinkPNThreads(struct ThreadContext *pnThreads)
 	 *
 	 * GenericL2 has nothing todo with Profinet.
 	 */
-	if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(TsnHigh))
-		pnThreads[TSN_HIGH_THREAD].IsFirst = true;
-	else if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Rtc))
-		pnThreads[RTC_THREAD].IsFirst = true;
-	else if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(GenericL2))
+	if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high))
+		pn_threads[TSN_HIGH_THREAD].is_first = true;
+	else if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc))
+		pn_threads[RTC_THREAD].is_first = true;
+	else if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2))
 		return 0;
 	else
 		return -EINVAL;

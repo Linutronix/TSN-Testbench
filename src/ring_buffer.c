@@ -12,125 +12,125 @@
 #include "ring_buffer.h"
 #include "thread.h"
 
-struct RingBuffer *RingBufferAllocate(size_t bufferSize)
+struct ring_buffer *ring_buffer_allocate(size_t buffer_size)
 {
-	struct RingBuffer *ringBuffer = malloc(sizeof(*ringBuffer));
+	struct ring_buffer *ring_buffer = malloc(sizeof(*ring_buffer));
 
-	if (!ringBuffer)
+	if (!ring_buffer)
 		return NULL;
 
-	memset(ringBuffer, '\0', sizeof(*ringBuffer));
+	memset(ring_buffer, '\0', sizeof(*ring_buffer));
 
-	ringBuffer->Data = malloc(bufferSize);
-	if (!ringBuffer->Data) {
-		free(ringBuffer);
+	ring_buffer->data = malloc(buffer_size);
+	if (!ring_buffer->data) {
+		free(ring_buffer);
 		return NULL;
 	}
 
-	memset(ringBuffer->Data, '\0', bufferSize);
+	memset(ring_buffer->data, '\0', buffer_size);
 
-	ringBuffer->BufferSize = bufferSize;
-	ringBuffer->BufferWritePointer = ringBuffer->Data;
-	ringBuffer->BufferReadPointer = ringBuffer->Data;
+	ring_buffer->buffer_size = buffer_size;
+	ring_buffer->buffer_write_pointer = ring_buffer->data;
+	ring_buffer->buffer_read_pointer = ring_buffer->data;
 
-	InitMutex(&ringBuffer->DataMutex);
+	init_mutex(&ring_buffer->data_mutex);
 
-	return ringBuffer;
+	return ring_buffer;
 }
 
-void RingBufferFree(struct RingBuffer *ringBuffer)
+void ring_buffer_free(struct ring_buffer *ring_buffer)
 {
-	if (!ringBuffer)
+	if (!ring_buffer)
 		return;
 
-	free(ringBuffer->Data);
-	free(ringBuffer);
+	free(ring_buffer->data);
+	free(ring_buffer);
 }
 
-void RingBufferAdd(struct RingBuffer *ringBuffer, const unsigned char *data, size_t len)
+void ring_buffer_add(struct ring_buffer *ring_buffer, const unsigned char *data, size_t len)
 {
 	size_t available;
 
-	if (!ringBuffer)
+	if (!ring_buffer)
 		return;
 
-	if (len > ringBuffer->BufferSize)
+	if (len > ring_buffer->buffer_size)
 		return;
 
-	pthread_mutex_lock(&ringBuffer->DataMutex);
+	pthread_mutex_lock(&ring_buffer->data_mutex);
 
 	/* Wrap? */
-	available = (ringBuffer->Data + ringBuffer->BufferSize) - ringBuffer->BufferWritePointer;
+	available = (ring_buffer->data + ring_buffer->buffer_size) - ring_buffer->buffer_write_pointer;
 	if (len <= available) {
-		memcpy(ringBuffer->BufferWritePointer, data, len);
-		ringBuffer->BufferWritePointer += len;
+		memcpy(ring_buffer->buffer_write_pointer, data, len);
+		ring_buffer->buffer_write_pointer += len;
 	} else {
-		memcpy(ringBuffer->BufferWritePointer, data, available);
+		memcpy(ring_buffer->buffer_write_pointer, data, available);
 		len -= available;
 		data += available;
-		ringBuffer->BufferWritePointer = ringBuffer->Data;
-		memcpy(ringBuffer->BufferWritePointer, data, len);
-		ringBuffer->BufferWritePointer += len;
+		ring_buffer->buffer_write_pointer = ring_buffer->data;
+		memcpy(ring_buffer->buffer_write_pointer, data, len);
+		ring_buffer->buffer_write_pointer += len;
 	}
 
-	if ((ringBuffer->Data + ringBuffer->BufferSize) == ringBuffer->BufferWritePointer)
-		ringBuffer->BufferWritePointer = ringBuffer->Data;
+	if ((ring_buffer->data + ring_buffer->buffer_size) == ring_buffer->buffer_write_pointer)
+		ring_buffer->buffer_write_pointer = ring_buffer->data;
 
-	pthread_mutex_unlock(&ringBuffer->DataMutex);
+	pthread_mutex_unlock(&ring_buffer->data_mutex);
 }
 
-void RingBufferFetch(struct RingBuffer *ringBuffer, unsigned char *data, size_t len, size_t *outLen)
+void ring_buffer_fetch(struct ring_buffer *ring_buffer, unsigned char *data, size_t len, size_t *out_len)
 {
 	intptr_t available;
-	size_t realLen;
+	size_t real_len;
 
-	if (!ringBuffer)
+	if (!ring_buffer)
 		return;
 
-	if (len > ringBuffer->BufferSize)
+	if (len > ring_buffer->buffer_size)
 		return;
 
-	pthread_mutex_lock(&ringBuffer->DataMutex);
+	pthread_mutex_lock(&ring_buffer->data_mutex);
 
-	available = ringBuffer->BufferWritePointer - ringBuffer->BufferReadPointer;
+	available = ring_buffer->buffer_write_pointer - ring_buffer->buffer_read_pointer;
 
 	/* Simple case: Copy difference between read and write ptr. */
 	if (available > 0) {
-		realLen = available > len ? len : available;
-		memcpy(data, ringBuffer->BufferReadPointer, realLen);
-		*outLen = realLen;
-		ringBuffer->BufferReadPointer += realLen;
+		real_len = available > len ? len : available;
+		memcpy(data, ring_buffer->buffer_read_pointer, real_len);
+		*out_len = real_len;
+		ring_buffer->buffer_read_pointer += real_len;
 	} else if (available < 0) {
 		/* Copy first part */
 		available =
-			(ringBuffer->Data + ringBuffer->BufferSize) - ringBuffer->BufferReadPointer;
-		realLen = available > len ? len : available;
-		memcpy(data, ringBuffer->BufferReadPointer, realLen);
+			(ring_buffer->data + ring_buffer->buffer_size) - ring_buffer->buffer_read_pointer;
+		real_len = available > len ? len : available;
+		memcpy(data, ring_buffer->buffer_read_pointer, real_len);
 
-		len -= realLen;
-		data += realLen;
-		*outLen = realLen;
-		ringBuffer->BufferReadPointer += realLen;
+		len -= real_len;
+		data += real_len;
+		*out_len = real_len;
+		ring_buffer->buffer_read_pointer += real_len;
 
-		if (ringBuffer->BufferReadPointer == (ringBuffer->Data + ringBuffer->BufferSize))
-			ringBuffer->BufferReadPointer = ringBuffer->Data;
+		if (ring_buffer->buffer_read_pointer == (ring_buffer->data + ring_buffer->buffer_size))
+			ring_buffer->buffer_read_pointer = ring_buffer->data;
 
 		/* Copy second part */
 		if (len > 0) {
-			available = ringBuffer->BufferWritePointer - ringBuffer->BufferReadPointer;
-			realLen = available > len ? len : available;
+			available = ring_buffer->buffer_write_pointer - ring_buffer->buffer_read_pointer;
+			real_len = available > len ? len : available;
 
-			memcpy(data, ringBuffer->BufferReadPointer, realLen);
+			memcpy(data, ring_buffer->buffer_read_pointer, real_len);
 
-			ringBuffer->BufferReadPointer += realLen;
-			*outLen += realLen;
+			ring_buffer->buffer_read_pointer += real_len;
+			*out_len += real_len;
 		}
 	} else {
-		*outLen = 0;
+		*out_len = 0;
 	}
 
-	if (ringBuffer->BufferReadPointer == (ringBuffer->Data + ringBuffer->BufferSize))
-		ringBuffer->BufferReadPointer = ringBuffer->Data;
+	if (ring_buffer->buffer_read_pointer == (ring_buffer->data + ring_buffer->buffer_size))
+		ring_buffer->buffer_read_pointer = ring_buffer->data;
 
-	pthread_mutex_unlock(&ringBuffer->DataMutex);
+	pthread_mutex_unlock(&ring_buffer->data_mutex);
 }

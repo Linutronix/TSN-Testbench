@@ -13,16 +13,16 @@
 
 #include "net_def.h"
 
-int CreateTSNHighSocket(void);
-int CreateTSNLowSocket(void);
-int CreateRTCSocket(void);
-int CreateRTASocket(void);
-int CreateDCPSocket(void);
-int CreateLLDPSocket(void);
-int CreateGenericL2Socket(void);
-int CreateUDPSocket(const char *udpDestination, const char *udpSource, const char *udpPort,
-		    int socketPriority, struct sockaddr_storage *destination);
-int GetInterfaceMacAddress(const char *ifName, unsigned char *mac, size_t len);
-int GetInterfaceLinkSpeed(const char *ifName, uint32_t *speed);
+int create_tsn_high_socket(void);
+int create_tsn_low_socket(void);
+int create_rtc_socket(void);
+int create_rta_socket(void);
+int create_dcp_socket(void);
+int create_lldp_socket(void);
+int create_generic_l2_socket(void);
+int create_udp_socket(const char *udp_destination, const char *udp_source, const char *udp_port,
+		    int socket_priority, struct sockaddr_storage *destination);
+int get_interface_mac_address(const char *if_name, unsigned char *mac, size_t len);
+int get_interface_link_speed(const char *if_name, uint32_t *speed);
 
 #endif /* _NET_H_ */

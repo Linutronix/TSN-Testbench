@@ -26,12 +26,12 @@
 #include "tsn_thread.h"
 #include "udp_thread.h"
 
-struct ApplicationConfig appConfig;
+struct application_config app_config;
 
 /*
  * The configuration file is YAML based. Use libyaml to parse it.
  */
-int ConfigReadFromFile(const char *configFile)
+int config_read_from_file(const char *config_file)
 {
 	int ret, state_key = 0;
 	yaml_parser_t parser;
@@ -40,10 +40,10 @@ int ConfigReadFromFile(const char *configFile)
 	char *key = NULL;
 	FILE *f;
 
-	if (!configFile)
+	if (!config_file)
 		return -EINVAL;
 
-	f = fopen(configFile, "r");
+	f = fopen(config_file, "r");
 	if (!f) {
 		perror("fopen() failed");
 		return -EIO;
@@ -92,235 +92,235 @@ int ConfigReadFromFile(const char *configFile)
 				continue;
 
 			/* Switch value */
-			CONFIG_STORE_CLOCKID_PARAM(ApplicationClockId);
-			CONFIG_STORE_ULONG_PARAM(ApplicationBaseCycleTimeNS);
-			CONFIG_STORE_ULONG_PARAM(ApplicationBaseStartTimeNS);
-			CONFIG_STORE_ULONG_PARAM(ApplicationTxBaseOffsetNS);
-			CONFIG_STORE_ULONG_PARAM(ApplicationRxBaseOffsetNS);
-			CONFIG_STORE_STRING_PARAM(ApplicationXdpProgram);
+			CONFIG_STORE_CLOCKID_PARAM(application_clock_id);
+			CONFIG_STORE_ULONG_PARAM(application_base_cycle_time_ns);
+			CONFIG_STORE_ULONG_PARAM(application_base_start_time_ns);
+			CONFIG_STORE_ULONG_PARAM(application_tx_base_offset_ns);
+			CONFIG_STORE_ULONG_PARAM(application_rx_base_offset_ns);
+			CONFIG_STORE_STRING_PARAM(application_xdp_program);
 
-			CONFIG_STORE_BOOL_PARAM(TsnHighEnabled);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpEnabled);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpSkbMode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpZcMode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpWakeupMode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpBusyPollMode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighTxTimeEnabled);
-			CONFIG_STORE_BOOL_PARAM(TsnHighIgnoreRxErrors);
-			CONFIG_STORE_ULONG_PARAM(TsnHighTxTimeOffsetNS);
-			CONFIG_STORE_INT_PARAM(TsnHighVid);
-			CONFIG_STORE_ULONG_PARAM(TsnHighNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(TsnHighPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(TsnHighFrameLength);
-			CONFIG_STORE_SECURITY_MODE_PARAM(TsnHighSecurityMode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(TsnHighSecurityAlgorithm);
-			CONFIG_STORE_STRING_PARAM(TsnHighSecurityKey);
-			CONFIG_STORE_STRING_PARAM(TsnHighSecurityIvPrefix);
-			CONFIG_STORE_INT_PARAM(TsnHighRxQueue);
-			CONFIG_STORE_INT_PARAM(TsnHighTxQueue);
-			CONFIG_STORE_INT_PARAM(TsnHighSocketPriority);
-			CONFIG_STORE_INT_PARAM(TsnHighTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(TsnHighRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(TsnHighTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(TsnHighRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(TsnHighInterface);
-			CONFIG_STORE_MAC_PARAM(TsnHighDestination);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_enabled);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_tx_time_enabled);
+			CONFIG_STORE_BOOL_PARAM(tsn_high_ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM(tsn_high_tx_time_offset_ns);
+			CONFIG_STORE_INT_PARAM(tsn_high_vid);
+			CONFIG_STORE_ULONG_PARAM(tsn_high_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(tsn_high_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(tsn_high_frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM(tsn_high_security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(tsn_high_security_algorithm);
+			CONFIG_STORE_STRING_PARAM(tsn_high_security_key);
+			CONFIG_STORE_STRING_PARAM(tsn_high_security_iv_prefix);
+			CONFIG_STORE_INT_PARAM(tsn_high_rx_queue);
+			CONFIG_STORE_INT_PARAM(tsn_high_tx_queue);
+			CONFIG_STORE_INT_PARAM(tsn_high_socket_priority);
+			CONFIG_STORE_INT_PARAM(tsn_high_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(tsn_high_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(tsn_high_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(tsn_high_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(tsn_high_interface);
+			CONFIG_STORE_MAC_PARAM(tsn_high_destination);
 
-			CONFIG_STORE_BOOL_PARAM(TsnLowEnabled);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpEnabled);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpSkbMode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpZcMode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpWakeupMode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpBusyPollMode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowTxTimeEnabled);
-			CONFIG_STORE_BOOL_PARAM(TsnLowIgnoreRxErrors);
-			CONFIG_STORE_ULONG_PARAM(TsnLowTxTimeOffsetNS);
-			CONFIG_STORE_INT_PARAM(TsnLowVid);
-			CONFIG_STORE_ULONG_PARAM(TsnLowNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(TsnLowPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(TsnLowFrameLength);
-			CONFIG_STORE_SECURITY_MODE_PARAM(TsnLowSecurityMode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(TsnLowSecurityAlgorithm);
-			CONFIG_STORE_STRING_PARAM(TsnLowSecurityKey);
-			CONFIG_STORE_STRING_PARAM(TsnLowSecurityIvPrefix);
-			CONFIG_STORE_INT_PARAM(TsnLowRxQueue);
-			CONFIG_STORE_INT_PARAM(TsnLowTxQueue);
-			CONFIG_STORE_INT_PARAM(TsnLowSocketPriority);
-			CONFIG_STORE_INT_PARAM(TsnLowTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(TsnLowRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(TsnLowTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(TsnLowRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(TsnLowInterface);
-			CONFIG_STORE_MAC_PARAM(TsnLowDestination);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_enabled);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_tx_time_enabled);
+			CONFIG_STORE_BOOL_PARAM(tsn_low_ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM(tsn_low_tx_time_offset_ns);
+			CONFIG_STORE_INT_PARAM(tsn_low_vid);
+			CONFIG_STORE_ULONG_PARAM(tsn_low_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(tsn_low_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(tsn_low_frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM(tsn_low_security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(tsn_low_security_algorithm);
+			CONFIG_STORE_STRING_PARAM(tsn_low_security_key);
+			CONFIG_STORE_STRING_PARAM(tsn_low_security_iv_prefix);
+			CONFIG_STORE_INT_PARAM(tsn_low_rx_queue);
+			CONFIG_STORE_INT_PARAM(tsn_low_tx_queue);
+			CONFIG_STORE_INT_PARAM(tsn_low_socket_priority);
+			CONFIG_STORE_INT_PARAM(tsn_low_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(tsn_low_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(tsn_low_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(tsn_low_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(tsn_low_interface);
+			CONFIG_STORE_MAC_PARAM(tsn_low_destination);
 
-			CONFIG_STORE_BOOL_PARAM(RtcEnabled);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpEnabled);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpSkbMode);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpZcMode);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpWakeupMode);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpBusyPollMode);
-			CONFIG_STORE_BOOL_PARAM(RtcIgnoreRxErrors);
-			CONFIG_STORE_INT_PARAM(RtcVid);
-			CONFIG_STORE_ULONG_PARAM(RtcNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(RtcPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(RtcFrameLength);
-			CONFIG_STORE_SECURITY_MODE_PARAM(RtcSecurityMode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(RtcSecurityAlgorithm);
-			CONFIG_STORE_STRING_PARAM(RtcSecurityKey);
-			CONFIG_STORE_STRING_PARAM(RtcSecurityIvPrefix);
-			CONFIG_STORE_INT_PARAM(RtcRxQueue);
-			CONFIG_STORE_INT_PARAM(RtcTxQueue);
-			CONFIG_STORE_INT_PARAM(RtcSocketPriority);
-			CONFIG_STORE_INT_PARAM(RtcTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(RtcRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(RtcTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(RtcRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(RtcInterface);
-			CONFIG_STORE_MAC_PARAM(RtcDestination);
+			CONFIG_STORE_BOOL_PARAM(rtc_enabled);
+			CONFIG_STORE_BOOL_PARAM(rtc_xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM(rtc_xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM(rtc_xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM(rtc_xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM(rtc_xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM(rtc_ignore_rx_errors);
+			CONFIG_STORE_INT_PARAM(rtc_vid);
+			CONFIG_STORE_ULONG_PARAM(rtc_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(rtc_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(rtc_frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM(rtc_security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(rtc_security_algorithm);
+			CONFIG_STORE_STRING_PARAM(rtc_security_key);
+			CONFIG_STORE_STRING_PARAM(rtc_security_iv_prefix);
+			CONFIG_STORE_INT_PARAM(rtc_rx_queue);
+			CONFIG_STORE_INT_PARAM(rtc_tx_queue);
+			CONFIG_STORE_INT_PARAM(rtc_socket_priority);
+			CONFIG_STORE_INT_PARAM(rtc_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(rtc_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(rtc_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(rtc_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(rtc_interface);
+			CONFIG_STORE_MAC_PARAM(rtc_destination);
 
-			CONFIG_STORE_BOOL_PARAM(RtaEnabled);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpEnabled);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpSkbMode);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpZcMode);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpWakeupMode);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpBusyPollMode);
-			CONFIG_STORE_BOOL_PARAM(RtaIgnoreRxErrors);
-			CONFIG_STORE_INT_PARAM(RtaVid);
-			CONFIG_STORE_ULONG_PARAM(RtaBurstPeriodNS);
-			CONFIG_STORE_ULONG_PARAM(RtaNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(RtaPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(RtaFrameLength);
-			CONFIG_STORE_SECURITY_MODE_PARAM(RtaSecurityMode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(RtaSecurityAlgorithm);
-			CONFIG_STORE_STRING_PARAM(RtaSecurityKey);
-			CONFIG_STORE_STRING_PARAM(RtaSecurityIvPrefix);
-			CONFIG_STORE_INT_PARAM(RtaRxQueue);
-			CONFIG_STORE_INT_PARAM(RtaTxQueue);
-			CONFIG_STORE_INT_PARAM(RtaSocketPriority);
-			CONFIG_STORE_INT_PARAM(RtaTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(RtaRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(RtaTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(RtaRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(RtaInterface);
-			CONFIG_STORE_MAC_PARAM(RtaDestination);
+			CONFIG_STORE_BOOL_PARAM(rta_enabled);
+			CONFIG_STORE_BOOL_PARAM(rta_xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM(rta_xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM(rta_xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM(rta_xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM(rta_xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM(rta_ignore_rx_errors);
+			CONFIG_STORE_INT_PARAM(rta_vid);
+			CONFIG_STORE_ULONG_PARAM(rta_burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM(rta_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(rta_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(rta_frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM(rta_security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(rta_security_algorithm);
+			CONFIG_STORE_STRING_PARAM(rta_security_key);
+			CONFIG_STORE_STRING_PARAM(rta_security_iv_prefix);
+			CONFIG_STORE_INT_PARAM(rta_rx_queue);
+			CONFIG_STORE_INT_PARAM(rta_tx_queue);
+			CONFIG_STORE_INT_PARAM(rta_socket_priority);
+			CONFIG_STORE_INT_PARAM(rta_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(rta_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(rta_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(rta_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(rta_interface);
+			CONFIG_STORE_MAC_PARAM(rta_destination);
 
-			CONFIG_STORE_BOOL_PARAM(DcpEnabled);
-			CONFIG_STORE_BOOL_PARAM(DcpIgnoreRxErrors);
-			CONFIG_STORE_INT_PARAM(DcpVid);
-			CONFIG_STORE_ULONG_PARAM(DcpBurstPeriodNS);
-			CONFIG_STORE_ULONG_PARAM(DcpNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(DcpPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(DcpFrameLength);
-			CONFIG_STORE_INT_PARAM(DcpRxQueue);
-			CONFIG_STORE_INT_PARAM(DcpTxQueue);
-			CONFIG_STORE_INT_PARAM(DcpSocketPriority);
-			CONFIG_STORE_INT_PARAM(DcpTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(DcpRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(DcpTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(DcpRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(DcpInterface);
-			CONFIG_STORE_MAC_PARAM(DcpDestination);
+			CONFIG_STORE_BOOL_PARAM(dcp_enabled);
+			CONFIG_STORE_BOOL_PARAM(dcp_ignore_rx_errors);
+			CONFIG_STORE_INT_PARAM(dcp_vid);
+			CONFIG_STORE_ULONG_PARAM(dcp_burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM(dcp_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(dcp_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(dcp_frame_length);
+			CONFIG_STORE_INT_PARAM(dcp_rx_queue);
+			CONFIG_STORE_INT_PARAM(dcp_tx_queue);
+			CONFIG_STORE_INT_PARAM(dcp_socket_priority);
+			CONFIG_STORE_INT_PARAM(dcp_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(dcp_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(dcp_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(dcp_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(dcp_interface);
+			CONFIG_STORE_MAC_PARAM(dcp_destination);
 
-			CONFIG_STORE_BOOL_PARAM(LldpEnabled);
-			CONFIG_STORE_BOOL_PARAM(LldpIgnoreRxErrors);
-			CONFIG_STORE_ULONG_PARAM(LldpBurstPeriodNS);
-			CONFIG_STORE_ULONG_PARAM(LldpNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(LldpPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(LldpFrameLength);
-			CONFIG_STORE_INT_PARAM(LldpRxQueue);
-			CONFIG_STORE_INT_PARAM(LldpTxQueue);
-			CONFIG_STORE_INT_PARAM(LldpSocketPriority);
-			CONFIG_STORE_INT_PARAM(LldpTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(LldpRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(LldpTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(LldpRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(LldpInterface);
-			CONFIG_STORE_MAC_PARAM(LldpDestination);
+			CONFIG_STORE_BOOL_PARAM(lldp_enabled);
+			CONFIG_STORE_BOOL_PARAM(lldp_ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM(lldp_burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM(lldp_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(lldp_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(lldp_frame_length);
+			CONFIG_STORE_INT_PARAM(lldp_rx_queue);
+			CONFIG_STORE_INT_PARAM(lldp_tx_queue);
+			CONFIG_STORE_INT_PARAM(lldp_socket_priority);
+			CONFIG_STORE_INT_PARAM(lldp_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(lldp_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(lldp_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(lldp_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(lldp_interface);
+			CONFIG_STORE_MAC_PARAM(lldp_destination);
 
-			CONFIG_STORE_BOOL_PARAM(UdpHighEnabled);
-			CONFIG_STORE_BOOL_PARAM(UdpHighIgnoreRxErrors);
-			CONFIG_STORE_ULONG_PARAM(UdpHighBurstPeriodNS);
-			CONFIG_STORE_ULONG_PARAM(UdpHighNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(UdpHighPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(UdpHighFrameLength);
-			CONFIG_STORE_INT_PARAM(UdpHighRxQueue);
-			CONFIG_STORE_INT_PARAM(UdpHighTxQueue);
-			CONFIG_STORE_INT_PARAM(UdpHighSocketPriority);
-			CONFIG_STORE_INT_PARAM(UdpHighTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(UdpHighRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(UdpHighTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(UdpHighRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(UdpHighInterface);
-			CONFIG_STORE_STRING_PARAM(UdpHighPort);
-			CONFIG_STORE_STRING_PARAM(UdpHighDestination);
-			CONFIG_STORE_STRING_PARAM(UdpHighSource);
+			CONFIG_STORE_BOOL_PARAM(udp_high_enabled);
+			CONFIG_STORE_BOOL_PARAM(udp_high_ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM(udp_high_burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM(udp_high_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(udp_high_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(udp_high_frame_length);
+			CONFIG_STORE_INT_PARAM(udp_high_rx_queue);
+			CONFIG_STORE_INT_PARAM(udp_high_tx_queue);
+			CONFIG_STORE_INT_PARAM(udp_high_socket_priority);
+			CONFIG_STORE_INT_PARAM(udp_high_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(udp_high_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(udp_high_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(udp_high_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(udp_high_interface);
+			CONFIG_STORE_STRING_PARAM(udp_high_port);
+			CONFIG_STORE_STRING_PARAM(udp_high_destination);
+			CONFIG_STORE_STRING_PARAM(udp_high_source);
 
-			CONFIG_STORE_BOOL_PARAM(UdpLowEnabled);
-			CONFIG_STORE_BOOL_PARAM(UdpLowIgnoreRxErrors);
-			CONFIG_STORE_ULONG_PARAM(UdpLowBurstPeriodNS);
-			CONFIG_STORE_ULONG_PARAM(UdpLowNumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(UdpLowPayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(UdpLowFrameLength);
-			CONFIG_STORE_INT_PARAM(UdpLowRxQueue);
-			CONFIG_STORE_INT_PARAM(UdpLowTxQueue);
-			CONFIG_STORE_INT_PARAM(UdpLowSocketPriority);
-			CONFIG_STORE_INT_PARAM(UdpLowTxThreadPriority);
-			CONFIG_STORE_INT_PARAM(UdpLowRxThreadPriority);
-			CONFIG_STORE_INT_PARAM(UdpLowTxThreadCpu);
-			CONFIG_STORE_INT_PARAM(UdpLowRxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(UdpLowInterface);
-			CONFIG_STORE_STRING_PARAM(UdpLowPort);
-			CONFIG_STORE_STRING_PARAM(UdpLowDestination);
-			CONFIG_STORE_STRING_PARAM(UdpLowSource);
+			CONFIG_STORE_BOOL_PARAM(udp_low_enabled);
+			CONFIG_STORE_BOOL_PARAM(udp_low_ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM(udp_low_burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM(udp_low_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(udp_low_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(udp_low_frame_length);
+			CONFIG_STORE_INT_PARAM(udp_low_rx_queue);
+			CONFIG_STORE_INT_PARAM(udp_low_tx_queue);
+			CONFIG_STORE_INT_PARAM(udp_low_socket_priority);
+			CONFIG_STORE_INT_PARAM(udp_low_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(udp_low_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(udp_low_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(udp_low_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(udp_low_interface);
+			CONFIG_STORE_STRING_PARAM(udp_low_port);
+			CONFIG_STORE_STRING_PARAM(udp_low_destination);
+			CONFIG_STORE_STRING_PARAM(udp_low_source);
 
-			CONFIG_STORE_STRING_PARAM(GenericL2Name);
-			CONFIG_STORE_BOOL_PARAM(GenericL2Enabled);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpEnabled);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpSkbMode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpZcMode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpWakeupMode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpBusyPollMode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2TxTimeEnabled);
-			CONFIG_STORE_BOOL_PARAM(GenericL2IgnoreRxErrors);
-			CONFIG_STORE_ULONG_PARAM(GenericL2TxTimeOffsetNS);
-			CONFIG_STORE_INT_PARAM(GenericL2Vid);
-			CONFIG_STORE_INT_PARAM(GenericL2Pcp);
-			CONFIG_STORE_ETHER_TYPE(GenericL2EtherType);
-			CONFIG_STORE_ULONG_PARAM(GenericL2NumFramesPerCycle);
-			CONFIG_STORE_STRING_PARAM(GenericL2PayloadPattern);
-			CONFIG_STORE_ULONG_PARAM(GenericL2FrameLength);
-			CONFIG_STORE_INT_PARAM(GenericL2RxQueue);
-			CONFIG_STORE_INT_PARAM(GenericL2TxQueue);
-			CONFIG_STORE_INT_PARAM(GenericL2SocketPriority);
-			CONFIG_STORE_INT_PARAM(GenericL2TxThreadPriority);
-			CONFIG_STORE_INT_PARAM(GenericL2RxThreadPriority);
-			CONFIG_STORE_INT_PARAM(GenericL2TxThreadCpu);
-			CONFIG_STORE_INT_PARAM(GenericL2RxThreadCpu);
-			CONFIG_STORE_INTERFACE_PARAM(GenericL2Interface);
-			CONFIG_STORE_MAC_PARAM(GenericL2Destination);
+			CONFIG_STORE_STRING_PARAM(generic_l2_name);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_enabled);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_tx_time_enabled);
+			CONFIG_STORE_BOOL_PARAM(generic_l2_ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM(generic_l2_tx_time_offset_ns);
+			CONFIG_STORE_INT_PARAM(generic_l2_vid);
+			CONFIG_STORE_INT_PARAM(generic_l2_pcp);
+			CONFIG_STORE_ETHER_TYPE(generic_l2_ether_type);
+			CONFIG_STORE_ULONG_PARAM(generic_l2_num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM(generic_l2_payload_pattern);
+			CONFIG_STORE_ULONG_PARAM(generic_l2_frame_length);
+			CONFIG_STORE_INT_PARAM(generic_l2_rx_queue);
+			CONFIG_STORE_INT_PARAM(generic_l2_tx_queue);
+			CONFIG_STORE_INT_PARAM(generic_l2_socket_priority);
+			CONFIG_STORE_INT_PARAM(generic_l2_tx_thread_priority);
+			CONFIG_STORE_INT_PARAM(generic_l2_rx_thread_priority);
+			CONFIG_STORE_INT_PARAM(generic_l2_tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM(generic_l2_rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM(generic_l2_interface);
+			CONFIG_STORE_MAC_PARAM(generic_l2_destination);
 
-			CONFIG_STORE_ULONG_PARAM(LogThreadPeriodNS);
-			CONFIG_STORE_INT_PARAM(LogThreadPriority);
-			CONFIG_STORE_INT_PARAM(LogThreadCpu);
-			CONFIG_STORE_STRING_PARAM(LogFile);
-			CONFIG_STORE_STRING_PARAM(LogLevel);
+			CONFIG_STORE_ULONG_PARAM(log_thread_period_ns);
+			CONFIG_STORE_INT_PARAM(log_thread_priority);
+			CONFIG_STORE_INT_PARAM(log_thread_cpu);
+			CONFIG_STORE_STRING_PARAM(log_file);
+			CONFIG_STORE_STRING_PARAM(log_level);
 
-			CONFIG_STORE_BOOL_PARAM(DebugStopTraceOnRtt);
-			CONFIG_STORE_BOOL_PARAM(DebugStopTraceOnError);
-			CONFIG_STORE_ULONG_PARAM(DebugStopTraceRttLimitNS);
-			CONFIG_STORE_BOOL_PARAM(DebugMonitorMode);
-			CONFIG_STORE_MAC_PARAM(DebugMonitorDestination);
+			CONFIG_STORE_BOOL_PARAM(debug_stop_trace_on_rtt);
+			CONFIG_STORE_BOOL_PARAM(debug_stop_trace_on_error);
+			CONFIG_STORE_ULONG_PARAM(debug_stop_trace_rtt_limit_ns);
+			CONFIG_STORE_BOOL_PARAM(debug_monitor_mode);
+			CONFIG_STORE_MAC_PARAM(debug_monitor_destination);
 
-			CONFIG_STORE_ULONG_PARAM(StatsCollectionIntervalNS);
+			CONFIG_STORE_ULONG_PARAM(stats_collection_interval_ns);
 
-			CONFIG_STORE_BOOL_PARAM(LogViaMQTT);
-			CONFIG_STORE_INT_PARAM(LogViaMQTTThreadPriority);
-			CONFIG_STORE_INT_PARAM(LogViaMQTTThreadCpu);
-			CONFIG_STORE_ULONG_PARAM(LogViaMQTTThreadPeriodNS);
-			CONFIG_STORE_STRING_PARAM(LogViaMQTTBrokerIP);
-			CONFIG_STORE_INT_PARAM(LogViaMQTTBrokerPort);
-			CONFIG_STORE_INT_PARAM(LogViaMQTTKeepAliveSecs);
-			CONFIG_STORE_STRING_PARAM(LogViaMQTTMeasurementName);
+			CONFIG_STORE_BOOL_PARAM(log_via_mqtt);
+			CONFIG_STORE_INT_PARAM(log_via_mqtt_thread_priority);
+			CONFIG_STORE_INT_PARAM(log_via_mqtt_thread_cpu);
+			CONFIG_STORE_ULONG_PARAM(log_via_mqtt_thread_period_ns);
+			CONFIG_STORE_STRING_PARAM(log_via_mqtt_broker_ip);
+			CONFIG_STORE_INT_PARAM(log_via_mqtt_broker_port);
+			CONFIG_STORE_INT_PARAM(log_via_mqtt_keep_alive_secs);
+			CONFIG_STORE_STRING_PARAM(log_via_mqtt_measurement_name);
 
 			if (key)
 				free(key);
@@ -346,667 +346,667 @@ err_yaml:
 	return ret;
 }
 
-void ConfigPrintValues(void)
+void config_print_values(void)
 {
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("ApplicationClockId=%s\n",
-	       appConfig.ApplicationClockId == CLOCK_TAI ? "CLOCK_TAI" : "CLOCK_MONOTONIC");
-	printf("ApplicationBaseCycleTimeNS=%" PRIu64 "\n", appConfig.ApplicationBaseCycleTimeNS);
-	printf("ApplicationBaseStartTimeNS=%" PRIu64 "\n", appConfig.ApplicationBaseStartTimeNS);
-	printf("ApplicationTxBaseOffsetNS=%" PRIu64 "\n", appConfig.ApplicationTxBaseOffsetNS);
-	printf("ApplicationRxBaseOffsetNS=%" PRIu64 "\n", appConfig.ApplicationRxBaseOffsetNS);
-	printf("ApplicationXdpProgram=%s\n", appConfig.ApplicationXdpProgram);
+	       app_config.application_clock_id == CLOCK_TAI ? "CLOCK_TAI" : "CLOCK_MONOTONIC");
+	printf("ApplicationBaseCycleTimeNS=%" PRIu64 "\n", app_config.application_base_cycle_time_ns);
+	printf("ApplicationBaseStartTimeNS=%" PRIu64 "\n", app_config.application_base_start_time_ns);
+	printf("ApplicationTxBaseOffsetNS=%" PRIu64 "\n", app_config.application_tx_base_offset_ns);
+	printf("ApplicationRxBaseOffsetNS=%" PRIu64 "\n", app_config.application_rx_base_offset_ns);
+	printf("ApplicationXdpProgram=%s\n", app_config.application_xdp_program);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("TsnHighEnabled=%s\n", appConfig.TsnHighEnabled ? "True" : "False");
-	printf("TsnHighRxMirrorEnabled=%s\n", appConfig.TsnHighRxMirrorEnabled ? "True" : "False");
-	printf("TsnHighXdpEnabled=%s\n", appConfig.TsnHighXdpEnabled ? "True" : "False");
-	printf("TsnHighXdpSkbMode=%s\n", appConfig.TsnHighXdpSkbMode ? "True" : "False");
-	printf("TsnHighXdpZcMode=%s\n", appConfig.TsnHighXdpZcMode ? "True" : "False");
-	printf("TsnHighXdpWakeupMode=%s\n", appConfig.TsnHighXdpWakeupMode ? "True" : "False");
-	printf("TsnHighXdpBusyPollMode=%s\n", appConfig.TsnHighXdpBusyPollMode ? "True" : "False");
-	printf("TsnHighTxTimeEnabled=%s\n", appConfig.TsnHighTxTimeEnabled ? "True" : "False");
-	printf("TsnHighIgnoreRxErrors=%s\n", appConfig.TsnHighIgnoreRxErrors ? "True" : "False");
-	printf("TsnHighTxTimeOffsetNS=%" PRIu64 "\n", appConfig.TsnHighTxTimeOffsetNS);
-	printf("TsnHighVid=%d\n", appConfig.TsnHighVid);
-	printf("TsnHighNumFramesPerCycle=%zu\n", appConfig.TsnHighNumFramesPerCycle);
+	printf("TsnHighEnabled=%s\n", app_config.tsn_high_enabled ? "True" : "False");
+	printf("TsnHighRxMirrorEnabled=%s\n", app_config.tsn_high_rx_mirror_enabled ? "True" : "False");
+	printf("TsnHighXdpEnabled=%s\n", app_config.tsn_high_xdp_enabled ? "True" : "False");
+	printf("TsnHighXdpSkbMode=%s\n", app_config.tsn_high_xdp_skb_mode ? "True" : "False");
+	printf("TsnHighXdpZcMode=%s\n", app_config.tsn_high_xdp_zc_mode ? "True" : "False");
+	printf("TsnHighXdpWakeupMode=%s\n", app_config.tsn_high_xdp_wakeup_mode ? "True" : "False");
+	printf("TsnHighXdpBusyPollMode=%s\n", app_config.tsn_high_xdp_busy_poll_mode ? "True" : "False");
+	printf("TsnHighTxTimeEnabled=%s\n", app_config.tsn_high_tx_time_enabled ? "True" : "False");
+	printf("TsnHighIgnoreRxErrors=%s\n", app_config.tsn_high_ignore_rx_errors ? "True" : "False");
+	printf("TsnHighTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_high_tx_time_offset_ns);
+	printf("TsnHighVid=%d\n", app_config.tsn_high_vid);
+	printf("TsnHighNumFramesPerCycle=%zu\n", app_config.tsn_high_num_frames_per_cycle);
 	printf("TsnHighPayloadPattern=");
-	PrintPayloadPattern(appConfig.TsnHighPayloadPattern, appConfig.TsnHighPayloadPatternLength);
+	print_payload_pattern(app_config.tsn_high_payload_pattern, app_config.tsn_high_payload_pattern_length);
 	printf("\n");
-	printf("TsnHighFrameLength=%zu\n", appConfig.TsnHighFrameLength);
-	printf("TsnHighSecurityMode=%s\n", SecurityModeToString(appConfig.TsnHighSecurityMode));
+	printf("TsnHighFrameLength=%zu\n", app_config.tsn_high_frame_length);
+	printf("TsnHighSecurityMode=%s\n", security_mode_to_string(app_config.tsn_high_security_mode));
 	printf("TsnHighSecurityAlgorithm=%s\n",
-	       SecurityAlgorithmToString(appConfig.TsnHighSecurityAlgorithm));
-	printf("TsnHighSecurityKey=%s\n", appConfig.TsnHighSecurityKey);
-	printf("TsnHighSecurityIvPrefix=%s\n", appConfig.TsnHighSecurityIvPrefix);
-	printf("TsnHighRxQueue=%d\n", appConfig.TsnHighRxQueue);
-	printf("TsnHighTxQueue=%d\n", appConfig.TsnHighTxQueue);
-	printf("TsnHighSocketPriority=%d\n", appConfig.TsnHighSocketPriority);
-	printf("TsnHighTxThreadPriority=%d\n", appConfig.TsnHighTxThreadPriority);
-	printf("TsnHighRxThreadPriority=%d\n", appConfig.TsnHighRxThreadPriority);
-	printf("TsnHighTxThreadCpu=%d\n", appConfig.TsnHighTxThreadCpu);
-	printf("TsnHighRxThreadCpu=%d\n", appConfig.TsnHighRxThreadCpu);
-	printf("TsnHighInterface=%s\n", appConfig.TsnHighInterface);
+	       security_algorithm_to_string(app_config.tsn_high_security_algorithm));
+	printf("TsnHighSecurityKey=%s\n", app_config.tsn_high_security_key);
+	printf("TsnHighSecurityIvPrefix=%s\n", app_config.tsn_high_security_iv_prefix);
+	printf("TsnHighRxQueue=%d\n", app_config.tsn_high_rx_queue);
+	printf("TsnHighTxQueue=%d\n", app_config.tsn_high_tx_queue);
+	printf("TsnHighSocketPriority=%d\n", app_config.tsn_high_socket_priority);
+	printf("TsnHighTxThreadPriority=%d\n", app_config.tsn_high_tx_thread_priority);
+	printf("TsnHighRxThreadPriority=%d\n", app_config.tsn_high_rx_thread_priority);
+	printf("TsnHighTxThreadCpu=%d\n", app_config.tsn_high_tx_thread_cpu);
+	printf("TsnHighRxThreadCpu=%d\n", app_config.tsn_high_rx_thread_cpu);
+	printf("TsnHighInterface=%s\n", app_config.tsn_high_interface);
 	printf("TsnHighDestination=");
-	PrintMacAddress(appConfig.TsnHighDestination);
+	print_mac_address(app_config.tsn_high_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("TsnLowEnabled=%s\n", appConfig.TsnLowEnabled ? "True" : "False");
-	printf("TsnLowRxMirrorEnabled=%s\n", appConfig.TsnLowRxMirrorEnabled ? "True" : "False");
-	printf("TsnLowXdpEnabled=%s\n", appConfig.TsnLowXdpEnabled ? "True" : "False");
-	printf("TsnLowXdpSkbMode=%s\n", appConfig.TsnLowXdpSkbMode ? "True" : "False");
-	printf("TsnLowXdpZcMode=%s\n", appConfig.TsnLowXdpZcMode ? "True" : "False");
-	printf("TsnLowXdpWakeupMode=%s\n", appConfig.TsnLowXdpWakeupMode ? "True" : "False");
-	printf("TsnLowXdpBusyPollMode=%s\n", appConfig.TsnLowXdpBusyPollMode ? "True" : "False");
-	printf("TsnLowTxTimeEnabled=%s\n", appConfig.TsnLowTxTimeEnabled ? "True" : "False");
-	printf("TsnLowIgnoreRxErrors=%s\n", appConfig.TsnLowIgnoreRxErrors ? "True" : "False");
-	printf("TsnLowTxTimeOffsetNS=%" PRIu64 "\n", appConfig.TsnLowTxTimeOffsetNS);
-	printf("TsnLowVid=%d\n", appConfig.TsnLowVid);
-	printf("TsnLowNumFramesPerCycle=%zu\n", appConfig.TsnLowNumFramesPerCycle);
+	printf("TsnLowEnabled=%s\n", app_config.tsn_low_enabled ? "True" : "False");
+	printf("TsnLowRxMirrorEnabled=%s\n", app_config.tsn_low_rx_mirror_enabled ? "True" : "False");
+	printf("TsnLowXdpEnabled=%s\n", app_config.tsn_low_xdp_enabled ? "True" : "False");
+	printf("TsnLowXdpSkbMode=%s\n", app_config.tsn_low_xdp_skb_mode ? "True" : "False");
+	printf("TsnLowXdpZcMode=%s\n", app_config.tsn_low_xdp_zc_mode ? "True" : "False");
+	printf("TsnLowXdpWakeupMode=%s\n", app_config.tsn_low_xdp_wakeup_mode ? "True" : "False");
+	printf("TsnLowXdpBusyPollMode=%s\n", app_config.tsn_low_xdp_busy_poll_mode ? "True" : "False");
+	printf("TsnLowTxTimeEnabled=%s\n", app_config.tsn_low_tx_time_enabled ? "True" : "False");
+	printf("TsnLowIgnoreRxErrors=%s\n", app_config.tsn_low_ignore_rx_errors ? "True" : "False");
+	printf("TsnLowTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_low_tx_time_offset_ns);
+	printf("TsnLowVid=%d\n", app_config.tsn_low_vid);
+	printf("TsnLowNumFramesPerCycle=%zu\n", app_config.tsn_low_num_frames_per_cycle);
 	printf("TsnLowPayloadPattern=");
-	PrintPayloadPattern(appConfig.TsnLowPayloadPattern, appConfig.TsnLowPayloadPatternLength);
+	print_payload_pattern(app_config.tsn_low_payload_pattern, app_config.tsn_low_payload_pattern_length);
 	printf("\n");
-	printf("TsnLowFrameLength=%zu\n", appConfig.TsnLowFrameLength);
-	printf("TsnLowSecurityMode=%s\n", SecurityModeToString(appConfig.TsnLowSecurityMode));
+	printf("TsnLowFrameLength=%zu\n", app_config.tsn_low_frame_length);
+	printf("TsnLowSecurityMode=%s\n", security_mode_to_string(app_config.tsn_low_security_mode));
 	printf("TsnLowSecurityAlgorithm=%s\n",
-	       SecurityAlgorithmToString(appConfig.TsnLowSecurityAlgorithm));
-	printf("TsnLowSecurityKey=%s\n", appConfig.TsnLowSecurityKey);
-	printf("TsnLowSecurityIvPrefix=%s\n", appConfig.TsnLowSecurityIvPrefix);
-	printf("TsnLowRxQueue=%d\n", appConfig.TsnLowRxQueue);
-	printf("TsnLowTxQueue=%d\n", appConfig.TsnLowTxQueue);
-	printf("TsnLowSocketPriority=%d\n", appConfig.TsnLowSocketPriority);
-	printf("TsnLowTxThreadPriority=%d\n", appConfig.TsnLowTxThreadPriority);
-	printf("TsnLowRxThreadPriority=%d\n", appConfig.TsnLowRxThreadPriority);
-	printf("TsnLowTxThreadCpu=%d\n", appConfig.TsnLowTxThreadCpu);
-	printf("TsnLowRxThreadCpu=%d\n", appConfig.TsnLowRxThreadCpu);
-	printf("TsnLowInterface=%s\n", appConfig.TsnLowInterface);
+	       security_algorithm_to_string(app_config.tsn_low_security_algorithm));
+	printf("TsnLowSecurityKey=%s\n", app_config.tsn_low_security_key);
+	printf("TsnLowSecurityIvPrefix=%s\n", app_config.tsn_low_security_iv_prefix);
+	printf("TsnLowRxQueue=%d\n", app_config.tsn_low_rx_queue);
+	printf("TsnLowTxQueue=%d\n", app_config.tsn_low_tx_queue);
+	printf("TsnLowSocketPriority=%d\n", app_config.tsn_low_socket_priority);
+	printf("TsnLowTxThreadPriority=%d\n", app_config.tsn_low_tx_thread_priority);
+	printf("TsnLowRxThreadPriority=%d\n", app_config.tsn_low_rx_thread_priority);
+	printf("TsnLowTxThreadCpu=%d\n", app_config.tsn_low_tx_thread_cpu);
+	printf("TsnLowRxThreadCpu=%d\n", app_config.tsn_low_rx_thread_cpu);
+	printf("TsnLowInterface=%s\n", app_config.tsn_low_interface);
 	printf("TsnLowDestination=");
-	PrintMacAddress(appConfig.TsnLowDestination);
+	print_mac_address(app_config.tsn_low_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("RtcEnabled=%s\n", appConfig.RtcEnabled ? "True" : "False");
-	printf("RtcRxMirrorEnabled=%s\n", appConfig.RtcRxMirrorEnabled ? "True" : "False");
-	printf("RtcXdpEnabled=%s\n", appConfig.RtcXdpEnabled ? "True" : "False");
-	printf("RtcXdpSkbMode=%s\n", appConfig.RtcXdpSkbMode ? "True" : "False");
-	printf("RtcXdpZcMode=%s\n", appConfig.RtcXdpZcMode ? "True" : "False");
-	printf("RtcXdpWakeupMode=%s\n", appConfig.RtcXdpWakeupMode ? "True" : "False");
-	printf("RtcXdpBusyPollMode=%s\n", appConfig.RtcXdpBusyPollMode ? "True" : "False");
-	printf("RtcIgnoreRxErrors=%s\n", appConfig.RtcIgnoreRxErrors ? "True" : "False");
-	printf("RtcVid=%d\n", appConfig.RtcVid);
-	printf("RtcNumFramesPerCycle=%zu\n", appConfig.RtcNumFramesPerCycle);
+	printf("RtcEnabled=%s\n", app_config.rtc_enabled ? "True" : "False");
+	printf("RtcRxMirrorEnabled=%s\n", app_config.rtc_rx_mirror_enabled ? "True" : "False");
+	printf("RtcXdpEnabled=%s\n", app_config.rtc_xdp_enabled ? "True" : "False");
+	printf("RtcXdpSkbMode=%s\n", app_config.rtc_xdp_skb_mode ? "True" : "False");
+	printf("RtcXdpZcMode=%s\n", app_config.rtc_xdp_zc_mode ? "True" : "False");
+	printf("RtcXdpWakeupMode=%s\n", app_config.rtc_xdp_wakeup_mode ? "True" : "False");
+	printf("RtcXdpBusyPollMode=%s\n", app_config.rtc_xdp_busy_poll_mode ? "True" : "False");
+	printf("RtcIgnoreRxErrors=%s\n", app_config.rtc_ignore_rx_errors ? "True" : "False");
+	printf("RtcVid=%d\n", app_config.rtc_vid);
+	printf("RtcNumFramesPerCycle=%zu\n", app_config.rtc_num_frames_per_cycle);
 	printf("RtcPayloadPattern=");
-	PrintPayloadPattern(appConfig.RtcPayloadPattern, appConfig.RtcPayloadPatternLength);
+	print_payload_pattern(app_config.rtc_payload_pattern, app_config.rtc_payload_pattern_length);
 	printf("\n");
-	printf("RtcFrameLength=%zu\n", appConfig.RtcFrameLength);
-	printf("RtcSecurityMode=%s\n", SecurityModeToString(appConfig.RtcSecurityMode));
+	printf("RtcFrameLength=%zu\n", app_config.rtc_frame_length);
+	printf("RtcSecurityMode=%s\n", security_mode_to_string(app_config.rtc_security_mode));
 	printf("RtcSecurityAlgorithm=%s\n",
-	       SecurityAlgorithmToString(appConfig.RtcSecurityAlgorithm));
-	printf("RtcSecurityKey=%s\n", appConfig.RtcSecurityKey);
-	printf("RtcSecurityIvPrefix=%s\n", appConfig.RtcSecurityIvPrefix);
-	printf("RtcRxQueue=%d\n", appConfig.RtcRxQueue);
-	printf("RtcTxQueue=%d\n", appConfig.RtcTxQueue);
-	printf("RtcSocketPriority=%d\n", appConfig.RtcSocketPriority);
-	printf("RtcTxThreadPriority=%d\n", appConfig.RtcTxThreadPriority);
-	printf("RtcRxThreadPriority=%d\n", appConfig.RtcRxThreadPriority);
-	printf("RtcTxThreadCpu=%d\n", appConfig.RtcTxThreadCpu);
-	printf("RtcRxThreadCpu=%d\n", appConfig.RtcRxThreadCpu);
-	printf("RtcInterface=%s\n", appConfig.RtcInterface);
+	       security_algorithm_to_string(app_config.rtc_security_algorithm));
+	printf("RtcSecurityKey=%s\n", app_config.rtc_security_key);
+	printf("RtcSecurityIvPrefix=%s\n", app_config.rtc_security_iv_prefix);
+	printf("RtcRxQueue=%d\n", app_config.rtc_rx_queue);
+	printf("RtcTxQueue=%d\n", app_config.rtc_tx_queue);
+	printf("RtcSocketPriority=%d\n", app_config.rtc_socket_priority);
+	printf("RtcTxThreadPriority=%d\n", app_config.rtc_tx_thread_priority);
+	printf("RtcRxThreadPriority=%d\n", app_config.rtc_rx_thread_priority);
+	printf("RtcTxThreadCpu=%d\n", app_config.rtc_tx_thread_cpu);
+	printf("RtcRxThreadCpu=%d\n", app_config.rtc_rx_thread_cpu);
+	printf("RtcInterface=%s\n", app_config.rtc_interface);
 	printf("RtcDestination=");
-	PrintMacAddress(appConfig.RtcDestination);
+	print_mac_address(app_config.rtc_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("RtaEnabled=%s\n", appConfig.RtaEnabled ? "True" : "False");
-	printf("RtaRxMirrorEnabled=%s\n", appConfig.RtaRxMirrorEnabled ? "True" : "False");
-	printf("RtaXdpEnabled=%s\n", appConfig.RtaXdpEnabled ? "True" : "False");
-	printf("RtaXdpSkbMode=%s\n", appConfig.RtaXdpSkbMode ? "True" : "False");
-	printf("RtaXdpZcMode=%s\n", appConfig.RtaXdpZcMode ? "True" : "False");
-	printf("RtaXdpWakeupMode=%s\n", appConfig.RtaXdpWakeupMode ? "True" : "False");
-	printf("RtaXdpBusyPollMode=%s\n", appConfig.RtaXdpBusyPollMode ? "True" : "False");
-	printf("RtaIgnoreRxErrors=%s\n", appConfig.RtaIgnoreRxErrors ? "True" : "False");
-	printf("RtaVid=%d\n", appConfig.RtaVid);
-	printf("RtaBurstPeriodNS=%" PRIu64 "\n", appConfig.RtaBurstPeriodNS);
-	printf("RtaNumFramesPerCycle=%zu\n", appConfig.RtaNumFramesPerCycle);
+	printf("RtaEnabled=%s\n", app_config.rta_enabled ? "True" : "False");
+	printf("RtaRxMirrorEnabled=%s\n", app_config.rta_rx_mirror_enabled ? "True" : "False");
+	printf("RtaXdpEnabled=%s\n", app_config.rta_xdp_enabled ? "True" : "False");
+	printf("RtaXdpSkbMode=%s\n", app_config.rta_xdp_skb_mode ? "True" : "False");
+	printf("RtaXdpZcMode=%s\n", app_config.rta_xdp_zc_mode ? "True" : "False");
+	printf("RtaXdpWakeupMode=%s\n", app_config.rta_xdp_wakeup_mode ? "True" : "False");
+	printf("RtaXdpBusyPollMode=%s\n", app_config.rta_xdp_busy_poll_mode ? "True" : "False");
+	printf("RtaIgnoreRxErrors=%s\n", app_config.rta_ignore_rx_errors ? "True" : "False");
+	printf("RtaVid=%d\n", app_config.rta_vid);
+	printf("RtaBurstPeriodNS=%" PRIu64 "\n", app_config.rta_burst_period_ns);
+	printf("RtaNumFramesPerCycle=%zu\n", app_config.rta_num_frames_per_cycle);
 	printf("RtaPayloadPattern=");
-	PrintPayloadPattern(appConfig.RtaPayloadPattern, appConfig.RtaPayloadPatternLength);
+	print_payload_pattern(app_config.rta_payload_pattern, app_config.rta_payload_pattern_length);
 	printf("\n");
-	printf("RtaFrameLength=%zu\n", appConfig.RtaFrameLength);
-	printf("RtaSecurityMode=%s\n", SecurityModeToString(appConfig.RtaSecurityMode));
+	printf("RtaFrameLength=%zu\n", app_config.rta_frame_length);
+	printf("RtaSecurityMode=%s\n", security_mode_to_string(app_config.rta_security_mode));
 	printf("RtaSecurityAlgorithm=%s\n",
-	       SecurityAlgorithmToString(appConfig.RtaSecurityAlgorithm));
-	printf("RtaSecurityKey=%s\n", appConfig.RtaSecurityKey);
-	printf("RtaSecurityIvPrefix=%s\n", appConfig.RtaSecurityIvPrefix);
-	printf("RtaRxQueue=%d\n", appConfig.RtaRxQueue);
-	printf("RtaTxQueue=%d\n", appConfig.RtaTxQueue);
-	printf("RtaSocketPriority=%d\n", appConfig.RtaSocketPriority);
-	printf("RtaTxThreadPriority=%d\n", appConfig.RtaTxThreadPriority);
-	printf("RtaRxThreadPriority=%d\n", appConfig.RtaRxThreadPriority);
-	printf("RtaTxThreadCpu=%d\n", appConfig.RtaTxThreadCpu);
-	printf("RtaRxThreadCpu=%d\n", appConfig.RtaRxThreadCpu);
-	printf("RtaInterface=%s\n", appConfig.RtaInterface);
+	       security_algorithm_to_string(app_config.rta_security_algorithm));
+	printf("RtaSecurityKey=%s\n", app_config.rta_security_key);
+	printf("RtaSecurityIvPrefix=%s\n", app_config.rta_security_iv_prefix);
+	printf("RtaRxQueue=%d\n", app_config.rta_rx_queue);
+	printf("RtaTxQueue=%d\n", app_config.rta_tx_queue);
+	printf("RtaSocketPriority=%d\n", app_config.rta_socket_priority);
+	printf("RtaTxThreadPriority=%d\n", app_config.rta_tx_thread_priority);
+	printf("RtaRxThreadPriority=%d\n", app_config.rta_rx_thread_priority);
+	printf("RtaTxThreadCpu=%d\n", app_config.rta_tx_thread_cpu);
+	printf("RtaRxThreadCpu=%d\n", app_config.rta_rx_thread_cpu);
+	printf("RtaInterface=%s\n", app_config.rta_interface);
 	printf("RtaDestination=");
-	PrintMacAddress(appConfig.RtaDestination);
+	print_mac_address(app_config.rta_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("DcpEnabled=%s\n", appConfig.DcpEnabled ? "True" : "False");
-	printf("DcpRxMirrorEnabled=%s\n", appConfig.DcpRxMirrorEnabled ? "True" : "False");
-	printf("DcpIgnoreRxErrors=%s\n", appConfig.DcpIgnoreRxErrors ? "True" : "False");
-	printf("DcpVid=%d\n", appConfig.DcpVid);
-	printf("DcpBurstPeriodNS=%" PRIu64 "\n", appConfig.DcpBurstPeriodNS);
-	printf("DcpNumFramesPerCycle=%zu\n", appConfig.DcpNumFramesPerCycle);
+	printf("DcpEnabled=%s\n", app_config.dcp_enabled ? "True" : "False");
+	printf("DcpRxMirrorEnabled=%s\n", app_config.dcp_rx_mirror_enabled ? "True" : "False");
+	printf("DcpIgnoreRxErrors=%s\n", app_config.dcp_ignore_rx_errors ? "True" : "False");
+	printf("DcpVid=%d\n", app_config.dcp_vid);
+	printf("DcpBurstPeriodNS=%" PRIu64 "\n", app_config.dcp_burst_period_ns);
+	printf("DcpNumFramesPerCycle=%zu\n", app_config.dcp_num_frames_per_cycle);
 	printf("DcpPayloadPattern=");
-	PrintPayloadPattern(appConfig.DcpPayloadPattern, appConfig.DcpPayloadPatternLength);
+	print_payload_pattern(app_config.dcp_payload_pattern, app_config.dcp_payload_pattern_length);
 	printf("\n");
-	printf("DcpFrameLength=%zu\n", appConfig.DcpFrameLength);
-	printf("DcpRxQueue=%d\n", appConfig.DcpRxQueue);
-	printf("DcpTxQueue=%d\n", appConfig.DcpTxQueue);
-	printf("DcpSocketPriority=%d\n", appConfig.DcpSocketPriority);
-	printf("DcpTxThreadPriority=%d\n", appConfig.DcpTxThreadPriority);
-	printf("DcpRxThreadPriority=%d\n", appConfig.DcpRxThreadPriority);
-	printf("DcpTxThreadCpu=%d\n", appConfig.DcpTxThreadCpu);
-	printf("DcpRxThreadCpu=%d\n", appConfig.DcpRxThreadCpu);
-	printf("DcpInterface=%s\n", appConfig.DcpInterface);
+	printf("DcpFrameLength=%zu\n", app_config.dcp_frame_length);
+	printf("DcpRxQueue=%d\n", app_config.dcp_rx_queue);
+	printf("DcpTxQueue=%d\n", app_config.dcp_tx_queue);
+	printf("DcpSocketPriority=%d\n", app_config.dcp_socket_priority);
+	printf("DcpTxThreadPriority=%d\n", app_config.dcp_tx_thread_priority);
+	printf("DcpRxThreadPriority=%d\n", app_config.dcp_rx_thread_priority);
+	printf("DcpTxThreadCpu=%d\n", app_config.dcp_tx_thread_cpu);
+	printf("DcpRxThreadCpu=%d\n", app_config.dcp_rx_thread_cpu);
+	printf("DcpInterface=%s\n", app_config.dcp_interface);
 	printf("DcpDestination=");
-	PrintMacAddress(appConfig.DcpDestination);
+	print_mac_address(app_config.dcp_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("LldpEnabled=%s\n", appConfig.LldpEnabled ? "True" : "False");
-	printf("LldpRxMirrorEnabled=%s\n", appConfig.LldpRxMirrorEnabled ? "True" : "False");
-	printf("LldpIgnoreRxErrors=%s\n", appConfig.DcpIgnoreRxErrors ? "True" : "False");
-	printf("LldpBurstPeriodNS=%" PRIu64 "\n", appConfig.LldpBurstPeriodNS);
-	printf("LldpNumFramesPerCycle=%zu\n", appConfig.LldpNumFramesPerCycle);
+	printf("LldpEnabled=%s\n", app_config.lldp_enabled ? "True" : "False");
+	printf("LldpRxMirrorEnabled=%s\n", app_config.lldp_rx_mirror_enabled ? "True" : "False");
+	printf("LldpIgnoreRxErrors=%s\n", app_config.dcp_ignore_rx_errors ? "True" : "False");
+	printf("LldpBurstPeriodNS=%" PRIu64 "\n", app_config.lldp_burst_period_ns);
+	printf("LldpNumFramesPerCycle=%zu\n", app_config.lldp_num_frames_per_cycle);
 	printf("LldpPayloadPattern=");
-	PrintPayloadPattern(appConfig.LldpPayloadPattern, appConfig.LldpPayloadPatternLength);
+	print_payload_pattern(app_config.lldp_payload_pattern, app_config.lldp_payload_pattern_length);
 	printf("\n");
-	printf("LldpFrameLength=%zu\n", appConfig.LldpFrameLength);
-	printf("LldpRxQueue=%d\n", appConfig.LldpRxQueue);
-	printf("LldpTxQueue=%d\n", appConfig.LldpTxQueue);
-	printf("LldpSocketPriority=%d\n", appConfig.LldpSocketPriority);
-	printf("LldpTxThreadPriority=%d\n", appConfig.LldpTxThreadPriority);
-	printf("LldpRxThreadPriority=%d\n", appConfig.LldpRxThreadPriority);
-	printf("LldpTxThreadCpu=%d\n", appConfig.LldpTxThreadCpu);
-	printf("LldpRxThreadCpu=%d\n", appConfig.LldpRxThreadCpu);
-	printf("LldpInterface=%s\n", appConfig.LldpInterface);
+	printf("LldpFrameLength=%zu\n", app_config.lldp_frame_length);
+	printf("LldpRxQueue=%d\n", app_config.lldp_rx_queue);
+	printf("LldpTxQueue=%d\n", app_config.lldp_tx_queue);
+	printf("LldpSocketPriority=%d\n", app_config.lldp_socket_priority);
+	printf("LldpTxThreadPriority=%d\n", app_config.lldp_tx_thread_priority);
+	printf("LldpRxThreadPriority=%d\n", app_config.lldp_rx_thread_priority);
+	printf("LldpTxThreadCpu=%d\n", app_config.lldp_tx_thread_cpu);
+	printf("LldpRxThreadCpu=%d\n", app_config.lldp_rx_thread_cpu);
+	printf("LldpInterface=%s\n", app_config.lldp_interface);
 	printf("LldpDestination=");
-	PrintMacAddress(appConfig.LldpDestination);
+	print_mac_address(app_config.lldp_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("UdpHighEnabled=%s\n", appConfig.UdpHighEnabled ? "True" : "False");
-	printf("UdpHighRxMirrorEnabled=%s\n", appConfig.UdpHighRxMirrorEnabled ? "True" : "False");
-	printf("UdpHighIgnoreRxErrors=%s\n", appConfig.UdpHighIgnoreRxErrors ? "True" : "False");
-	printf("UdpHighBurstPeriodNS=%" PRIu64 "\n", appConfig.UdpHighBurstPeriodNS);
-	printf("UdpHighNumFramesPerCycle=%zu\n", appConfig.UdpHighNumFramesPerCycle);
+	printf("UdpHighEnabled=%s\n", app_config.udp_high_enabled ? "True" : "False");
+	printf("UdpHighRxMirrorEnabled=%s\n", app_config.udp_high_rx_mirror_enabled ? "True" : "False");
+	printf("UdpHighIgnoreRxErrors=%s\n", app_config.udp_high_ignore_rx_errors ? "True" : "False");
+	printf("UdpHighBurstPeriodNS=%" PRIu64 "\n", app_config.udp_high_burst_period_ns);
+	printf("UdpHighNumFramesPerCycle=%zu\n", app_config.udp_high_num_frames_per_cycle);
 	printf("UdpHighPayloadPattern=");
-	PrintPayloadPattern(appConfig.UdpHighPayloadPattern, appConfig.UdpHighPayloadPatternLength);
+	print_payload_pattern(app_config.udp_high_payload_pattern, app_config.udp_high_payload_pattern_length);
 	printf("\n");
-	printf("UdpHighFrameLength=%zu\n", appConfig.UdpHighFrameLength);
-	printf("UdpHighRxQueue=%d\n", appConfig.UdpHighRxQueue);
-	printf("UdpHighTxQueue=%d\n", appConfig.UdpHighTxQueue);
-	printf("UdpHighSocketPriority=%d\n", appConfig.UdpHighSocketPriority);
-	printf("UdpHighTxThreadPriority=%d\n", appConfig.UdpHighTxThreadPriority);
-	printf("UdpHighRxThreadPriority=%d\n", appConfig.UdpHighRxThreadPriority);
-	printf("UdpHighTxThreadCpu=%d\n", appConfig.UdpHighTxThreadCpu);
-	printf("UdpHighRxThreadCpu=%d\n", appConfig.UdpHighRxThreadCpu);
-	printf("UdpHighInterface=%s\n", appConfig.UdpHighInterface);
-	printf("UdpHighPort=%s\n", appConfig.UdpHighPort);
-	printf("UdpHighDestination=%s\n", appConfig.UdpHighDestination);
-	printf("UdpHighSource=%s\n", appConfig.UdpHighSource);
+	printf("UdpHighFrameLength=%zu\n", app_config.udp_high_frame_length);
+	printf("UdpHighRxQueue=%d\n", app_config.udp_high_rx_queue);
+	printf("UdpHighTxQueue=%d\n", app_config.udp_high_tx_queue);
+	printf("UdpHighSocketPriority=%d\n", app_config.udp_high_socket_priority);
+	printf("UdpHighTxThreadPriority=%d\n", app_config.udp_high_tx_thread_priority);
+	printf("UdpHighRxThreadPriority=%d\n", app_config.udp_high_rx_thread_priority);
+	printf("UdpHighTxThreadCpu=%d\n", app_config.udp_high_tx_thread_cpu);
+	printf("UdpHighRxThreadCpu=%d\n", app_config.udp_high_rx_thread_cpu);
+	printf("UdpHighInterface=%s\n", app_config.udp_high_interface);
+	printf("UdpHighPort=%s\n", app_config.udp_high_port);
+	printf("UdpHighDestination=%s\n", app_config.udp_high_destination);
+	printf("UdpHighSource=%s\n", app_config.udp_high_source);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("UdpLowEnabled=%s\n", appConfig.UdpLowEnabled ? "True" : "False");
-	printf("UdpLowRxMirrorEnabled=%s\n", appConfig.UdpLowRxMirrorEnabled ? "True" : "False");
-	printf("UdpLowIgnoreRxErrors=%s\n", appConfig.UdpLowIgnoreRxErrors ? "True" : "False");
-	printf("UdpLowBurstPeriodNS=%" PRIu64 "\n", appConfig.UdpLowBurstPeriodNS);
-	printf("UdpLowNumFramesPerCycle=%zu\n", appConfig.UdpLowNumFramesPerCycle);
+	printf("UdpLowEnabled=%s\n", app_config.udp_low_enabled ? "True" : "False");
+	printf("UdpLowRxMirrorEnabled=%s\n", app_config.udp_low_rx_mirror_enabled ? "True" : "False");
+	printf("UdpLowIgnoreRxErrors=%s\n", app_config.udp_low_ignore_rx_errors ? "True" : "False");
+	printf("UdpLowBurstPeriodNS=%" PRIu64 "\n", app_config.udp_low_burst_period_ns);
+	printf("UdpLowNumFramesPerCycle=%zu\n", app_config.udp_low_num_frames_per_cycle);
 	printf("UdpLowPayloadPattern=");
-	PrintPayloadPattern(appConfig.UdpLowPayloadPattern, appConfig.UdpLowPayloadPatternLength);
+	print_payload_pattern(app_config.udp_low_payload_pattern, app_config.udp_low_payload_pattern_length);
 	printf("\n");
-	printf("UdpLowFrameLength=%zu\n", appConfig.UdpLowFrameLength);
-	printf("UdpLowRxQueue=%d\n", appConfig.UdpLowRxQueue);
-	printf("UdpLowTxQueue=%d\n", appConfig.UdpLowTxQueue);
-	printf("UdpLowSocketPriority=%d\n", appConfig.UdpLowSocketPriority);
-	printf("UdpLowTxThreadPriority=%d\n", appConfig.UdpLowTxThreadPriority);
-	printf("UdpLowRxThreadPriority=%d\n", appConfig.UdpLowRxThreadPriority);
-	printf("UdpLowTxThreadCpu=%d\n", appConfig.UdpLowTxThreadCpu);
-	printf("UdpLowRxThreadCpu=%d\n", appConfig.UdpLowRxThreadCpu);
-	printf("UdpLowInterface=%s\n", appConfig.UdpLowInterface);
-	printf("UdpLowPort=%s\n", appConfig.UdpLowPort);
-	printf("UdpLowDestination=%s\n", appConfig.UdpLowDestination);
-	printf("UdpLowSource=%s\n", appConfig.UdpLowSource);
+	printf("UdpLowFrameLength=%zu\n", app_config.udp_low_frame_length);
+	printf("UdpLowRxQueue=%d\n", app_config.udp_low_rx_queue);
+	printf("UdpLowTxQueue=%d\n", app_config.udp_low_tx_queue);
+	printf("UdpLowSocketPriority=%d\n", app_config.udp_low_socket_priority);
+	printf("UdpLowTxThreadPriority=%d\n", app_config.udp_low_tx_thread_priority);
+	printf("UdpLowRxThreadPriority=%d\n", app_config.udp_low_rx_thread_priority);
+	printf("UdpLowTxThreadCpu=%d\n", app_config.udp_low_tx_thread_cpu);
+	printf("UdpLowRxThreadCpu=%d\n", app_config.udp_low_rx_thread_cpu);
+	printf("UdpLowInterface=%s\n", app_config.udp_low_interface);
+	printf("UdpLowPort=%s\n", app_config.udp_low_port);
+	printf("UdpLowDestination=%s\n", app_config.udp_low_destination);
+	printf("UdpLowSource=%s\n", app_config.udp_low_source);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("GenericL2Name=%s\n", appConfig.GenericL2Name);
-	printf("GenericL2Enabled=%s\n", appConfig.GenericL2Enabled ? "True" : "False");
+	printf("GenericL2Name=%s\n", app_config.generic_l2_name);
+	printf("GenericL2Enabled=%s\n", app_config.generic_l2_enabled ? "True" : "False");
 	printf("GenericL2RxMirrorEnabled=%s\n",
-	       appConfig.GenericL2RxMirrorEnabled ? "True" : "False");
-	printf("GenericL2XdpEnabled=%s\n", appConfig.GenericL2XdpEnabled ? "True" : "False");
-	printf("GenericL2XdpSkbMode=%s\n", appConfig.GenericL2XdpSkbMode ? "True" : "False");
-	printf("GenericL2XdpZcMode=%s\n", appConfig.GenericL2XdpZcMode ? "True" : "False");
-	printf("GenericL2XdpWakeupMode=%s\n", appConfig.GenericL2XdpWakeupMode ? "True" : "False");
+	       app_config.generic_l2_rx_mirror_enabled ? "True" : "False");
+	printf("GenericL2XdpEnabled=%s\n", app_config.generic_l2_xdp_enabled ? "True" : "False");
+	printf("GenericL2XdpSkbMode=%s\n", app_config.generic_l2_xdp_skb_mode ? "True" : "False");
+	printf("GenericL2XdpZcMode=%s\n", app_config.generic_l2_xdp_zc_mode ? "True" : "False");
+	printf("GenericL2XdpWakeupMode=%s\n", app_config.generic_l2_xdp_wakeup_mode ? "True" : "False");
 	printf("GenericL2XdpBusyPollMode=%s\n",
-	       appConfig.GenericL2XdpBusyPollMode ? "True" : "False");
-	printf("GenericL2TxTimeEnabled=%s\n", appConfig.GenericL2TxTimeEnabled ? "True" : "False");
+	       app_config.generic_l2_xdp_busy_poll_mode ? "True" : "False");
+	printf("GenericL2TxTimeEnabled=%s\n", app_config.generic_l2_tx_time_enabled ? "True" : "False");
 	printf("GenericL2IgnoreRxErrors=%s\n",
-	       appConfig.GenericL2IgnoreRxErrors ? "True" : "False");
-	printf("GenericL2TxTimeOffsetNS=%" PRIu64 "\n", appConfig.GenericL2TxTimeOffsetNS);
-	printf("GenericL2Vid=%d\n", appConfig.GenericL2Vid);
-	printf("GenericL2Pcp=%d\n", appConfig.GenericL2Pcp);
-	printf("GenericL2EtherType=0x%04x\n", appConfig.GenericL2EtherType);
-	printf("GenericL2NumFramesPerCycle=%zu\n", appConfig.GenericL2NumFramesPerCycle);
+	       app_config.generic_l2_ignore_rx_errors ? "True" : "False");
+	printf("GenericL2TxTimeOffsetNS=%" PRIu64 "\n", app_config.generic_l2_tx_time_offset_ns);
+	printf("GenericL2Vid=%d\n", app_config.generic_l2_vid);
+	printf("GenericL2Pcp=%d\n", app_config.generic_l2_pcp);
+	printf("GenericL2EtherType=0x%04x\n", app_config.generic_l2_ether_type);
+	printf("GenericL2NumFramesPerCycle=%zu\n", app_config.generic_l2_num_frames_per_cycle);
 	printf("GenericL2PayloadPattern=");
-	PrintPayloadPattern(appConfig.GenericL2PayloadPattern,
-			    appConfig.GenericL2PayloadPatternLength);
+	print_payload_pattern(app_config.generic_l2_payload_pattern,
+			    app_config.generic_l2_payload_pattern_length);
 	printf("\n");
-	printf("GenericL2FrameLength=%zu\n", appConfig.GenericL2FrameLength);
-	printf("GenericL2RxQueue=%d\n", appConfig.GenericL2RxQueue);
-	printf("GenericL2TxQueue=%d\n", appConfig.GenericL2TxQueue);
-	printf("GenericL2SocketPriority=%d\n", appConfig.GenericL2SocketPriority);
-	printf("GenericL2TxThreadPriority=%d\n", appConfig.GenericL2TxThreadPriority);
-	printf("GenericL2RxThreadPriority=%d\n", appConfig.GenericL2RxThreadPriority);
-	printf("GenericL2TxThreadCpu=%d\n", appConfig.GenericL2TxThreadCpu);
-	printf("GenericL2RxThreadCpu=%d\n", appConfig.GenericL2RxThreadCpu);
-	printf("GenericL2Interface=%s\n", appConfig.GenericL2Interface);
+	printf("GenericL2FrameLength=%zu\n", app_config.generic_l2_frame_length);
+	printf("GenericL2RxQueue=%d\n", app_config.generic_l2_rx_queue);
+	printf("GenericL2TxQueue=%d\n", app_config.generic_l2_tx_queue);
+	printf("GenericL2SocketPriority=%d\n", app_config.generic_l2_socket_priority);
+	printf("GenericL2TxThreadPriority=%d\n", app_config.generic_l2_tx_thread_priority);
+	printf("GenericL2RxThreadPriority=%d\n", app_config.generic_l2_rx_thread_priority);
+	printf("GenericL2TxThreadCpu=%d\n", app_config.generic_l2_tx_thread_cpu);
+	printf("GenericL2RxThreadCpu=%d\n", app_config.generic_l2_rx_thread_cpu);
+	printf("GenericL2Interface=%s\n", app_config.generic_l2_interface);
 	printf("GenericL2Destination=");
-	PrintMacAddress(appConfig.GenericL2Destination);
+	print_mac_address(app_config.generic_l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("LogThreadPeriodNS=%" PRIu64 "\n", appConfig.LogThreadPeriodNS);
-	printf("LogThreadPriority=%d\n", appConfig.LogThreadPriority);
-	printf("LogThreadCpu=%d\n", appConfig.LogThreadCpu);
-	printf("LogFile=%s\n", appConfig.LogFile);
-	printf("LogLevel=%s\n", appConfig.LogLevel);
+	printf("LogThreadPeriodNS=%" PRIu64 "\n", app_config.log_thread_period_ns);
+	printf("LogThreadPriority=%d\n", app_config.log_thread_priority);
+	printf("LogThreadCpu=%d\n", app_config.log_thread_cpu);
+	printf("LogFile=%s\n", app_config.log_file);
+	printf("LogLevel=%s\n", app_config.log_level);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("DebugStopTraceOnRtt=%s\n", appConfig.DebugStopTraceOnRtt ? "True" : "False");
-	printf("DebugStopTraceOnError=%s\n", appConfig.DebugStopTraceOnError ? "True" : "False");
-	printf("DebugStopTraceLimitNS=%" PRIu64 "\n", appConfig.DebugStopTraceRttLimitNS);
-	printf("DebugMonitorMode=%s\n", appConfig.DebugMonitorMode ? "True" : "False");
+	printf("DebugStopTraceOnRtt=%s\n", app_config.debug_stop_trace_on_rtt ? "True" : "False");
+	printf("DebugStopTraceOnError=%s\n", app_config.debug_stop_trace_on_error ? "True" : "False");
+	printf("DebugStopTraceLimitNS=%" PRIu64 "\n", app_config.debug_stop_trace_rtt_limit_ns);
+	printf("DebugMonitorMode=%s\n", app_config.debug_monitor_mode ? "True" : "False");
 	printf("DebugMonitorDestination=");
-	PrintMacAddress(appConfig.DebugMonitorDestination);
+	print_mac_address(app_config.debug_monitor_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("StatsCollectionIntervalNS=%ld\n", appConfig.StatsCollectionIntervalNS);
+	printf("StatsCollectionIntervalNS=%ld\n", app_config.stats_collection_interval_ns);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("LogViaMQTT=%s\n", appConfig.LogViaMQTT ? "True" : "False");
-	printf("LogViaMQTTThreadPriority=%d\n", appConfig.LogViaMQTTThreadPriority);
-	printf("LogViaMQTTThreadCpu=%d\n", appConfig.LogViaMQTTThreadCpu);
-	printf("LogViaMQTTThreadPeriodNS=%ld\n", appConfig.LogViaMQTTThreadPeriodNS);
-	printf("LogViaMQTTBrokerIP=%s\n", appConfig.LogViaMQTTBrokerIP);
-	printf("LogViaMQTTBrokerPort=%d\n", appConfig.LogViaMQTTBrokerPort);
-	printf("LogViaMQTTKeepAliveSecs=%d\n", appConfig.LogViaMQTTKeepAliveSecs);
-	printf("LogViaMQTTMeasurementName=%s\n", appConfig.LogViaMQTTMeasurementName);
+	printf("LogViaMQTT=%s\n", app_config.log_via_mqtt ? "True" : "False");
+	printf("LogViaMQTTThreadPriority=%d\n", app_config.log_via_mqtt_thread_priority);
+	printf("LogViaMQTTThreadCpu=%d\n", app_config.log_via_mqtt_thread_cpu);
+	printf("LogViaMQTTThreadPeriodNS=%ld\n", app_config.log_via_mqtt_thread_period_ns);
+	printf("LogViaMQTTBrokerIP=%s\n", app_config.log_via_mqtt_broker_ip);
+	printf("LogViaMQTTBrokerPort=%d\n", app_config.log_via_mqtt_broker_port);
+	printf("LogViaMQTTKeepAliveSecs=%d\n", app_config.log_via_mqtt_keep_alive_secs);
+	printf("LogViaMQTTMeasurementName=%s\n", app_config.log_via_mqtt_measurement_name);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 }
 
-int ConfigSetDefaults(bool mirrorEnabled)
+int config_set_defaults(bool mirror_enabled)
 {
-	static unsigned char defaultDebugMontitorDestination[] = {0x44, 0x44, 0x44,
+	static unsigned char default_debug_montitor_destination[] = {0x44, 0x44, 0x44,
 								  0x44, 0x44, 0x44};
-	static unsigned char defaultLldpDestination[] = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e};
-	static unsigned char defaultDestination[] = {0xa8, 0xa1, 0x59, 0x2c, 0xa8, 0xdb};
-	static unsigned char defaultDcpIdentify[] = {0x01, 0x0e, 0xcf, 0x00, 0x00, 0x00};
-	static const char *DefaultLogViaMQTTMeasurementName = "testbench";
-	static const char *DefaultUdpLowDestination = "192.168.2.120";
-	static const char *DefaultLogViaMQTTBrokerIP = "127.0.0.1";
-	static const char *DefaultUdpLowSource = "192.168.2.119";
-	static const char *DefaultPayloadPattern = "Payload";
-	static const char *DefaultUdpLowPort = "6666";
-	static const char *DefaultLogLevel = "Debug";
+	static unsigned char default_lldp_destination[] = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e};
+	static unsigned char default_destination[] = {0xa8, 0xa1, 0x59, 0x2c, 0xa8, 0xdb};
+	static unsigned char default_dcp_identify[] = {0x01, 0x0e, 0xcf, 0x00, 0x00, 0x00};
+	static const char *default_log_via_mqtt_measurement_name = "testbench";
+	static const char *default_udp_low_destination = "192.168.2.120";
+	static const char *default_log_via_mqtt_broker_ip = "127.0.0.1";
+	static const char *default_udp_low_source = "192.168.2.119";
+	static const char *default_payload_pattern = "Payload";
+	static const char *default_udp_low_port = "6666";
+	static const char *default_log_level = "Debug";
 	struct timespec current;
 	int ret = -ENOMEM;
 
 	clock_gettime(CLOCK_TAI, &current);
 
 	/* Application scheduling configuration */
-	appConfig.ApplicationClockId = CLOCK_TAI;
-	appConfig.ApplicationBaseCycleTimeNS = 500000;
-	appConfig.ApplicationBaseStartTimeNS = (current.tv_sec + 30) * NSEC_PER_SEC;
-	appConfig.ApplicationTxBaseOffsetNS = 400000;
-	appConfig.ApplicationRxBaseOffsetNS = 200000;
-	appConfig.ApplicationXdpProgram = NULL;
+	app_config.application_clock_id = CLOCK_TAI;
+	app_config.application_base_cycle_time_ns = 500000;
+	app_config.application_base_start_time_ns = (current.tv_sec + 30) * NSEC_PER_SEC;
+	app_config.application_tx_base_offset_ns = 400000;
+	app_config.application_rx_base_offset_ns = 200000;
+	app_config.application_xdp_program = NULL;
 
 	/* TSN High */
-	appConfig.TsnHighEnabled = false;
-	appConfig.TsnHighRxMirrorEnabled = mirrorEnabled;
-	appConfig.TsnHighXdpEnabled = false;
-	appConfig.TsnHighXdpSkbMode = false;
-	appConfig.TsnHighXdpZcMode = false;
-	appConfig.TsnHighXdpWakeupMode = true;
-	appConfig.TsnHighXdpBusyPollMode = false;
-	appConfig.TsnHighTxTimeEnabled = false;
-	appConfig.TsnHighIgnoreRxErrors = false;
-	appConfig.TsnHighTxTimeOffsetNS = 0;
-	appConfig.TsnHighVid = TSN_HIGH_VID_VALUE;
-	appConfig.TsnHighNumFramesPerCycle = 0;
-	appConfig.TsnHighPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.TsnHighPayloadPattern)
+	app_config.tsn_high_enabled = false;
+	app_config.tsn_high_rx_mirror_enabled = mirror_enabled;
+	app_config.tsn_high_xdp_enabled = false;
+	app_config.tsn_high_xdp_skb_mode = false;
+	app_config.tsn_high_xdp_zc_mode = false;
+	app_config.tsn_high_xdp_wakeup_mode = true;
+	app_config.tsn_high_xdp_busy_poll_mode = false;
+	app_config.tsn_high_tx_time_enabled = false;
+	app_config.tsn_high_ignore_rx_errors = false;
+	app_config.tsn_high_tx_time_offset_ns = 0;
+	app_config.tsn_high_vid = TSN_HIGH_VID_VALUE;
+	app_config.tsn_high_num_frames_per_cycle = 0;
+	app_config.tsn_high_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.tsn_high_payload_pattern)
 		goto out;
-	appConfig.TsnHighPayloadPatternLength = strlen(appConfig.TsnHighPayloadPattern);
-	appConfig.TsnHighFrameLength = 200;
-	appConfig.TsnHighSecurityMode = SECURITY_MODE_NONE;
-	appConfig.TsnHighSecurityAlgorithm = SECURITY_ALGORITHM_AES256_GCM;
-	appConfig.TsnHighSecurityKey = NULL;
-	appConfig.TsnHighSecurityIvPrefix = NULL;
-	appConfig.TsnHighRxQueue = 1;
-	appConfig.TsnHighTxQueue = 1;
-	appConfig.TsnHighSocketPriority = 1;
-	appConfig.TsnHighTxThreadPriority = 98;
-	appConfig.TsnHighRxThreadPriority = 98;
-	appConfig.TsnHighTxThreadCpu = 0;
-	appConfig.TsnHighRxThreadCpu = 0;
-	strncpy(appConfig.TsnHighInterface, "enp3s0", sizeof(appConfig.TsnHighInterface) - 1);
-	memcpy((void *)appConfig.TsnHighDestination, defaultDestination, ETH_ALEN);
+	app_config.tsn_high_payload_pattern_length = strlen(app_config.tsn_high_payload_pattern);
+	app_config.tsn_high_frame_length = 200;
+	app_config.tsn_high_security_mode = SECURITY_MODE_NONE;
+	app_config.tsn_high_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	app_config.tsn_high_security_key = NULL;
+	app_config.tsn_high_security_iv_prefix = NULL;
+	app_config.tsn_high_rx_queue = 1;
+	app_config.tsn_high_tx_queue = 1;
+	app_config.tsn_high_socket_priority = 1;
+	app_config.tsn_high_tx_thread_priority = 98;
+	app_config.tsn_high_rx_thread_priority = 98;
+	app_config.tsn_high_tx_thread_cpu = 0;
+	app_config.tsn_high_rx_thread_cpu = 0;
+	strncpy(app_config.tsn_high_interface, "enp3s0", sizeof(app_config.tsn_high_interface) - 1);
+	memcpy((void *)app_config.tsn_high_destination, default_destination, ETH_ALEN);
 
 	/* TSN Low */
-	appConfig.TsnLowEnabled = false;
-	appConfig.TsnLowRxMirrorEnabled = mirrorEnabled;
-	appConfig.TsnLowXdpEnabled = false;
-	appConfig.TsnLowXdpSkbMode = false;
-	appConfig.TsnLowXdpZcMode = false;
-	appConfig.TsnLowXdpWakeupMode = true;
-	appConfig.TsnLowXdpBusyPollMode = false;
-	appConfig.TsnLowTxTimeEnabled = false;
-	appConfig.TsnLowIgnoreRxErrors = false;
-	appConfig.TsnLowTxTimeOffsetNS = 0;
-	appConfig.TsnLowVid = TSN_LOW_VID_VALUE;
-	appConfig.TsnLowNumFramesPerCycle = 0;
-	appConfig.TsnLowPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.TsnLowPayloadPattern)
+	app_config.tsn_low_enabled = false;
+	app_config.tsn_low_rx_mirror_enabled = mirror_enabled;
+	app_config.tsn_low_xdp_enabled = false;
+	app_config.tsn_low_xdp_skb_mode = false;
+	app_config.tsn_low_xdp_zc_mode = false;
+	app_config.tsn_low_xdp_wakeup_mode = true;
+	app_config.tsn_low_xdp_busy_poll_mode = false;
+	app_config.tsn_low_tx_time_enabled = false;
+	app_config.tsn_low_ignore_rx_errors = false;
+	app_config.tsn_low_tx_time_offset_ns = 0;
+	app_config.tsn_low_vid = TSN_LOW_VID_VALUE;
+	app_config.tsn_low_num_frames_per_cycle = 0;
+	app_config.tsn_low_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.tsn_low_payload_pattern)
 		goto out;
-	appConfig.TsnLowPayloadPatternLength = strlen(appConfig.TsnLowPayloadPattern);
-	appConfig.TsnLowFrameLength = 200;
-	appConfig.TsnLowSecurityMode = SECURITY_MODE_NONE;
-	appConfig.TsnLowSecurityAlgorithm = SECURITY_ALGORITHM_AES256_GCM;
-	appConfig.TsnLowSecurityKey = NULL;
-	appConfig.TsnLowSecurityIvPrefix = NULL;
-	appConfig.TsnLowRxQueue = 1;
-	appConfig.TsnLowTxQueue = 1;
-	appConfig.TsnLowSocketPriority = 1;
-	appConfig.TsnLowTxThreadPriority = 98;
-	appConfig.TsnLowRxThreadPriority = 98;
-	appConfig.TsnLowTxThreadCpu = 0;
-	appConfig.TsnLowRxThreadCpu = 0;
-	strncpy(appConfig.TsnLowInterface, "enp3s0", sizeof(appConfig.TsnLowInterface) - 1);
-	memcpy((void *)appConfig.TsnLowDestination, defaultDestination, ETH_ALEN);
+	app_config.tsn_low_payload_pattern_length = strlen(app_config.tsn_low_payload_pattern);
+	app_config.tsn_low_frame_length = 200;
+	app_config.tsn_low_security_mode = SECURITY_MODE_NONE;
+	app_config.tsn_low_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	app_config.tsn_low_security_key = NULL;
+	app_config.tsn_low_security_iv_prefix = NULL;
+	app_config.tsn_low_rx_queue = 1;
+	app_config.tsn_low_tx_queue = 1;
+	app_config.tsn_low_socket_priority = 1;
+	app_config.tsn_low_tx_thread_priority = 98;
+	app_config.tsn_low_rx_thread_priority = 98;
+	app_config.tsn_low_tx_thread_cpu = 0;
+	app_config.tsn_low_rx_thread_cpu = 0;
+	strncpy(app_config.tsn_low_interface, "enp3s0", sizeof(app_config.tsn_low_interface) - 1);
+	memcpy((void *)app_config.tsn_low_destination, default_destination, ETH_ALEN);
 
 	/* Real Time Cyclic (RTC) */
-	appConfig.RtcEnabled = false;
-	appConfig.RtcRxMirrorEnabled = mirrorEnabled;
-	appConfig.RtcXdpEnabled = false;
-	appConfig.RtcXdpSkbMode = false;
-	appConfig.RtcXdpZcMode = false;
-	appConfig.RtcXdpWakeupMode = true;
-	appConfig.RtcXdpBusyPollMode = false;
-	appConfig.RtcIgnoreRxErrors = false;
-	appConfig.RtcVid = PROFINET_RT_VID_VALUE;
-	appConfig.RtcNumFramesPerCycle = 0;
-	appConfig.RtcPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.RtcPayloadPattern)
+	app_config.rtc_enabled = false;
+	app_config.rtc_rx_mirror_enabled = mirror_enabled;
+	app_config.rtc_xdp_enabled = false;
+	app_config.rtc_xdp_skb_mode = false;
+	app_config.rtc_xdp_zc_mode = false;
+	app_config.rtc_xdp_wakeup_mode = true;
+	app_config.rtc_xdp_busy_poll_mode = false;
+	app_config.rtc_ignore_rx_errors = false;
+	app_config.rtc_vid = PROFINET_RT_VID_VALUE;
+	app_config.rtc_num_frames_per_cycle = 0;
+	app_config.rtc_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.rtc_payload_pattern)
 		goto out;
-	appConfig.RtcPayloadPatternLength = strlen(appConfig.RtcPayloadPattern);
-	appConfig.RtcFrameLength = 200;
-	appConfig.RtcSecurityMode = SECURITY_MODE_NONE;
-	appConfig.RtcSecurityAlgorithm = SECURITY_ALGORITHM_AES256_GCM;
-	appConfig.RtcSecurityKey = NULL;
-	appConfig.RtcSecurityIvPrefix = NULL;
-	appConfig.RtcRxQueue = 1;
-	appConfig.RtcTxQueue = 1;
-	appConfig.RtcSocketPriority = 1;
-	appConfig.RtcTxThreadPriority = 98;
-	appConfig.RtcRxThreadPriority = 98;
-	appConfig.RtcTxThreadCpu = 0;
-	appConfig.RtcRxThreadCpu = 0;
-	strncpy(appConfig.RtcInterface, "enp3s0", sizeof(appConfig.RtcInterface) - 1);
-	memcpy((void *)appConfig.RtcDestination, defaultDestination, ETH_ALEN);
+	app_config.rtc_payload_pattern_length = strlen(app_config.rtc_payload_pattern);
+	app_config.rtc_frame_length = 200;
+	app_config.rtc_security_mode = SECURITY_MODE_NONE;
+	app_config.rtc_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	app_config.rtc_security_key = NULL;
+	app_config.rtc_security_iv_prefix = NULL;
+	app_config.rtc_rx_queue = 1;
+	app_config.rtc_tx_queue = 1;
+	app_config.rtc_socket_priority = 1;
+	app_config.rtc_tx_thread_priority = 98;
+	app_config.rtc_rx_thread_priority = 98;
+	app_config.rtc_tx_thread_cpu = 0;
+	app_config.rtc_rx_thread_cpu = 0;
+	strncpy(app_config.rtc_interface, "enp3s0", sizeof(app_config.rtc_interface) - 1);
+	memcpy((void *)app_config.rtc_destination, default_destination, ETH_ALEN);
 
 	/* Real Time Acyclic (RTA) */
-	appConfig.RtaEnabled = false;
-	appConfig.RtaRxMirrorEnabled = mirrorEnabled;
-	appConfig.RtaXdpEnabled = false;
-	appConfig.RtaXdpSkbMode = false;
-	appConfig.RtaXdpZcMode = false;
-	appConfig.RtaXdpWakeupMode = true;
-	appConfig.RtaXdpBusyPollMode = false;
-	appConfig.RtaIgnoreRxErrors = false;
-	appConfig.RtaVid = PROFINET_RT_VID_VALUE;
-	appConfig.RtaBurstPeriodNS = 200000000;
-	appConfig.RtaNumFramesPerCycle = 0;
-	appConfig.RtaPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.RtaPayloadPattern)
+	app_config.rta_enabled = false;
+	app_config.rta_rx_mirror_enabled = mirror_enabled;
+	app_config.rta_xdp_enabled = false;
+	app_config.rta_xdp_skb_mode = false;
+	app_config.rta_xdp_zc_mode = false;
+	app_config.rta_xdp_wakeup_mode = true;
+	app_config.rta_xdp_busy_poll_mode = false;
+	app_config.rta_ignore_rx_errors = false;
+	app_config.rta_vid = PROFINET_RT_VID_VALUE;
+	app_config.rta_burst_period_ns = 200000000;
+	app_config.rta_num_frames_per_cycle = 0;
+	app_config.rta_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.rta_payload_pattern)
 		goto out;
-	appConfig.RtaPayloadPatternLength = strlen(appConfig.RtaPayloadPattern);
-	appConfig.RtaFrameLength = 200;
-	appConfig.RtaSecurityMode = SECURITY_MODE_NONE;
-	appConfig.RtaSecurityAlgorithm = SECURITY_ALGORITHM_AES256_GCM;
-	appConfig.RtaSecurityKey = NULL;
-	appConfig.RtaSecurityIvPrefix = NULL;
-	appConfig.RtaRxQueue = 1;
-	appConfig.RtaTxQueue = 1;
-	appConfig.RtaSocketPriority = 1;
-	appConfig.RtaTxThreadPriority = 98;
-	appConfig.RtaRxThreadPriority = 98;
-	appConfig.RtaTxThreadCpu = 0;
-	appConfig.RtaRxThreadCpu = 0;
-	strncpy(appConfig.RtaInterface, "enp3s0", sizeof(appConfig.RtaInterface) - 1);
-	memcpy((void *)appConfig.RtaDestination, defaultDestination, ETH_ALEN);
+	app_config.rta_payload_pattern_length = strlen(app_config.rta_payload_pattern);
+	app_config.rta_frame_length = 200;
+	app_config.rta_security_mode = SECURITY_MODE_NONE;
+	app_config.rta_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	app_config.rta_security_key = NULL;
+	app_config.rta_security_iv_prefix = NULL;
+	app_config.rta_rx_queue = 1;
+	app_config.rta_tx_queue = 1;
+	app_config.rta_socket_priority = 1;
+	app_config.rta_tx_thread_priority = 98;
+	app_config.rta_rx_thread_priority = 98;
+	app_config.rta_tx_thread_cpu = 0;
+	app_config.rta_rx_thread_cpu = 0;
+	strncpy(app_config.rta_interface, "enp3s0", sizeof(app_config.rta_interface) - 1);
+	memcpy((void *)app_config.rta_destination, default_destination, ETH_ALEN);
 
 	/* Discovery and Configuration Protocol (DCP) */
-	appConfig.DcpEnabled = false;
-	appConfig.DcpIgnoreRxErrors = false;
-	appConfig.DcpRxMirrorEnabled = mirrorEnabled;
-	appConfig.DcpVid = PROFINET_RT_VID_VALUE;
-	appConfig.DcpBurstPeriodNS = 2000000000;
-	appConfig.DcpNumFramesPerCycle = 0;
-	appConfig.DcpPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.DcpPayloadPattern)
+	app_config.dcp_enabled = false;
+	app_config.dcp_ignore_rx_errors = false;
+	app_config.dcp_rx_mirror_enabled = mirror_enabled;
+	app_config.dcp_vid = PROFINET_RT_VID_VALUE;
+	app_config.dcp_burst_period_ns = 2000000000;
+	app_config.dcp_num_frames_per_cycle = 0;
+	app_config.dcp_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.dcp_payload_pattern)
 		goto out;
-	appConfig.DcpPayloadPatternLength = strlen(appConfig.DcpPayloadPattern);
-	appConfig.DcpFrameLength = 200;
-	appConfig.DcpRxQueue = 1;
-	appConfig.DcpTxQueue = 1;
-	appConfig.DcpSocketPriority = 1;
-	appConfig.DcpTxThreadPriority = 98;
-	appConfig.DcpRxThreadPriority = 98;
-	appConfig.DcpTxThreadCpu = 3;
-	appConfig.DcpRxThreadCpu = 3;
-	strncpy(appConfig.DcpInterface, "enp3s0", sizeof(appConfig.DcpInterface) - 1);
-	memcpy((void *)appConfig.DcpDestination, defaultDcpIdentify, ETH_ALEN);
+	app_config.dcp_payload_pattern_length = strlen(app_config.dcp_payload_pattern);
+	app_config.dcp_frame_length = 200;
+	app_config.dcp_rx_queue = 1;
+	app_config.dcp_tx_queue = 1;
+	app_config.dcp_socket_priority = 1;
+	app_config.dcp_tx_thread_priority = 98;
+	app_config.dcp_rx_thread_priority = 98;
+	app_config.dcp_tx_thread_cpu = 3;
+	app_config.dcp_rx_thread_cpu = 3;
+	strncpy(app_config.dcp_interface, "enp3s0", sizeof(app_config.dcp_interface) - 1);
+	memcpy((void *)app_config.dcp_destination, default_dcp_identify, ETH_ALEN);
 
 	/* Link Layer Discovery Protocol (LLDP) */
-	appConfig.LldpEnabled = false;
-	appConfig.LldpIgnoreRxErrors = false;
-	appConfig.LldpRxMirrorEnabled = mirrorEnabled;
-	appConfig.LldpBurstPeriodNS = 5000000000;
-	appConfig.LldpNumFramesPerCycle = 0;
-	appConfig.LldpPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.LldpPayloadPattern)
+	app_config.lldp_enabled = false;
+	app_config.lldp_ignore_rx_errors = false;
+	app_config.lldp_rx_mirror_enabled = mirror_enabled;
+	app_config.lldp_burst_period_ns = 5000000000;
+	app_config.lldp_num_frames_per_cycle = 0;
+	app_config.lldp_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.lldp_payload_pattern)
 		goto out;
-	appConfig.LldpPayloadPatternLength = strlen(appConfig.LldpPayloadPattern);
-	appConfig.LldpFrameLength = 200;
-	appConfig.LldpRxQueue = 1;
-	appConfig.LldpTxQueue = 1;
-	appConfig.LldpSocketPriority = 1;
-	appConfig.LldpTxThreadPriority = 98;
-	appConfig.LldpRxThreadPriority = 98;
-	appConfig.LldpTxThreadCpu = 4;
-	appConfig.LldpRxThreadCpu = 4;
-	strncpy(appConfig.LldpInterface, "enp3s0", sizeof(appConfig.LldpInterface) - 1);
-	memcpy((void *)appConfig.LldpDestination, defaultLldpDestination, ETH_ALEN);
+	app_config.lldp_payload_pattern_length = strlen(app_config.lldp_payload_pattern);
+	app_config.lldp_frame_length = 200;
+	app_config.lldp_rx_queue = 1;
+	app_config.lldp_tx_queue = 1;
+	app_config.lldp_socket_priority = 1;
+	app_config.lldp_tx_thread_priority = 98;
+	app_config.lldp_rx_thread_priority = 98;
+	app_config.lldp_tx_thread_cpu = 4;
+	app_config.lldp_rx_thread_cpu = 4;
+	strncpy(app_config.lldp_interface, "enp3s0", sizeof(app_config.lldp_interface) - 1);
+	memcpy((void *)app_config.lldp_destination, default_lldp_destination, ETH_ALEN);
 
 	/* User Datagram Protocol (UDP) High */
-	appConfig.UdpHighEnabled = false;
-	appConfig.UdpHighIgnoreRxErrors = false;
-	appConfig.UdpHighRxMirrorEnabled = mirrorEnabled;
-	appConfig.UdpHighBurstPeriodNS = 1000000000;
-	appConfig.UdpHighNumFramesPerCycle = 0;
-	appConfig.UdpHighPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.UdpHighPayloadPattern)
+	app_config.udp_high_enabled = false;
+	app_config.udp_high_ignore_rx_errors = false;
+	app_config.udp_high_rx_mirror_enabled = mirror_enabled;
+	app_config.udp_high_burst_period_ns = 1000000000;
+	app_config.udp_high_num_frames_per_cycle = 0;
+	app_config.udp_high_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.udp_high_payload_pattern)
 		goto out;
-	appConfig.UdpHighPayloadPatternLength = strlen(appConfig.UdpHighPayloadPattern);
-	appConfig.UdpHighFrameLength = 1400;
-	appConfig.UdpHighRxQueue = 0;
-	appConfig.UdpHighTxQueue = 0;
-	appConfig.UdpHighSocketPriority = 0;
-	appConfig.UdpHighTxThreadPriority = 98;
-	appConfig.UdpHighRxThreadPriority = 98;
-	appConfig.UdpHighTxThreadCpu = 5;
-	appConfig.UdpHighRxThreadCpu = 5;
-	strncpy(appConfig.UdpHighInterface, "enp3s0", sizeof(appConfig.UdpHighInterface) - 1);
-	appConfig.UdpHighPort = strdup(DefaultUdpLowPort);
-	if (!appConfig.UdpHighPort)
+	app_config.udp_high_payload_pattern_length = strlen(app_config.udp_high_payload_pattern);
+	app_config.udp_high_frame_length = 1400;
+	app_config.udp_high_rx_queue = 0;
+	app_config.udp_high_tx_queue = 0;
+	app_config.udp_high_socket_priority = 0;
+	app_config.udp_high_tx_thread_priority = 98;
+	app_config.udp_high_rx_thread_priority = 98;
+	app_config.udp_high_tx_thread_cpu = 5;
+	app_config.udp_high_rx_thread_cpu = 5;
+	strncpy(app_config.udp_high_interface, "enp3s0", sizeof(app_config.udp_high_interface) - 1);
+	app_config.udp_high_port = strdup(default_udp_low_port);
+	if (!app_config.udp_high_port)
 		goto out;
-	appConfig.UdpHighDestination = strdup(DefaultUdpLowDestination);
-	if (!appConfig.UdpHighDestination)
+	app_config.udp_high_destination = strdup(default_udp_low_destination);
+	if (!app_config.udp_high_destination)
 		goto out;
-	appConfig.UdpHighSource = strdup(DefaultUdpLowSource);
-	if (!appConfig.UdpHighSource)
+	app_config.udp_high_source = strdup(default_udp_low_source);
+	if (!app_config.udp_high_source)
 		goto out;
 
 	/* User Datagram Protocol (UDP) Low */
-	appConfig.UdpLowEnabled = false;
-	appConfig.UdpLowIgnoreRxErrors = false;
-	appConfig.UdpLowRxMirrorEnabled = mirrorEnabled;
-	appConfig.UdpLowBurstPeriodNS = 1000000000;
-	appConfig.UdpLowNumFramesPerCycle = 0;
-	appConfig.UdpLowPayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.UdpLowPayloadPattern)
+	app_config.udp_low_enabled = false;
+	app_config.udp_low_ignore_rx_errors = false;
+	app_config.udp_low_rx_mirror_enabled = mirror_enabled;
+	app_config.udp_low_burst_period_ns = 1000000000;
+	app_config.udp_low_num_frames_per_cycle = 0;
+	app_config.udp_low_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.udp_low_payload_pattern)
 		goto out;
-	appConfig.UdpLowPayloadPatternLength = strlen(appConfig.UdpLowPayloadPattern);
-	appConfig.UdpLowFrameLength = 1400;
-	appConfig.UdpLowRxQueue = 0;
-	appConfig.UdpLowTxQueue = 0;
-	appConfig.UdpLowSocketPriority = 0;
-	appConfig.UdpLowTxThreadPriority = 98;
-	appConfig.UdpLowRxThreadPriority = 98;
-	appConfig.UdpLowTxThreadCpu = 5;
-	appConfig.UdpLowRxThreadCpu = 5;
-	strncpy(appConfig.UdpLowInterface, "enp3s0", sizeof(appConfig.UdpLowInterface) - 1);
-	appConfig.UdpLowPort = strdup(DefaultUdpLowPort);
-	if (!appConfig.UdpLowPort)
+	app_config.udp_low_payload_pattern_length = strlen(app_config.udp_low_payload_pattern);
+	app_config.udp_low_frame_length = 1400;
+	app_config.udp_low_rx_queue = 0;
+	app_config.udp_low_tx_queue = 0;
+	app_config.udp_low_socket_priority = 0;
+	app_config.udp_low_tx_thread_priority = 98;
+	app_config.udp_low_rx_thread_priority = 98;
+	app_config.udp_low_tx_thread_cpu = 5;
+	app_config.udp_low_rx_thread_cpu = 5;
+	strncpy(app_config.udp_low_interface, "enp3s0", sizeof(app_config.udp_low_interface) - 1);
+	app_config.udp_low_port = strdup(default_udp_low_port);
+	if (!app_config.udp_low_port)
 		goto out;
-	appConfig.UdpLowDestination = strdup(DefaultUdpLowDestination);
-	if (!appConfig.UdpLowDestination)
+	app_config.udp_low_destination = strdup(default_udp_low_destination);
+	if (!app_config.udp_low_destination)
 		goto out;
-	appConfig.UdpLowSource = strdup(DefaultUdpLowSource);
-	if (!appConfig.UdpLowSource)
+	app_config.udp_low_source = strdup(default_udp_low_source);
+	if (!app_config.udp_low_source)
 		goto out;
 
 	/* Generic L2 */
-	appConfig.GenericL2Name = strdup("GenericL2");
-	if (!appConfig.GenericL2Name)
+	app_config.generic_l2_name = strdup("GenericL2");
+	if (!app_config.generic_l2_name)
 		goto out;
-	appConfig.GenericL2Enabled = false;
-	appConfig.GenericL2RxMirrorEnabled = mirrorEnabled;
-	appConfig.GenericL2XdpEnabled = false;
-	appConfig.GenericL2XdpSkbMode = false;
-	appConfig.GenericL2XdpZcMode = false;
-	appConfig.GenericL2XdpWakeupMode = true;
-	appConfig.GenericL2XdpBusyPollMode = false;
-	appConfig.GenericL2TxTimeEnabled = false;
-	appConfig.GenericL2IgnoreRxErrors = false;
-	appConfig.GenericL2TxTimeOffsetNS = 0;
-	appConfig.GenericL2Vid = 100;
-	appConfig.GenericL2Pcp = 6;
-	appConfig.GenericL2EtherType = 0xb62c;
-	appConfig.GenericL2NumFramesPerCycle = 0;
-	appConfig.GenericL2PayloadPattern = strdup(DefaultPayloadPattern);
-	if (!appConfig.GenericL2PayloadPattern)
+	app_config.generic_l2_enabled = false;
+	app_config.generic_l2_rx_mirror_enabled = mirror_enabled;
+	app_config.generic_l2_xdp_enabled = false;
+	app_config.generic_l2_xdp_skb_mode = false;
+	app_config.generic_l2_xdp_zc_mode = false;
+	app_config.generic_l2_xdp_wakeup_mode = true;
+	app_config.generic_l2_xdp_busy_poll_mode = false;
+	app_config.generic_l2_tx_time_enabled = false;
+	app_config.generic_l2_ignore_rx_errors = false;
+	app_config.generic_l2_tx_time_offset_ns = 0;
+	app_config.generic_l2_vid = 100;
+	app_config.generic_l2_pcp = 6;
+	app_config.generic_l2_ether_type = 0xb62c;
+	app_config.generic_l2_num_frames_per_cycle = 0;
+	app_config.generic_l2_payload_pattern = strdup(default_payload_pattern);
+	if (!app_config.generic_l2_payload_pattern)
 		goto out;
-	appConfig.GenericL2PayloadPatternLength = strlen(appConfig.GenericL2PayloadPattern);
-	appConfig.GenericL2FrameLength = 200;
-	appConfig.GenericL2RxQueue = 1;
-	appConfig.GenericL2TxQueue = 1;
-	appConfig.GenericL2SocketPriority = 1;
-	appConfig.GenericL2TxThreadPriority = 90;
-	appConfig.GenericL2RxThreadPriority = 90;
-	appConfig.GenericL2TxThreadCpu = 0;
-	appConfig.GenericL2RxThreadCpu = 0;
-	strncpy(appConfig.GenericL2Interface, "enp3s0", sizeof(appConfig.GenericL2Interface) - 1);
-	memcpy((void *)appConfig.GenericL2Destination, defaultDestination, ETH_ALEN);
+	app_config.generic_l2_payload_pattern_length = strlen(app_config.generic_l2_payload_pattern);
+	app_config.generic_l2_frame_length = 200;
+	app_config.generic_l2_rx_queue = 1;
+	app_config.generic_l2_tx_queue = 1;
+	app_config.generic_l2_socket_priority = 1;
+	app_config.generic_l2_tx_thread_priority = 90;
+	app_config.generic_l2_rx_thread_priority = 90;
+	app_config.generic_l2_tx_thread_cpu = 0;
+	app_config.generic_l2_rx_thread_cpu = 0;
+	strncpy(app_config.generic_l2_interface, "enp3s0", sizeof(app_config.generic_l2_interface) - 1);
+	memcpy((void *)app_config.generic_l2_destination, default_destination, ETH_ALEN);
 
 	/* Logging */
-	appConfig.LogThreadPeriodNS = 500000000;
-	appConfig.LogThreadPriority = 1;
-	appConfig.LogThreadCpu = 7;
-	appConfig.LogFile = strdup("reference.log");
-	if (!appConfig.LogFile)
+	app_config.log_thread_period_ns = 500000000;
+	app_config.log_thread_priority = 1;
+	app_config.log_thread_cpu = 7;
+	app_config.log_file = strdup("reference.log");
+	if (!app_config.log_file)
 		goto out;
-	appConfig.LogLevel = strdup(DefaultLogLevel);
-	if (!appConfig.LogLevel)
+	app_config.log_level = strdup(default_log_level);
+	if (!app_config.log_level)
 		goto out;
 
 	/* Debug */
-	appConfig.DebugStopTraceOnRtt = false;
-	appConfig.DebugStopTraceOnError = false;
-	appConfig.DebugStopTraceRttLimitNS = 10000000;
-	appConfig.DebugMonitorMode = false;
-	memcpy((void *)appConfig.DebugMonitorDestination, defaultDebugMontitorDestination,
+	app_config.debug_stop_trace_on_rtt = false;
+	app_config.debug_stop_trace_on_error = false;
+	app_config.debug_stop_trace_rtt_limit_ns = 10000000;
+	app_config.debug_monitor_mode = false;
+	memcpy((void *)app_config.debug_monitor_destination, default_debug_montitor_destination,
 	       ETH_ALEN);
 
 	/* Stats */
-	appConfig.StatsCollectionIntervalNS = 1e9;
+	app_config.stats_collection_interval_ns = 1e9;
 
 	/* LogViaMQTT */
-	appConfig.LogViaMQTT = false;
-	appConfig.LogViaMQTTBrokerPort = 1883;
-	appConfig.LogViaMQTTThreadPriority = 1;
-	appConfig.LogViaMQTTThreadCpu = 7;
-	appConfig.LogViaMQTTKeepAliveSecs = 60;
-	appConfig.LogViaMQTTThreadPeriodNS = 1e9;
-	appConfig.LogViaMQTTBrokerIP = strdup(DefaultLogViaMQTTBrokerIP);
-	if (!appConfig.LogViaMQTTBrokerIP)
+	app_config.log_via_mqtt = false;
+	app_config.log_via_mqtt_broker_port = 1883;
+	app_config.log_via_mqtt_thread_priority = 1;
+	app_config.log_via_mqtt_thread_cpu = 7;
+	app_config.log_via_mqtt_keep_alive_secs = 60;
+	app_config.log_via_mqtt_thread_period_ns = 1e9;
+	app_config.log_via_mqtt_broker_ip = strdup(default_log_via_mqtt_broker_ip);
+	if (!app_config.log_via_mqtt_broker_ip)
 		goto out;
 
-	appConfig.LogViaMQTTMeasurementName = strdup(DefaultLogViaMQTTMeasurementName);
-	if (!appConfig.LogViaMQTTMeasurementName)
+	app_config.log_via_mqtt_measurement_name = strdup(default_log_via_mqtt_measurement_name);
+	if (!app_config.log_via_mqtt_measurement_name)
 		goto out;
 	return 0;
 out:
-	ConfigFree();
+	config_free();
 	return ret;
 }
 
-static bool ConfigCheckKeys(const char *trafficClass, enum SecurityMode mode,
-			    enum SecurityAlgorithm algorithm, size_t keyLen, size_t ivPrefixLen)
+static bool config_check_keys(const char *traffic_class, enum security_mode mode,
+			    enum security_algorithm algorithm, size_t key_len, size_t iv_prefix_len)
 {
-	const size_t expectedKeyLen = algorithm == SECURITY_ALGORITHM_AES128_GCM ? 16 : 32;
+	const size_t expected_key_len = algorithm == SECURITY_ALGORITHM_AES128_GCM ? 16 : 32;
 
 	if (mode == SECURITY_MODE_NONE)
 		return true;
 
-	if (ivPrefixLen != SECURITY_IV_PREFIX_LEN) {
-		fprintf(stderr, "%s IV prefix length should be %d!\n", trafficClass,
+	if (iv_prefix_len != SECURITY_IV_PREFIX_LEN) {
+		fprintf(stderr, "%s IV prefix length should be %d!\n", traffic_class,
 			SECURITY_IV_PREFIX_LEN);
 		return false;
 	}
 
-	if (expectedKeyLen != keyLen) {
+	if (expected_key_len != key_len) {
 		fprintf(stderr, "%s key length mismatch!. Have %zu expected %zu for %s!\n",
-			trafficClass, keyLen, expectedKeyLen, SecurityAlgorithmToString(algorithm));
+			traffic_class, key_len, expected_key_len, security_algorithm_to_string(algorithm));
 		return false;
 	}
 
 	return true;
 }
 
-bool ConfigSanityCheck()
+bool config_sanity_check()
 {
-	const size_t minSecureProfinetFrameSize = sizeof(struct VLANEthernetHeader) +
-						  sizeof(struct ProfinetSecureHeader) +
-						  sizeof(struct SecurityChecksum);
-	const size_t minProfinetFrameSize =
-		sizeof(struct VLANEthernetHeader) + sizeof(struct ProfinetRtHeader);
-	size_t minFrameSize;
+	const size_t min_secure_profinet_frame_size = sizeof(struct vlan_ethernet_header) +
+						  sizeof(struct profinet_secure_header) +
+						  sizeof(struct security_checksum);
+	const size_t min_profinet_frame_size =
+		sizeof(struct vlan_ethernet_header) + sizeof(struct profinet_rt_header);
+	size_t min_frame_size;
 
 	/*
 	 * Perform configuration sanity checks. This includes:
@@ -1016,11 +1016,11 @@ bool ConfigSanityCheck()
 	 */
 
 	/* Either GenericL2 or PROFINET should be active. */
-	if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(GenericL2) &&
-	    (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(TsnHigh) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Rtc) ||
-	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Rta) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Dcp) ||
-	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(Lldp) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(UdpHigh) ||
-	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(UdpLow))) {
+	if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2) &&
+	    (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc) ||
+	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rta) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(dcp) ||
+	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(lldp) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_high) ||
+	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_low))) {
 		fprintf(stderr, "Either use PROFINET or GenericL2!\n");
 		fprintf(stderr, "For simulation of PROFINET and other middlewares in parallel "
 				"start multiple instances of ref&mirror application(s) with "
@@ -1029,185 +1029,185 @@ bool ConfigSanityCheck()
 	}
 
 	/* Frame lengths */
-	if (appConfig.GenericL2FrameLength > GENL2_TX_FRAME_LENGTH ||
-	    appConfig.GenericL2FrameLength <
-		    (sizeof(struct VLANEthernetHeader) + sizeof(struct GenericL2Header) +
-		     appConfig.GenericL2PayloadPatternLength)) {
+	if (app_config.generic_l2_frame_length > GENL2_TX_FRAME_LENGTH ||
+	    app_config.generic_l2_frame_length <
+		    (sizeof(struct vlan_ethernet_header) + sizeof(struct generic_l2_header) +
+		     app_config.generic_l2_payload_pattern_length)) {
 		fprintf(stderr, "GenericL2FrameLength is invalid!\n");
 		return false;
 	}
 
-	minFrameSize = appConfig.TsnHighSecurityMode == SECURITY_MODE_NONE
-			       ? minProfinetFrameSize
-			       : minSecureProfinetFrameSize;
-	if (appConfig.TsnHighFrameLength > TSN_TX_FRAME_LENGTH ||
-	    appConfig.TsnHighFrameLength < (minFrameSize + appConfig.TsnHighPayloadPatternLength)) {
+	min_frame_size = app_config.tsn_high_security_mode == SECURITY_MODE_NONE
+			       ? min_profinet_frame_size
+			       : min_secure_profinet_frame_size;
+	if (app_config.tsn_high_frame_length > TSN_TX_FRAME_LENGTH ||
+	    app_config.tsn_high_frame_length < (min_frame_size + app_config.tsn_high_payload_pattern_length)) {
 		fprintf(stderr, "TsnHighFrameLength is invalid!\n");
 		return false;
 	}
 
-	minFrameSize = appConfig.TsnLowSecurityMode == SECURITY_MODE_NONE
-			       ? minProfinetFrameSize
-			       : minSecureProfinetFrameSize;
-	if (appConfig.TsnLowFrameLength > TSN_TX_FRAME_LENGTH ||
-	    appConfig.TsnLowFrameLength < (minFrameSize + appConfig.TsnLowPayloadPatternLength)) {
+	min_frame_size = app_config.tsn_low_security_mode == SECURITY_MODE_NONE
+			       ? min_profinet_frame_size
+			       : min_secure_profinet_frame_size;
+	if (app_config.tsn_low_frame_length > TSN_TX_FRAME_LENGTH ||
+	    app_config.tsn_low_frame_length < (min_frame_size + app_config.tsn_low_payload_pattern_length)) {
 		fprintf(stderr, "TsnLowFrameLength is invalid!\n");
 		return false;
 	}
 
-	minFrameSize = appConfig.RtcSecurityMode == SECURITY_MODE_NONE ? minProfinetFrameSize
-								       : minSecureProfinetFrameSize;
-	if (appConfig.RtcFrameLength > RTC_TX_FRAME_LENGTH ||
-	    appConfig.RtcFrameLength < (minFrameSize + appConfig.RtcPayloadPatternLength)) {
+	min_frame_size = app_config.rtc_security_mode == SECURITY_MODE_NONE ? min_profinet_frame_size
+								       : min_secure_profinet_frame_size;
+	if (app_config.rtc_frame_length > RTC_TX_FRAME_LENGTH ||
+	    app_config.rtc_frame_length < (min_frame_size + app_config.rtc_payload_pattern_length)) {
 		fprintf(stderr, "RtcFrameLength is invalid!\n");
 		return false;
 	}
 
-	minFrameSize = appConfig.RtaSecurityMode == SECURITY_MODE_NONE ? minProfinetFrameSize
-								       : minSecureProfinetFrameSize;
-	if (appConfig.RtaFrameLength > RTA_TX_FRAME_LENGTH ||
-	    appConfig.RtaFrameLength < (minFrameSize + appConfig.RtaPayloadPatternLength)) {
+	min_frame_size = app_config.rta_security_mode == SECURITY_MODE_NONE ? min_profinet_frame_size
+								       : min_secure_profinet_frame_size;
+	if (app_config.rta_frame_length > RTA_TX_FRAME_LENGTH ||
+	    app_config.rta_frame_length < (min_frame_size + app_config.rta_payload_pattern_length)) {
 		fprintf(stderr, "RtaFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (appConfig.DcpFrameLength > DCP_TX_FRAME_LENGTH ||
-	    appConfig.DcpFrameLength < (minProfinetFrameSize + appConfig.DcpPayloadPatternLength)) {
+	if (app_config.dcp_frame_length > DCP_TX_FRAME_LENGTH ||
+	    app_config.dcp_frame_length < (min_profinet_frame_size + app_config.dcp_payload_pattern_length)) {
 		fprintf(stderr, "DcpFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (appConfig.LldpFrameLength > LLDP_TX_FRAME_LENGTH ||
-	    appConfig.LldpFrameLength < (sizeof(struct ethhdr) + sizeof(struct ReferenceMetaData) +
-					 appConfig.LldpPayloadPatternLength)) {
+	if (app_config.lldp_frame_length > LLDP_TX_FRAME_LENGTH ||
+	    app_config.lldp_frame_length < (sizeof(struct ethhdr) + sizeof(struct reference_meta_data) +
+					 app_config.lldp_payload_pattern_length)) {
 		fprintf(stderr, "LldpFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (appConfig.UdpHighFrameLength > UDP_TX_FRAME_LENGTH ||
-	    appConfig.UdpHighFrameLength <
-		    (sizeof(struct ReferenceMetaData) + appConfig.UdpHighPayloadPatternLength)) {
+	if (app_config.udp_high_frame_length > UDP_TX_FRAME_LENGTH ||
+	    app_config.udp_high_frame_length <
+		    (sizeof(struct reference_meta_data) + app_config.udp_high_payload_pattern_length)) {
 		fprintf(stderr, "UdpHighFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (appConfig.UdpLowFrameLength > UDP_TX_FRAME_LENGTH ||
-	    appConfig.UdpLowFrameLength <
-		    (sizeof(struct ReferenceMetaData) + appConfig.UdpLowPayloadPatternLength)) {
+	if (app_config.udp_low_frame_length > UDP_TX_FRAME_LENGTH ||
+	    app_config.udp_low_frame_length <
+		    (sizeof(struct reference_meta_data) + app_config.udp_low_payload_pattern_length)) {
 		fprintf(stderr, "UdpLowFrameLength is invalid!\n");
 		return false;
 	}
 
 	/* XDP and TxLauchTime combined doesn't work */
-	if ((appConfig.GenericL2TxTimeEnabled && appConfig.GenericL2XdpEnabled) ||
-	    (appConfig.TsnHighTxTimeEnabled && appConfig.TsnHighXdpEnabled) ||
-	    (appConfig.TsnLowTxTimeEnabled && appConfig.TsnLowXdpEnabled)) {
+	if ((app_config.generic_l2_tx_time_enabled && app_config.generic_l2_xdp_enabled) ||
+	    (app_config.tsn_high_tx_time_enabled && app_config.tsn_high_xdp_enabled) ||
+	    (app_config.tsn_low_tx_time_enabled && app_config.tsn_low_xdp_enabled)) {
 		fprintf(stderr, "TxTime and Xdp cannot be used at the same time!\n");
 		return false;
 	}
 
 	/* XDP busy polling only works beginning with Linux kernel version v5.11 */
-	if (!ConfigHaveBusyPoll() &&
-	    (appConfig.TsnHighXdpBusyPollMode || appConfig.TsnLowXdpBusyPollMode ||
-	     appConfig.RtcXdpBusyPollMode || appConfig.RtaXdpBusyPollMode ||
-	     appConfig.GenericL2XdpBusyPollMode)) {
+	if (!config_have_busy_poll() &&
+	    (app_config.tsn_high_xdp_busy_poll_mode || app_config.tsn_low_xdp_busy_poll_mode ||
+	     app_config.rtc_xdp_busy_poll_mode || app_config.rta_xdp_busy_poll_mode ||
+	     app_config.generic_l2_xdp_busy_poll_mode)) {
 		fprintf(stderr, "XDP busy polling selected, but not supported!\n");
 		return false;
 	}
 
-	if (!ConfigHaveMosquitto() && appConfig.LogViaMQTT) {
+	if (!config_have_mosquitto() && app_config.log_via_mqtt) {
 		fprintf(stderr, "Log via Mosquito enabled, but not supported!\n");
 		return false;
 	}
 
 	/* Check keys and IV */
-	if (!ConfigCheckKeys("TsnHigh", appConfig.TsnHighSecurityMode,
-			     appConfig.TsnHighSecurityAlgorithm, appConfig.TsnHighSecurityKeyLength,
-			     appConfig.TsnHighSecurityIvPrefixLength))
+	if (!config_check_keys("TsnHigh", app_config.tsn_high_security_mode,
+			     app_config.tsn_high_security_algorithm, app_config.tsn_high_security_key_length,
+			     app_config.tsn_high_security_iv_prefix_length))
 		return false;
-	if (!ConfigCheckKeys("TsnLow", appConfig.TsnLowSecurityMode,
-			     appConfig.TsnLowSecurityAlgorithm, appConfig.TsnLowSecurityKeyLength,
-			     appConfig.TsnLowSecurityIvPrefixLength))
+	if (!config_check_keys("TsnLow", app_config.tsn_low_security_mode,
+			     app_config.tsn_low_security_algorithm, app_config.tsn_low_security_key_length,
+			     app_config.tsn_low_security_iv_prefix_length))
 		return false;
-	if (!ConfigCheckKeys("Rtc", appConfig.RtcSecurityMode, appConfig.RtcSecurityAlgorithm,
-			     appConfig.RtcSecurityKeyLength, appConfig.RtcSecurityIvPrefixLength))
+	if (!config_check_keys("Rtc", app_config.rtc_security_mode, app_config.rtc_security_algorithm,
+			     app_config.rtc_security_key_length, app_config.rtc_security_iv_prefix_length))
 		return false;
-	if (!ConfigCheckKeys("Rta", appConfig.RtaSecurityMode, appConfig.RtaSecurityAlgorithm,
-			     appConfig.RtaSecurityKeyLength, appConfig.RtaSecurityIvPrefixLength))
+	if (!config_check_keys("Rta", app_config.rta_security_mode, app_config.rta_security_algorithm,
+			     app_config.rta_security_key_length, app_config.rta_security_iv_prefix_length))
 		return false;
 
 	return true;
 }
 
-void ConfigFree(void)
+void config_free(void)
 {
-	if (appConfig.ApplicationXdpProgram)
-		free(appConfig.ApplicationXdpProgram);
+	if (app_config.application_xdp_program)
+		free(app_config.application_xdp_program);
 
-	if (appConfig.TsnHighPayloadPattern)
-		free(appConfig.TsnHighPayloadPattern);
-	if (appConfig.TsnHighSecurityKey)
-		free(appConfig.TsnHighSecurityKey);
-	if (appConfig.TsnHighSecurityIvPrefix)
-		free(appConfig.TsnHighSecurityIvPrefix);
+	if (app_config.tsn_high_payload_pattern)
+		free(app_config.tsn_high_payload_pattern);
+	if (app_config.tsn_high_security_key)
+		free(app_config.tsn_high_security_key);
+	if (app_config.tsn_high_security_iv_prefix)
+		free(app_config.tsn_high_security_iv_prefix);
 
-	if (appConfig.TsnLowPayloadPattern)
-		free(appConfig.TsnLowPayloadPattern);
-	if (appConfig.TsnLowSecurityKey)
-		free(appConfig.TsnLowSecurityKey);
-	if (appConfig.TsnLowSecurityIvPrefix)
-		free(appConfig.TsnLowSecurityIvPrefix);
+	if (app_config.tsn_low_payload_pattern)
+		free(app_config.tsn_low_payload_pattern);
+	if (app_config.tsn_low_security_key)
+		free(app_config.tsn_low_security_key);
+	if (app_config.tsn_low_security_iv_prefix)
+		free(app_config.tsn_low_security_iv_prefix);
 
-	if (appConfig.RtcPayloadPattern)
-		free(appConfig.RtcPayloadPattern);
-	if (appConfig.RtcSecurityKey)
-		free(appConfig.RtcSecurityKey);
-	if (appConfig.RtcSecurityIvPrefix)
-		free(appConfig.RtcSecurityIvPrefix);
+	if (app_config.rtc_payload_pattern)
+		free(app_config.rtc_payload_pattern);
+	if (app_config.rtc_security_key)
+		free(app_config.rtc_security_key);
+	if (app_config.rtc_security_iv_prefix)
+		free(app_config.rtc_security_iv_prefix);
 
-	if (appConfig.RtaPayloadPattern)
-		free(appConfig.RtaPayloadPattern);
-	if (appConfig.RtaSecurityKey)
-		free(appConfig.RtaSecurityKey);
-	if (appConfig.RtaSecurityIvPrefix)
-		free(appConfig.RtaSecurityIvPrefix);
+	if (app_config.rta_payload_pattern)
+		free(app_config.rta_payload_pattern);
+	if (app_config.rta_security_key)
+		free(app_config.rta_security_key);
+	if (app_config.rta_security_iv_prefix)
+		free(app_config.rta_security_iv_prefix);
 
-	if (appConfig.DcpPayloadPattern)
-		free(appConfig.DcpPayloadPattern);
+	if (app_config.dcp_payload_pattern)
+		free(app_config.dcp_payload_pattern);
 
-	if (appConfig.LldpPayloadPattern)
-		free(appConfig.LldpPayloadPattern);
+	if (app_config.lldp_payload_pattern)
+		free(app_config.lldp_payload_pattern);
 
-	if (appConfig.UdpHighPayloadPattern)
-		free(appConfig.UdpHighPayloadPattern);
-	if (appConfig.UdpHighPort)
-		free(appConfig.UdpHighPort);
-	if (appConfig.UdpHighDestination)
-		free(appConfig.UdpHighDestination);
-	if (appConfig.UdpHighSource)
-		free(appConfig.UdpHighSource);
+	if (app_config.udp_high_payload_pattern)
+		free(app_config.udp_high_payload_pattern);
+	if (app_config.udp_high_port)
+		free(app_config.udp_high_port);
+	if (app_config.udp_high_destination)
+		free(app_config.udp_high_destination);
+	if (app_config.udp_high_source)
+		free(app_config.udp_high_source);
 
-	if (appConfig.UdpLowPayloadPattern)
-		free(appConfig.UdpLowPayloadPattern);
-	if (appConfig.UdpLowPort)
-		free(appConfig.UdpLowPort);
-	if (appConfig.UdpLowDestination)
-		free(appConfig.UdpLowDestination);
-	if (appConfig.UdpLowSource)
-		free(appConfig.UdpLowSource);
+	if (app_config.udp_low_payload_pattern)
+		free(app_config.udp_low_payload_pattern);
+	if (app_config.udp_low_port)
+		free(app_config.udp_low_port);
+	if (app_config.udp_low_destination)
+		free(app_config.udp_low_destination);
+	if (app_config.udp_low_source)
+		free(app_config.udp_low_source);
 
-	if (appConfig.GenericL2Name)
-		free(appConfig.GenericL2Name);
-	if (appConfig.GenericL2PayloadPattern)
-		free(appConfig.GenericL2PayloadPattern);
+	if (app_config.generic_l2_name)
+		free(app_config.generic_l2_name);
+	if (app_config.generic_l2_payload_pattern)
+		free(app_config.generic_l2_payload_pattern);
 
-	if (appConfig.LogFile)
-		free(appConfig.LogFile);
-	if (appConfig.LogLevel)
-		free(appConfig.LogLevel);
+	if (app_config.log_file)
+		free(app_config.log_file);
+	if (app_config.log_level)
+		free(app_config.log_level);
 
-	if (appConfig.LogViaMQTTBrokerIP)
-		free(appConfig.LogViaMQTTBrokerIP);
-	if (appConfig.LogViaMQTTMeasurementName)
-		free(appConfig.LogViaMQTTMeasurementName);
+	if (app_config.log_via_mqtt_broker_ip)
+		free(app_config.log_via_mqtt_broker_ip);
+	if (app_config.log_via_mqtt_measurement_name)
+		free(app_config.log_via_mqtt_measurement_name);
 }

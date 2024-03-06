@@ -40,7 +40,7 @@
  *   ret #-1
  *   drop: ret #0
  */
-static struct sock_filter TsnHighFrameFilter[] = {
+static struct sock_filter tsn_high_frame_filter[] = {
 	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 6, 0x00008892}, {0x20, 0, 0, 0xfffff02c},
 	{0x15, 0, 4, 0x00001234}, {0x28, 0, 0, 0x0000000e}, {0x35, 0, 2, 0x00000100},
 	{0x25, 1, 0, 0x000001ff}, {0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
@@ -58,7 +58,7 @@ static struct sock_filter TsnHighFrameFilter[] = {
  *   ret #-1
  *   drop: ret #0
  */
-static struct sock_filter TsnLowFrameFilter[] = {
+static struct sock_filter tsn_low_frame_filter[] = {
 	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 6, 0x00008892}, {0x20, 0, 0, 0xfffff02c},
 	{0x15, 0, 4, 0x00001234}, {0x28, 0, 0, 0x0000000e}, {0x35, 0, 2, 0x00000200},
 	{0x25, 1, 0, 0x000003ff}, {0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
@@ -76,7 +76,7 @@ static struct sock_filter TsnLowFrameFilter[] = {
  *   ret #-1
  *   drop: ret #0
  */
-static struct sock_filter RtcFrameFilter[] = {
+static struct sock_filter rtc_frame_filter[] = {
 	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 6, 0x00008892}, {0x20, 0, 0, 0xfffff02c},
 	{0x15, 0, 4, 0x00001234}, {0x28, 0, 0, 0x0000000e}, {0x35, 0, 2, 0x00008000},
 	{0x25, 1, 0, 0x0000bbff}, {0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
@@ -93,7 +93,7 @@ static struct sock_filter RtcFrameFilter[] = {
  *   ret #-1
  *   drop: ret #0
  */
-static struct sock_filter RtaFrameFilter[] = {
+static struct sock_filter rta_frame_filter[] = {
 	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 5, 0x00008892}, {0x20, 0, 0, 0xfffff02c},
 	{0x15, 0, 3, 0x00001234}, {0x28, 0, 0, 0x0000000e}, {0x15, 0, 1, 0x0000fc01},
 	{0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
@@ -111,7 +111,7 @@ static struct sock_filter RtaFrameFilter[] = {
  *   ret #-1
  *   drop: ret #0
  */
-static struct sock_filter DcpFrameFilter[] = {
+static struct sock_filter dcp_frame_filter[] = {
 	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 6, 0x00008892}, {0x20, 0, 0, 0xfffff02c},
 	{0x15, 0, 4, 0x00001234}, {0x28, 0, 0, 0x0000000e}, {0x35, 0, 2, 0x0000fefe},
 	{0x25, 1, 0, 0x0000feff}, {0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
@@ -124,7 +124,7 @@ static struct sock_filter DcpFrameFilter[] = {
  *   ret #-1
  *   drop: ret #0
  */
-static struct sock_filter LldpFrameFilter[] = {
+static struct sock_filter lldp_frame_filter[] = {
 	{0x28, 0, 0, 0x0000000c},
 	{0x15, 0, 1, 0x000088cc},
 	{0x06, 0, 0, 0xffffffff},
@@ -140,12 +140,12 @@ static struct sock_filter LldpFrameFilter[] = {
  *   ret #-1
  *   drop: ret #0
  */
-static struct sock_filter GenericL2FrameFilter[] = {
+static struct sock_filter generic_l2_frame_filter[] = {
 	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 3, 0x00001234}, {0x20, 0, 0, 0xfffff02c},
 	{0x15, 0, 1, 0x00004321}, {0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
 };
 
-static int SetPromiscuousMode(int socket, int interface)
+static int set_promiscuous_mode(int socket, int interface)
 {
 	struct packet_mreq mreq;
 	int ret;
@@ -163,18 +163,18 @@ static int SetPromiscuousMode(int socket, int interface)
 	return 0;
 }
 
-static int CreateRawSocket(const char *ifName, int socketPriority)
+static int create_raw_socket(const char *if_name, int socket_priority)
 {
 	struct sockaddr_ll address = {0};
-	int socketFd, interface, ret;
+	int socket_fd, interface, ret;
 
-	socketFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-	if (socketFd < 0) {
+	socket_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	if (socket_fd < 0) {
 		perror("socket() failed");
 		goto err_socket;
 	}
 
-	interface = if_nametoindex(ifName);
+	interface = if_nametoindex(if_name);
 	if (!interface) {
 		perror("ioctl() failed");
 		goto err_index;
@@ -184,55 +184,55 @@ static int CreateRawSocket(const char *ifName, int socketPriority)
 	address.sll_family = AF_PACKET;
 	address.sll_protocol = htons(ETH_P_ALL);
 
-	ret = bind(socketFd, (struct sockaddr *)&address, sizeof(address));
+	ret = bind(socket_fd, (struct sockaddr *)&address, sizeof(address));
 	if (ret < 0) {
 		perror("bind() failed");
 		goto err_index;
 	}
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_BINDTODEVICE, ifName, strlen(ifName));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_BINDTODEVICE, if_name, strlen(if_name));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_index;
 	}
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_PRIORITY, &socketPriority,
-			 sizeof(socketPriority));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_PRIORITY, &socket_priority,
+			 sizeof(socket_priority));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_index;
 	}
 
-	ret = SetPromiscuousMode(socketFd, interface);
+	ret = set_promiscuous_mode(socket_fd, interface);
 	if (ret)
 		goto err_index;
 
-	return socketFd;
+	return socket_fd;
 
 err_index:
-	close(socketFd);
+	close(socket_fd);
 err_socket:
 	return -errno;
 }
 
-int GetInterfaceMacAddress(const char *ifName, unsigned char *mac, size_t len)
+int get_interface_mac_address(const char *if_name, unsigned char *mac, size_t len)
 {
 	struct ifreq ifreq = {0};
-	int socketFd, ret;
+	int socket_fd, ret;
 
 	if (len < ETH_ALEN)
 		return -EINVAL;
 
-	strncpy(ifreq.ifr_name, ifName, sizeof(ifreq.ifr_name) - 1);
+	strncpy(ifreq.ifr_name, if_name, sizeof(ifreq.ifr_name) - 1);
 
-	socketFd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
-	if (socketFd < 0) {
+	socket_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+	if (socket_fd < 0) {
 		perror("socket() failed");
 		return -errno;
 	}
 
-	ret = ioctl(socketFd, SIOCGIFHWADDR, &ifreq);
-	close(socketFd);
+	ret = ioctl(socket_fd, SIOCGIFHWADDR, &ifreq);
+	close(socket_fd);
 	if (ret < 0) {
 		perror("ioctl() failed");
 		return -errno;
@@ -243,286 +243,286 @@ int GetInterfaceMacAddress(const char *ifName, unsigned char *mac, size_t len)
 	return 0;
 }
 
-int GetInterfaceLinkSpeed(const char *ifName, uint32_t *speed)
+int get_interface_link_speed(const char *if_name, uint32_t *speed)
 {
 	struct ifreq ifreq = {0};
-	struct ethtool_cmd eData;
-	int socketFd, ret;
+	struct ethtool_cmd e_data;
+	int socket_fd, ret;
 
 	if (!speed)
 		return -EINVAL;
 
-	strncpy(ifreq.ifr_name, ifName, sizeof(ifreq.ifr_name) - 1);
-	ifreq.ifr_data = (char *)&eData;
+	strncpy(ifreq.ifr_name, if_name, sizeof(ifreq.ifr_name) - 1);
+	ifreq.ifr_data = (char *)&e_data;
 
-	socketFd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
-	if (socketFd < 0) {
+	socket_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+	if (socket_fd < 0) {
 		perror("socket() failed");
 		return -errno;
 	}
 
-	eData.cmd = ETHTOOL_GSET;
+	e_data.cmd = ETHTOOL_GSET;
 
-	ret = ioctl(socketFd, SIOCETHTOOL, &ifreq);
-	close(socketFd);
+	ret = ioctl(socket_fd, SIOCETHTOOL, &ifreq);
+	close(socket_fd);
 	if (ret < 0) {
 		perror("ioctl() failed");
 		return -errno;
 	}
 
-	*speed = ethtool_cmd_speed(&eData);
+	*speed = ethtool_cmd_speed(&e_data);
 
 	return 0;
 }
 
-int CreateTSNHighSocket(void)
+int create_tsn_high_socket(void)
 {
-	const struct sock_fprog tsnHighFilterProgram = {.len = ARRAY_SIZE(TsnHighFrameFilter),
-							.filter = TsnHighFrameFilter};
-	struct sock_txtime skTxtime;
-	int socketFd, ret;
+	const struct sock_fprog tsn_high_filter_program = {.len = ARRAY_SIZE(tsn_high_frame_filter),
+							.filter = tsn_high_frame_filter};
+	struct sock_txtime sk_txtime;
+	int socket_fd, ret;
 
-	socketFd = CreateRawSocket(appConfig.TsnHighInterface, appConfig.TsnHighSocketPriority);
-	if (socketFd < 0) {
+	socket_fd = create_raw_socket(app_config.tsn_high_interface, app_config.tsn_high_socket_priority);
+	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Profinet TSN High Frames!\n");
-		return socketFd;
+		return socket_fd;
 	}
 
 	/* Adjust filter: VLAN TCI */
-	TsnHighFrameFilter[3].k = appConfig.TsnHighVid | TSN_HIGH_PCP_VALUE << VLAN_PCP_SHIFT;
+	tsn_high_frame_filter[3].k = app_config.tsn_high_vid | TSN_HIGH_PCP_VALUE << VLAN_PCP_SHIFT;
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_ATTACH_FILTER, &tsnHighFilterProgram,
-			 sizeof(tsnHighFilterProgram));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &tsn_high_filter_program,
+			 sizeof(tsn_high_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
 	/* Enable SO_TXTIME */
-	if (!appConfig.TsnHighTxTimeEnabled)
+	if (!app_config.tsn_high_tx_time_enabled)
 		goto out;
 
-	skTxtime.clockid = CLOCK_TAI; /* For hardware offload CLOCK_TAI is mandatory */
-	skTxtime.flags = 1 << 1;      /* Enable error reporting */
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_TXTIME, &skTxtime, sizeof(skTxtime));
+	sk_txtime.clockid = CLOCK_TAI; /* For hardware offload CLOCK_TAI is mandatory */
+	sk_txtime.flags = 1 << 1;      /* Enable error reporting */
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_TXTIME, &sk_txtime, sizeof(sk_txtime));
 	if (ret) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
 out:
-	return socketFd;
+	return socket_fd;
 
 err_filter:
-	close(socketFd);
+	close(socket_fd);
 	return -errno;
 }
 
-int CreateTSNLowSocket(void)
+int create_tsn_low_socket(void)
 {
-	const struct sock_fprog tsnLowFilterProgram = {.len = ARRAY_SIZE(TsnLowFrameFilter),
-						       .filter = TsnLowFrameFilter};
-	struct sock_txtime skTxtime;
-	int socketFd, ret;
+	const struct sock_fprog tsn_low_filter_program = {.len = ARRAY_SIZE(tsn_low_frame_filter),
+						       .filter = tsn_low_frame_filter};
+	struct sock_txtime sk_txtime;
+	int socket_fd, ret;
 
-	socketFd = CreateRawSocket(appConfig.TsnLowInterface, appConfig.TsnLowSocketPriority);
-	if (socketFd < 0) {
+	socket_fd = create_raw_socket(app_config.tsn_low_interface, app_config.tsn_low_socket_priority);
+	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Profinet TSN Low Frames!\n");
-		return socketFd;
+		return socket_fd;
 	}
 
 	/* Adjust filter: VLAN TCI */
-	TsnLowFrameFilter[3].k = appConfig.TsnLowVid | TSN_LOW_PCP_VALUE << VLAN_PCP_SHIFT;
+	tsn_low_frame_filter[3].k = app_config.tsn_low_vid | TSN_LOW_PCP_VALUE << VLAN_PCP_SHIFT;
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_ATTACH_FILTER, &tsnLowFilterProgram,
-			 sizeof(tsnLowFilterProgram));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &tsn_low_filter_program,
+			 sizeof(tsn_low_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
 	/* Enable SO_TXTIME */
-	if (!appConfig.TsnLowTxTimeEnabled)
+	if (!app_config.tsn_low_tx_time_enabled)
 		goto out;
 
-	skTxtime.clockid = CLOCK_TAI; /* For hardware offload CLOCK_TAI is mandatory */
-	skTxtime.flags = 1 << 1;      /* Enable error reporting */
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_TXTIME, &skTxtime, sizeof(skTxtime));
+	sk_txtime.clockid = CLOCK_TAI; /* For hardware offload CLOCK_TAI is mandatory */
+	sk_txtime.flags = 1 << 1;      /* Enable error reporting */
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_TXTIME, &sk_txtime, sizeof(sk_txtime));
 	if (ret) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
 out:
-	return socketFd;
+	return socket_fd;
 
 err_filter:
-	close(socketFd);
+	close(socket_fd);
 	return -errno;
 }
 
-int CreateRTCSocket(void)
+int create_rtc_socket(void)
 {
-	const struct sock_fprog rtcFilterProgram = {.len = ARRAY_SIZE(RtcFrameFilter),
-						    .filter = RtcFrameFilter};
-	int socketFd, ret;
+	const struct sock_fprog rtc_filter_program = {.len = ARRAY_SIZE(rtc_frame_filter),
+						    .filter = rtc_frame_filter};
+	int socket_fd, ret;
 
-	socketFd = CreateRawSocket(appConfig.RtcInterface, appConfig.RtcSocketPriority);
-	if (socketFd < 0) {
+	socket_fd = create_raw_socket(app_config.rtc_interface, app_config.rtc_socket_priority);
+	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Profinet RTC Frames!\n");
-		return socketFd;
+		return socket_fd;
 	}
 
 	/* Adjust filter: VLAN TCI */
-	RtcFrameFilter[3].k = appConfig.RtcVid | RTC_PCP_VALUE << VLAN_PCP_SHIFT;
+	rtc_frame_filter[3].k = app_config.rtc_vid | RTC_PCP_VALUE << VLAN_PCP_SHIFT;
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_ATTACH_FILTER, &rtcFilterProgram,
-			 sizeof(rtcFilterProgram));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &rtc_filter_program,
+			 sizeof(rtc_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
-	return socketFd;
+	return socket_fd;
 
 err_filter:
-	close(socketFd);
+	close(socket_fd);
 	return -errno;
 }
 
-int CreateRTASocket(void)
+int create_rta_socket(void)
 {
-	const struct sock_fprog rtaFilterProgram = {.len = ARRAY_SIZE(RtaFrameFilter),
-						    .filter = RtaFrameFilter};
-	int socketFd, ret;
+	const struct sock_fprog rta_filter_program = {.len = ARRAY_SIZE(rta_frame_filter),
+						    .filter = rta_frame_filter};
+	int socket_fd, ret;
 
-	socketFd = CreateRawSocket(appConfig.RtaInterface, appConfig.RtaSocketPriority);
-	if (socketFd < 0) {
+	socket_fd = create_raw_socket(app_config.rta_interface, app_config.rta_socket_priority);
+	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Profinet RTC Frames!\n");
-		return socketFd;
+		return socket_fd;
 	}
 
 	/* Adjust filter: VLAN TCI */
-	RtaFrameFilter[3].k = appConfig.RtaVid | RTA_PCP_VALUE << VLAN_PCP_SHIFT;
+	rta_frame_filter[3].k = app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT;
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_ATTACH_FILTER, &rtaFilterProgram,
-			 sizeof(rtaFilterProgram));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &rta_filter_program,
+			 sizeof(rta_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
-	return socketFd;
+	return socket_fd;
 
 err_filter:
-	close(socketFd);
+	close(socket_fd);
 	return -errno;
 }
 
-int CreateDCPSocket(void)
+int create_dcp_socket(void)
 {
-	const struct sock_fprog dcpFilterProgram = {.len = ARRAY_SIZE(DcpFrameFilter),
-						    .filter = DcpFrameFilter};
-	int socketFd, ret;
+	const struct sock_fprog dcp_filter_program = {.len = ARRAY_SIZE(dcp_frame_filter),
+						    .filter = dcp_frame_filter};
+	int socket_fd, ret;
 
-	socketFd = CreateRawSocket(appConfig.DcpInterface, appConfig.DcpSocketPriority);
-	if (socketFd < 0) {
+	socket_fd = create_raw_socket(app_config.dcp_interface, app_config.dcp_socket_priority);
+	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Profinet DCP Frames!\n");
-		return socketFd;
+		return socket_fd;
 	}
 
 	/* Adjust filter: VLAN TCI */
-	DcpFrameFilter[3].k = appConfig.DcpVid | DCP_PCP_VALUE << VLAN_PCP_SHIFT;
+	dcp_frame_filter[3].k = app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT;
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_ATTACH_FILTER, &dcpFilterProgram,
-			 sizeof(dcpFilterProgram));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &dcp_filter_program,
+			 sizeof(dcp_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
-	return socketFd;
+	return socket_fd;
 
 err_filter:
-	close(socketFd);
+	close(socket_fd);
 	return -errno;
 }
 
-int CreateLLDPSocket(void)
+int create_lldp_socket(void)
 {
-	const struct sock_fprog lldpFilterProgram = {.len = ARRAY_SIZE(LldpFrameFilter),
-						     .filter = LldpFrameFilter};
-	int socketFd, ret;
+	const struct sock_fprog lldp_filter_program = {.len = ARRAY_SIZE(lldp_frame_filter),
+						     .filter = lldp_frame_filter};
+	int socket_fd, ret;
 
-	socketFd = CreateRawSocket(appConfig.LldpInterface, appConfig.LldpSocketPriority);
-	if (socketFd < 0) {
+	socket_fd = create_raw_socket(app_config.lldp_interface, app_config.lldp_socket_priority);
+	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for LLDP Frames!\n");
-		return socketFd;
+		return socket_fd;
 	}
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_ATTACH_FILTER, &lldpFilterProgram,
-			 sizeof(lldpFilterProgram));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &lldp_filter_program,
+			 sizeof(lldp_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
-	return socketFd;
+	return socket_fd;
 
 err_filter:
-	close(socketFd);
+	close(socket_fd);
 	return -errno;
 }
 
-int CreateGenericL2Socket(void)
+int create_generic_l2_socket(void)
 {
-	const struct sock_fprog genericL2FilterProgram = {.len = ARRAY_SIZE(GenericL2FrameFilter),
-							  .filter = GenericL2FrameFilter};
-	struct sock_txtime skTxtime;
-	int socketFd, ret;
+	const struct sock_fprog generic_l2_filter_program = {.len = ARRAY_SIZE(generic_l2_frame_filter),
+							  .filter = generic_l2_frame_filter};
+	struct sock_txtime sk_txtime;
+	int socket_fd, ret;
 
-	socketFd = CreateRawSocket(appConfig.GenericL2Interface, appConfig.GenericL2SocketPriority);
-	if (socketFd < 0) {
+	socket_fd = create_raw_socket(app_config.generic_l2_interface, app_config.generic_l2_socket_priority);
+	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Generic L2 Frames!\n");
-		return socketFd;
+		return socket_fd;
 	}
 
 	/* Adjust filter: EtherType and VLAN TCI */
-	GenericL2FrameFilter[1].k = appConfig.GenericL2EtherType;
-	GenericL2FrameFilter[3].k = appConfig.GenericL2Vid | appConfig.GenericL2Pcp
+	generic_l2_frame_filter[1].k = app_config.generic_l2_ether_type;
+	generic_l2_frame_filter[3].k = app_config.generic_l2_vid | app_config.generic_l2_pcp
 								     << VLAN_PCP_SHIFT;
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_ATTACH_FILTER, &genericL2FilterProgram,
-			 sizeof(genericL2FilterProgram));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &generic_l2_filter_program,
+			 sizeof(generic_l2_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
 	/* Enable SO_TXTIME */
-	if (!appConfig.GenericL2TxTimeEnabled)
+	if (!app_config.generic_l2_tx_time_enabled)
 		goto out;
 
-	skTxtime.clockid = CLOCK_TAI; /* For hardware offload CLOCK_TAI is mandatory */
-	skTxtime.flags = 1 << 1;      /* Enable error reporting */
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_TXTIME, &skTxtime, sizeof(skTxtime));
+	sk_txtime.clockid = CLOCK_TAI; /* For hardware offload CLOCK_TAI is mandatory */
+	sk_txtime.flags = 1 << 1;      /* Enable error reporting */
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_TXTIME, &sk_txtime, sizeof(sk_txtime));
 	if (ret) {
 		perror("setsockopt() failed");
 		goto err_filter;
 	}
 
 out:
-	return socketFd;
+	return socket_fd;
 
 err_filter:
-	close(socketFd);
+	close(socket_fd);
 	return -errno;
 }
 
-static int DnsLookup(const char *host, const char *port, struct sockaddr_storage *addr,
-		     int *socketFd)
+static int dns_lookup(const char *host, const char *port, struct sockaddr_storage *addr,
+		     int *socket_fd)
 {
-	struct addrinfo *saHead, *sa, hints;
+	struct addrinfo *sa_head, *sa, hints;
 	int ret, sock;
 
 	memset(&hints, 0, sizeof(hints));
@@ -530,7 +530,7 @@ static int DnsLookup(const char *host, const char *port, struct sockaddr_storage
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_flags = AI_ADDRCONFIG;
 
-	ret = getaddrinfo(host, port, &hints, &saHead);
+	ret = getaddrinfo(host, port, &hints, &sa_head);
 	if (ret) {
 		fprintf(stderr, "getaddrinfo() for host '%s' failed: %s!\n", host,
 			gai_strerror(ret));
@@ -538,15 +538,15 @@ static int DnsLookup(const char *host, const char *port, struct sockaddr_storage
 		goto err_addrinfo;
 	}
 
-	for (sa = saHead; sa != NULL; sa = sa->ai_next) {
+	for (sa = sa_head; sa != NULL; sa = sa->ai_next) {
 		sock = socket(sa->ai_family, sa->ai_socktype, sa->ai_protocol);
 		if (sock < 0) {
 			perror("socket() failed");
 			continue;
 		}
 
-		if (socketFd)
-			*socketFd = sock;
+		if (socket_fd)
+			*socket_fd = sock;
 		else
 			close(sock);
 
@@ -564,31 +564,31 @@ static int DnsLookup(const char *host, const char *port, struct sockaddr_storage
 	ret = 0;
 
 err_dns:
-	freeaddrinfo(saHead);
+	freeaddrinfo(sa_head);
 err_addrinfo:
 	return ret;
 }
 
-int CreateUDPSocket(const char *udpDestination, const char *udpSource, const char *udpPort,
-		    int socketPriority, struct sockaddr_storage *destination)
+int create_udp_socket(const char *udp_destination, const char *udp_source, const char *udp_port,
+		    int socket_priority, struct sockaddr_storage *destination)
 {
 	struct sockaddr_storage source;
-	int ret, socketFd = -1;
+	int ret, socket_fd = -1;
 
-	ret = DnsLookup(udpDestination, udpPort, destination, NULL);
+	ret = dns_lookup(udp_destination, udp_port, destination, NULL);
 	if (ret)
 		goto err_dns1;
 
-	ret = DnsLookup(udpSource, udpPort, &source, &socketFd);
+	ret = dns_lookup(udp_source, udp_port, &source, &socket_fd);
 	if (ret)
 		goto err_dns2;
 
 	switch (source.ss_family) {
 	case AF_INET:
-		ret = bind(socketFd, (struct sockaddr_in *)&source, sizeof(struct sockaddr_in));
+		ret = bind(socket_fd, (struct sockaddr_in *)&source, sizeof(struct sockaddr_in));
 		break;
 	case AF_INET6:
-		ret = bind(socketFd, (struct sockaddr_in6 *)&source, sizeof(struct sockaddr_in6));
+		ret = bind(socket_fd, (struct sockaddr_in6 *)&source, sizeof(struct sockaddr_in6));
 		break;
 	default:
 		ret = -EINVAL;
@@ -599,18 +599,18 @@ int CreateUDPSocket(const char *udpDestination, const char *udpSource, const cha
 		goto err_bind;
 	}
 
-	ret = setsockopt(socketFd, SOL_SOCKET, SO_PRIORITY, &socketPriority,
-			 sizeof(socketPriority));
+	ret = setsockopt(socket_fd, SOL_SOCKET, SO_PRIORITY, &socket_priority,
+			 sizeof(socket_priority));
 	if (ret) {
 		perror("setsockopt() failed");
 		goto err_prio;
 	}
 
-	return socketFd;
+	return socket_fd;
 
 err_prio:
 err_bind:
-	close(socketFd);
+	close(socket_fd);
 err_dns2:
 err_dns1:
 	return ret;

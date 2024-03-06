@@ -15,9 +15,9 @@
 
 #define RTC_TX_FRAME_LENGTH XDP_FRAME_SIZE
 
-int RtcThreadsCreate(struct ThreadContext *threadContext);
-void RtcThreadsStop(struct ThreadContext *threadContext);
-void RtcThreadsFree(struct ThreadContext *threadContext);
-void RtcThreadsWaitForFinish(struct ThreadContext *threadContext);
+int rtc_threads_create(struct thread_context *thread_context);
+void rtc_threads_stop(struct thread_context *thread_context);
+void rtc_threads_free(struct thread_context *thread_context);
+void rtc_threads_wait_for_finish(struct thread_context *thread_context);
 
 #endif /* _RTC_THREAD_H_ */

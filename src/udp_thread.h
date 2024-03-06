@@ -18,35 +18,35 @@
 
 #define UDP_TX_FRAME_LENGTH (4096)
 
-struct UdpThreadConfiguration {
+struct udp_thread_configuration {
 	/* UDP configuration */
-	enum StatFrameType FrameType;
-	const char *UdpSuffix;
-	bool UdpRxMirrorEnabled;
-	bool UdpIgnoreRxErrors;
-	uint64_t UdpBurstPeriodNS;
-	size_t UdpNumFramesPerCycle;
-	const char *UdpPayloadPattern;
-	size_t UdpPayloadPatternLength;
-	size_t UdpFrameLength;
-	int UdpSocketPriority;
-	int UdpTxThreadPriority;
-	int UdpRxThreadPriority;
-	int UdpTxThreadCpu;
-	int UdpRxThreadCpu;
-	const char *UdpPort;
-	const char *UdpDestination;
-	const char *UdpSource;
+	enum stat_frame_type frame_type;
+	const char *udp_suffix;
+	bool udp_rx_mirror_enabled;
+	bool udp_ignore_rx_errors;
+	uint64_t udp_burst_period_ns;
+	size_t udp_num_frames_per_cycle;
+	const char *udp_payload_pattern;
+	size_t udp_payload_pattern_length;
+	size_t udp_frame_length;
+	int udp_socket_priority;
+	int udp_tx_thread_priority;
+	int udp_rx_thread_priority;
+	int udp_tx_thread_cpu;
+	int udp_rx_thread_cpu;
+	const char *udp_port;
+	const char *udp_destination;
+	const char *udp_source;
 };
 
-int UdpLowThreadsCreate(struct ThreadContext *threadContext);
-void UdpLowThreadsStop(struct ThreadContext *threadContext);
-void UdpLowThreadsFree(struct ThreadContext *threadContext);
-void UdpLowThreadsWaitForFinish(struct ThreadContext *threadContext);
+int udp_low_threads_create(struct thread_context *thread_context);
+void udp_low_threads_stop(struct thread_context *thread_context);
+void udp_low_threads_free(struct thread_context *thread_context);
+void udp_low_threads_wait_for_finish(struct thread_context *thread_context);
 
-int UdpHighThreadsCreate(struct ThreadContext *threadContext);
-void UdpHighThreadsStop(struct ThreadContext *threadContext);
-void UdpHighThreadsFree(struct ThreadContext *threadContext);
-void UdpHighThreadsWaitForFinish(struct ThreadContext *threadContext);
+int udp_high_threads_create(struct thread_context *thread_context);
+void udp_high_threads_stop(struct thread_context *thread_context);
+void udp_high_threads_free(struct thread_context *thread_context);
+void udp_high_threads_wait_for_finish(struct thread_context *thread_context);
 
 #endif /* _UDP_THREAD_H_ */

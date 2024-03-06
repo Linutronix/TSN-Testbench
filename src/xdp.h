@@ -33,47 +33,47 @@
 #define XDP_NUM_FRAMES (XSK_RING_CONS__DEFAULT_NUM_DESCS + XSK_RING_PROD__DEFAULT_NUM_DESCS)
 #define XDP_FRAME_SIZE XSK_UMEM__DEFAULT_FRAME_SIZE
 
-struct XskUmemInfo {
-	struct xsk_ring_prod Fq;
-	struct xsk_ring_cons Cq;
-	struct xsk_umem *Umem;
-	void *Buffer;
+struct xsk_umem_info {
+	struct xsk_ring_prod fq;
+	struct xsk_ring_cons cq;
+	struct xsk_umem *umem;
+	void *buffer;
 };
 
-struct XdpSocket {
-	uint64_t OutstandingTx;
-	struct xsk_ring_cons Rx;
-	struct xsk_ring_prod Tx;
-	struct XskUmemInfo Umem;
-	struct xsk_socket *Xsk;
-	struct xdp_program *Prog;
-	int Fd;
-	bool BusyPollMode;
+struct xdp_socket {
+	uint64_t outstanding_tx;
+	struct xsk_ring_cons rx;
+	struct xsk_ring_prod tx;
+	struct xsk_umem_info umem;
+	struct xsk_socket *xsk;
+	struct xdp_program *prog;
+	int fd;
+	bool busy_poll_mode;
 };
 
-struct XdpGenConfig {
-	enum SecurityMode Mode;
-	struct SecurityContext *SecurityContext;
-	const unsigned char *IvPrefix;
-	const unsigned char *PayloadPattern;
-	size_t PayloadPatternLength;
-	size_t FrameLength;
-	size_t NumFramesPerCycle;
-	uint32_t *FrameNumber;
-	uint64_t SequenceCounterBegin;
-	uint32_t MetaDataOffset;
-	enum StatFrameType FrameType;
+struct xdp_gen_config {
+	enum security_mode mode;
+	struct security_context *security_context;
+	const unsigned char *iv_prefix;
+	const unsigned char *payload_pattern;
+	size_t payload_pattern_length;
+	size_t frame_length;
+	size_t num_frames_per_cycle;
+	uint32_t *frame_number;
+	uint64_t sequence_counter_begin;
+	uint32_t meta_data_offset;
+	enum stat_frame_type frame_type;
 };
 
-struct XdpSocket *XdpOpenSocket(const char *interface, const char *xdpProgram, int queue,
-				bool skbMode, bool zeroCopyMode, bool wakeupMode,
-				bool busyPollMode);
-void XdpCloseSocket(struct XdpSocket *xsk, const char *interface, bool skbMode);
-void XdpCompleteTxOnly(struct XdpSocket *xsk);
-void XdpCompleteTx(struct XdpSocket *xsk);
-void XdpGenAndSendFrames(struct XdpSocket *xsk, const struct XdpGenConfig *xdp);
-unsigned int XdpReceiveFrames(struct XdpSocket *xsk, size_t frameLength, bool mirrorEnabled,
-			      int (*receiveFunction)(void *data, unsigned char *, size_t),
+struct xdp_socket *xdp_open_socket(const char *interface, const char *xdp_program, int queue,
+				bool skb_mode, bool zero_copy_mode, bool wakeup_mode,
+				bool busy_poll_mode);
+void xdp_close_socket(struct xdp_socket *xsk, const char *interface, bool skb_mode);
+void xdp_complete_tx_only(struct xdp_socket *xsk);
+void xdp_complete_tx(struct xdp_socket *xsk);
+void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config *xdp);
+unsigned int xdp_receive_frames(struct xdp_socket *xsk, size_t frame_length, bool mirror_enabled,
+			      int (*receive_function)(void *data, unsigned char *, size_t),
 			      void *data);
 
 #endif /* _XDP_H_ */
