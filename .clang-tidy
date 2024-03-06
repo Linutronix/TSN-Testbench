@@ -1,0 +1,20 @@
+Checks: '-*,readability-identifier-naming'
+CheckOptions:
+  - { key: readability-identifier-naming.ClassCase,             value: lower_case }
+  - { key: readability-identifier-naming.ClassMemberCase,       value: lower_case }
+  - { key: readability-identifier-naming.ClassMethodCase,       value: lower_case }
+  - { key: readability-identifier-naming.ConstantCase,          value: UPPER_CASE }
+  - { key: readability-identifier-naming.ConstantMemberCase,    value: UPPER_CASE }
+  - { key: readability-identifier-naming.ConstantParameterCase, value: lower_case }
+  - { key: readability-identifier-naming.ConstantPointerParameterCase, value: lower_case }
+  - { key: readability-identifier-naming.StructCase,            value: lower_case }
+  - { key: readability-identifier-naming.FunctionCase,          value: lower_case }
+  - { key: readability-identifier-naming.VariableCase,          value: lower_case }
+  - { key: readability-identifier-naming.GlobalConstantCase,    value: lower_case }
+  - { key: readability-identifier-naming.GlobalFunctionCase,    value: lower_case }
+  - { key: readability-identifier-naming.GlobalVariableCase,    value: lower_case }
+  - { key: readability-identifier-naming.LocalConstantCase,     value: lower_case }
+  - { key: readability-identifier-naming.LocalVariableCase,     value: lower_case }
+  - { key: readability-identifier-naming.MemberCase,            value: lower_case }
+  - { key: readability-identifier-naming.EnumCase,              value: lower_case }
+  - { key: readability-identifier-naming.ParameterCase,         value: lower_case }
