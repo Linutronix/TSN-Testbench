@@ -101,15 +101,15 @@ static void DcpGenAndSendFrame(unsigned char *frameData, size_t frameLength, siz
 
 static void *DcpTxThreadRoutine(void *data)
 {
+    struct ThreadContext *threadContext = data;
     unsigned char receivedFrames[DCP_TX_FRAME_LENGTH * appConfig.DcpNumFramesPerCycle];
     const bool mirrorEnabled = appConfig.DcpRxMirrorEnabled;
-    struct ThreadContext *threadContext = data;
+    pthread_mutex_t *mutex = &threadContext->DataMutex;
+    pthread_cond_t *cond = &threadContext->DataCondVar;
     unsigned char source[ETH_ALEN];
     uint64_t sequenceCounter = 0;
     unsigned char *frame;
     int ret, socketFd;
-    pthread_mutex_t *mutex = &threadContext->DataMutex;
-    pthread_cond_t *cond = &threadContext->DataCondVar;
 
     socketFd = threadContext->SocketFd;
 
@@ -280,9 +280,9 @@ static void *DcpRxThreadRoutine(void *data)
 static void *DcpTxGenerationThreadRoutine(void *data)
 {
     struct ThreadContext *threadContext = data;
+    uint64_t numFrames = appConfig.DcpNumFramesPerCycle;
     pthread_mutex_t *mutex = &threadContext->DataMutex;
     uint64_t cycleTimeNS = appConfig.DcpBurstPeriodNS;
-    uint64_t numFrames = appConfig.DcpNumFramesPerCycle;
     struct timespec wakeupTime;
     int ret;
 

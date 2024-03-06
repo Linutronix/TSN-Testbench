@@ -148,7 +148,6 @@ static void LogViaMQTTOnConnect(struct mosquitto *mosq, void *obj, int reason_co
 
 static void *LogViaMQTTThreadRoutine(void *data)
 {
-
     uint64_t periodNS = appConfig.LogViaMQTTThreadPeriodNS;
     struct LogViaMQTTThreadContext *mqttContext = data;
     struct LogStatistics stats[10 * NUM_FRAME_TYPES];

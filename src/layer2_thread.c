@@ -194,15 +194,15 @@ static void GenericL2GenAndSendXdpFrames(struct XdpSocket *xsk, size_t numFrames
 
 static void *GenericL2TxThreadRoutine(void *data)
 {
-    size_t receivedFramesLength = GENL2_TX_FRAME_LENGTH * appConfig.GenericL2NumFramesPerCycle;
     struct ThreadContext *threadContext = data;
+    size_t receivedFramesLength = GENL2_TX_FRAME_LENGTH * appConfig.GenericL2NumFramesPerCycle;
     const long long cycleTimeNS = appConfig.ApplicationBaseCycleTimeNS;
     const bool mirrorEnabled = appConfig.GenericL2RxMirrorEnabled;
     unsigned char *receivedFrames = threadContext->RxFrameData;
     struct sockaddr_ll destination;
     unsigned char source[ETH_ALEN];
-    struct timespec wakeupTime;
     uint64_t sequenceCounter = 0;
+    struct timespec wakeupTime;
     unsigned int ifIndex;
     unsigned char *frame;
     uint32_t linkSpeed;
@@ -298,8 +298,8 @@ static void *GenericL2XdpTxThreadRoutine(void *data)
     uint32_t frameNumber = XSK_RING_PROD__DEFAULT_NUM_DESCS;
     size_t numFrames = appConfig.GenericL2NumFramesPerCycle;
     unsigned char source[ETH_ALEN];
-    struct timespec wakeupTime;
     uint64_t sequenceCounter = 0;
+    struct timespec wakeupTime;
     unsigned char *frameData;
     struct XdpSocket *xsk;
     int ret;

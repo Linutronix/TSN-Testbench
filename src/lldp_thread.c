@@ -114,15 +114,15 @@ static void LldpGenAndSendFrame(unsigned char *frameData, size_t frameLength, si
 
 static void *LldpTxThreadRoutine(void *data)
 {
+    struct ThreadContext *threadContext = data;
     unsigned char receivedFrames[LLDP_TX_FRAME_LENGTH * appConfig.LldpNumFramesPerCycle];
     const bool mirrorEnabled = appConfig.LldpRxMirrorEnabled;
-    struct ThreadContext *threadContext = data;
+    pthread_mutex_t *mutex = &threadContext->DataMutex;
+    pthread_cond_t *cond = &threadContext->DataCondVar;
     unsigned char source[ETH_ALEN];
     uint64_t sequenceCounter = 0;
     unsigned char *frame;
     int ret, socketFd;
-    pthread_mutex_t *mutex = &threadContext->DataMutex;
-    pthread_cond_t *cond = &threadContext->DataCondVar;
 
     socketFd = threadContext->SocketFd;
 
@@ -194,14 +194,14 @@ static void *LldpTxThreadRoutine(void *data)
 
 static void *LldpRxThreadRoutine(void *data)
 {
+    struct ThreadContext *threadContext = data;
     const unsigned char *expectedPattern = (const unsigned char *)appConfig.LldpPayloadPattern;
     const size_t expectedPatternLength = appConfig.LldpPayloadPatternLength;
     const size_t numFramesPerCycle = appConfig.LldpNumFramesPerCycle;
+    unsigned char frame[LLDP_TX_FRAME_LENGTH], source[ETH_ALEN];
     const bool mirrorEnabled = appConfig.LldpRxMirrorEnabled;
     const bool ignoreRxErrors = appConfig.LldpIgnoreRxErrors;
     const ssize_t frameLength = appConfig.LldpFrameLength;
-    unsigned char frame[LLDP_TX_FRAME_LENGTH], source[ETH_ALEN];
-    struct ThreadContext *threadContext = data;
     uint64_t sequenceCounter = 0;
     int socketFd, ret;
 
@@ -291,9 +291,9 @@ static void *LldpRxThreadRoutine(void *data)
 static void *LldpTxGenerationThreadRoutine(void *data)
 {
     struct ThreadContext *threadContext = data;
+    uint64_t numFrames = appConfig.LldpNumFramesPerCycle;
     pthread_mutex_t *mutex = &threadContext->DataMutex;
     uint64_t cycleTimeNS = appConfig.LldpBurstPeriodNS;
-    uint64_t numFrames = appConfig.LldpNumFramesPerCycle;
     struct timespec wakeupTime;
     int ret;
 

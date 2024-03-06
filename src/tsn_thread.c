@@ -197,8 +197,8 @@ static void *TsnTxThreadRoutine(void *data)
     const bool mirrorEnabled = tsnConfig->TsnRxMirrorEnabled;
     struct sockaddr_ll destination;
     unsigned char source[ETH_ALEN];
-    struct timespec wakeupTime;
     uint64_t sequenceCounter = 0;
+    struct timespec wakeupTime;
     unsigned int ifIndex;
     uint32_t linkSpeed;
     int ret, socketFd;
@@ -324,8 +324,8 @@ static void *TsnXdpTxThreadRoutine(void *data)
     uint32_t frameNumber = XSK_RING_PROD__DEFAULT_NUM_DESCS;
     size_t numFrames = tsnConfig->TsnNumFramesPerCycle;
     unsigned char source[ETH_ALEN];
-    struct timespec wakeupTime;
     uint64_t sequenceCounter = 0;
+    struct timespec wakeupTime;
     unsigned char *frameData;
     struct XdpSocket *xsk;
     int ret;
@@ -669,10 +669,10 @@ static void *TsnXdpRxThreadRoutine(void *data)
 {
     struct ThreadContext *threadContext = data;
     const struct TsnThreadConfiguration *tsnConfig = threadContext->PrivateData;
-    struct XdpSocket *xsk = threadContext->Xsk;
     const long long cycleTimeNS = appConfig.ApplicationBaseCycleTimeNS;
-    const size_t frameLength = tsnConfig->TsnFrameLength;
     const bool mirrorEnabled = tsnConfig->TsnRxMirrorEnabled;
+    const size_t frameLength = tsnConfig->TsnFrameLength;
+    struct XdpSocket *xsk = threadContext->Xsk;
     struct timespec wakeupTime;
     int ret;
 

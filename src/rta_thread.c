@@ -135,11 +135,11 @@ static void *RtaTxThreadRoutine(void *data)
     unsigned char receivedFrames[RTA_TX_FRAME_LENGTH * appConfig.RtaNumFramesPerCycle];
     struct SecurityContext *securityContext = threadContext->TxSecurityContext;
     const bool mirrorEnabled = appConfig.RtaRxMirrorEnabled;
+    pthread_mutex_t *mutex = &threadContext->DataMutex;
+    pthread_cond_t *cond = &threadContext->DataCondVar;
     unsigned char source[ETH_ALEN];
     uint64_t sequenceCounter = 0;
     int ret, socketFd;
-    pthread_mutex_t *mutex = &threadContext->DataMutex;
-    pthread_cond_t *cond = &threadContext->DataCondVar;
 
     socketFd = threadContext->SocketFd;
 
@@ -546,9 +546,9 @@ static void *RtaRxThreadRoutine(void *data)
 static void *RtaTxGenerationThreadRoutine(void *data)
 {
     struct ThreadContext *threadContext = data;
+    uint64_t numFrames = appConfig.RtaNumFramesPerCycle;
     pthread_mutex_t *mutex = &threadContext->DataMutex;
     uint64_t cycleTimeNS = appConfig.RtaBurstPeriodNS;
-    uint64_t numFrames = appConfig.RtaNumFramesPerCycle;
     struct timespec wakeupTime;
     int ret;
 
@@ -592,10 +592,10 @@ static void *RtaTxGenerationThreadRoutine(void *data)
 static void *RtaXdpRxThreadRoutine(void *data)
 {
     struct ThreadContext *threadContext = data;
-    struct XdpSocket *xsk = threadContext->Xsk;
     const long long cycleTimeNS = appConfig.ApplicationBaseCycleTimeNS;
-    const size_t frameLength = appConfig.RtaFrameLength;
     const bool mirrorEnabled = appConfig.RtaRxMirrorEnabled;
+    const size_t frameLength = appConfig.RtaFrameLength;
+    struct XdpSocket *xsk = threadContext->Xsk;
     struct timespec wakeupTime;
     int ret;
 

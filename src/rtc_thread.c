@@ -138,8 +138,8 @@ static void *RtcTxThreadRoutine(void *data)
     const uint64_t cycleTimeNS = appConfig.ApplicationBaseCycleTimeNS;
     const bool mirrorEnabled = appConfig.RtcRxMirrorEnabled;
     unsigned char source[ETH_ALEN];
-    struct timespec wakeupTime;
     uint64_t sequenceCounter = 0;
+    struct timespec wakeupTime;
     int ret, socketFd;
 
     socketFd = threadContext->SocketFd;
@@ -242,8 +242,8 @@ static void *RtcXdpTxThreadRoutine(void *data)
     uint32_t frameNumber = XSK_RING_PROD__DEFAULT_NUM_DESCS;
     const size_t numFrames = appConfig.RtcNumFramesPerCycle;
     unsigned char source[ETH_ALEN];
-    struct timespec wakeupTime;
     uint64_t sequenceCounter = 0;
+    struct timespec wakeupTime;
     unsigned char *frameData;
     struct XdpSocket *xsk;
     int ret;

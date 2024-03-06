@@ -54,8 +54,8 @@ static void PrintVersionAndDie(void)
 
 int main(int argc, char *argv[])
 {
-    struct LogThreadContext *logThread;
     struct LogViaMQTTThreadContext *logViaMQTTThread;
+    struct LogThreadContext *logThread;
     struct ThreadContext *g2Threads;
     struct ThreadContext *threads;
     const char *configFile = NULL;

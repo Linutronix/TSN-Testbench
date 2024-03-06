@@ -101,8 +101,8 @@ static void InitializeSecureProfinetFrame(enum SecurityMode mode, unsigned char 
                                           const char *payloadPattern, size_t payloadPatternLength, uint16_t vlanTCI,
                                           uint16_t frameId)
 {
-    struct VLANEthernetHeader *eth;
     struct ProfinetSecureHeader *rt;
+    struct VLANEthernetHeader *eth;
     uint16_t securityLength;
     size_t payloadOffset;
 

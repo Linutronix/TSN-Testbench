@@ -633,19 +633,17 @@ void ConfigPrintValues(void)
 
 int ConfigSetDefaults(bool mirrorEnabled)
 {
+    static unsigned char defaultDebugMontitorDestination[] = {0x44, 0x44, 0x44, 0x44, 0x44, 0x44};
+    static unsigned char defaultLldpDestination[] = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e};
     static unsigned char defaultDestination[] = {0xa8, 0xa1, 0x59, 0x2c, 0xa8, 0xdb};
     static unsigned char defaultDcpIdentify[] = {0x01, 0x0e, 0xcf, 0x00, 0x00, 0x00};
-    static unsigned char defaultLldpDestination[] = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e};
-    static unsigned char defaultDebugMontitorDestination[] = {0x44, 0x44, 0x44, 0x44, 0x44, 0x44};
-    static const char *DefaultPayloadPattern = "Payload";
-    static const char *DefaultUdpLowDestination = "192.168.2.120";
-    static const char *DefaultUdpLowSource = "192.168.2.119";
-    static const char *DefaultLogLevel = "Debug";
-    static const char *DefaultUdpLowPort = "6666";
-
-    static const char *DefaultLogViaMQTTBrokerIP = "127.0.0.1";
     static const char *DefaultLogViaMQTTMeasurementName = "testbench";
-
+    static const char *DefaultUdpLowDestination = "192.168.2.120";
+    static const char *DefaultLogViaMQTTBrokerIP = "127.0.0.1";
+    static const char *DefaultUdpLowSource = "192.168.2.119";
+    static const char *DefaultPayloadPattern = "Payload";
+    static const char *DefaultUdpLowPort = "6666";
+    static const char *DefaultLogLevel = "Debug";
     struct timespec current;
     int ret = -ENOMEM;
 
@@ -985,9 +983,9 @@ static bool ConfigCheckKeys(const char *trafficClass, enum SecurityMode mode, en
 
 bool ConfigSanityCheck()
 {
-    const size_t minProfinetFrameSize = sizeof(struct VLANEthernetHeader) + sizeof(struct ProfinetRtHeader);
     const size_t minSecureProfinetFrameSize =
         sizeof(struct VLANEthernetHeader) + sizeof(struct ProfinetSecureHeader) + sizeof(struct SecurityChecksum);
+    const size_t minProfinetFrameSize = sizeof(struct VLANEthernetHeader) + sizeof(struct ProfinetRtHeader);
     size_t minFrameSize;
 
     /*

@@ -75,9 +75,9 @@ static const char *LogLevelToString(enum LogLevel level)
 void LogMessage(enum LogLevel level, const char *format, ...)
 {
     unsigned char buffer[4096];
+    int written, len, ret;
     struct timespec time;
     va_list args;
-    int written, len, ret;
     char *p;
 
     /*
@@ -138,8 +138,8 @@ static void LogAddTrafficClass(const char *name, enum StatFrameType frameType, c
 
 static void *LogThreadRoutine(void *data)
 {
-    uint64_t period = appConfig.LogThreadPeriodNS;
     struct LogThreadContext *logContext = data;
+    uint64_t period = appConfig.LogThreadPeriodNS;
     struct timespec time;
     int ret;
 
