@@ -13,6 +13,7 @@
 uint64_t TxTimeGetFrameDuration(uint32_t linkSpeed, size_t frameLength);
 
 uint64_t TxTimeGetFrameTxTime(uint64_t wakeupTime, uint64_t sequenceCounter, uint64_t duration,
-                              size_t numFramesPerCycle, uint64_t txTimeOffset, const char *trafficClass);
+			      size_t numFramesPerCycle, uint64_t txTimeOffset,
+			      const char *trafficClass);
 
 #endif /* _TX_TIME_H_ */

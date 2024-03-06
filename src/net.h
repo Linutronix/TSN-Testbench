@@ -20,8 +20,8 @@ int CreateRTASocket(void);
 int CreateDCPSocket(void);
 int CreateLLDPSocket(void);
 int CreateGenericL2Socket(void);
-int CreateUDPSocket(const char *udpDestination, const char *udpSource, const char *udpPort, int socketPriority,
-                    struct sockaddr_storage *destination);
+int CreateUDPSocket(const char *udpDestination, const char *udpSource, const char *udpPort,
+		    int socketPriority, struct sockaddr_storage *destination);
 int GetInterfaceMacAddress(const char *ifName, unsigned char *mac, size_t len);
 int GetInterfaceLinkSpeed(const char *ifName, uint32_t *speed);
 

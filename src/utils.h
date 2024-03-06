@@ -23,13 +23,13 @@
 
 static inline void NsToTs(int64_t ns, struct timespec *ts)
 {
-    ts->tv_sec = ns / NSEC_PER_SEC;
-    ts->tv_nsec = ns % NSEC_PER_SEC;
+	ts->tv_sec = ns / NSEC_PER_SEC;
+	ts->tv_nsec = ns % NSEC_PER_SEC;
 }
 
 static inline int64_t TsToNs(const struct timespec *ts)
 {
-    return ts->tv_sec * NSEC_PER_SEC + ts->tv_nsec;
+	return ts->tv_sec * NSEC_PER_SEC + ts->tv_nsec;
 }
 
 void IncrementPeriod(struct timespec *time, int64_t periodNS);
@@ -46,37 +46,39 @@ void InsertVlanTag(void *buffer, size_t len, uint16_t vlanTCI);
  *
  * This function does nothing when the @newFrame isn't sufficent in length.
  */
-void BuildVLANFrameFromRx(const unsigned char *oldFrame, size_t oldFrameLen, unsigned char *newFrame,
-                          size_t newFrameLen, uint16_t etherType, uint16_t vlanTCI);
+void BuildVLANFrameFromRx(const unsigned char *oldFrame, size_t oldFrameLen,
+			  unsigned char *newFrame, size_t newFrameLen, uint16_t etherType,
+			  uint16_t vlanTCI);
 
 /*
  * This function initializes an PROFINET Ethernet frame. The Ethernet header,
  * PROFINET header and payload is initialized. The sequenceCounter is set to zero.
  *
- * In case the SecurityMode is AE or AO, the PROFINET Ethernet frames will contain the SecurityHeader after the FrameID.
+ * In case the SecurityMode is AE or AO, the PROFINET Ethernet frames will contain the
+ * SecurityHeader after the FrameID.
  */
 void InitializeProfinetFrame(enum SecurityMode mode, unsigned char *frameData, size_t frameLength,
-                             const unsigned char *source, const unsigned char *destination, const char *payloadPattern,
-                             size_t payloadPatternLength, uint16_t vlanTCI, uint16_t frameId);
+			     const unsigned char *source, const unsigned char *destination,
+			     const char *payloadPattern, size_t payloadPatternLength,
+			     uint16_t vlanTCI, uint16_t frameId);
 
 /*
- * The following function prepares an already initialized PROFINET Ethernet frame for final transmission. Depending on
- * traffic class and security modes, different actions have to be taken e.g., adjusting the cycle counter and perform
- * authentifcation and/or encryption.
+ * The following function prepares an already initialized PROFINET Ethernet frame for final
+ * transmission. Depending on traffic class and security modes, different actions have to be taken
+ * e.g., adjusting the cycle counter and perform authentifcation and/or encryption.
  */
 
-struct PrepareFrameConfig
-{
-    enum SecurityMode Mode;
-    struct SecurityContext *SecurityContext;
-    const unsigned char *IvPrefix;
-    const unsigned char *PayloadPattern;
-    size_t PayloadPatternLength;
-    unsigned char *FrameData;
-    size_t FrameLength;
-    size_t NumFramesPerCycle;
-    uint64_t SequenceCounter;
-    uint32_t MetaDataOffset;
+struct PrepareFrameConfig {
+	enum SecurityMode Mode;
+	struct SecurityContext *SecurityContext;
+	const unsigned char *IvPrefix;
+	const unsigned char *PayloadPattern;
+	size_t PayloadPatternLength;
+	unsigned char *FrameData;
+	size_t FrameLength;
+	size_t NumFramesPerCycle;
+	uint64_t SequenceCounter;
+	uint32_t MetaDataOffset;
 };
 
 int PrepareFrameForTx(const struct PrepareFrameConfig *frameConfig);
@@ -102,21 +104,22 @@ void PrintPayloadPattern(const char *payloadPattern, size_t payloadPatternLength
 #define BIT(x) (1ULL << (x))
 
 /* Meta data handling */
-static inline uint64_t MetaDataToSequenceCounter(const struct ReferenceMetaData *meta, size_t numFramesPerCycle)
+static inline uint64_t MetaDataToSequenceCounter(const struct ReferenceMetaData *meta,
+						 size_t numFramesPerCycle)
 {
-    uint32_t frameCounter, cycleCounter;
+	uint32_t frameCounter, cycleCounter;
 
-    frameCounter = be32toh(meta->FrameCounter);
-    cycleCounter = be32toh(meta->CycleCounter);
+	frameCounter = be32toh(meta->FrameCounter);
+	cycleCounter = be32toh(meta->CycleCounter);
 
-    return (uint64_t)cycleCounter * numFramesPerCycle + frameCounter;
+	return (uint64_t)cycleCounter * numFramesPerCycle + frameCounter;
 }
 
-static inline void SequenceCounterToMetaData(struct ReferenceMetaData *meta, uint64_t sequenceCounter,
-                                             size_t numFramesPerCycle)
+static inline void SequenceCounterToMetaData(struct ReferenceMetaData *meta,
+					     uint64_t sequenceCounter, size_t numFramesPerCycle)
 {
-    meta->FrameCounter = htobe32(sequenceCounter % numFramesPerCycle);
-    meta->CycleCounter = htobe32(sequenceCounter / numFramesPerCycle);
+	meta->FrameCounter = htobe32(sequenceCounter % numFramesPerCycle);
+	meta->CycleCounter = htobe32(sequenceCounter / numFramesPerCycle);
 }
 
 #endif /* _UTILS_H_ */

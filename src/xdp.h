@@ -33,48 +33,47 @@
 #define XDP_NUM_FRAMES (XSK_RING_CONS__DEFAULT_NUM_DESCS + XSK_RING_PROD__DEFAULT_NUM_DESCS)
 #define XDP_FRAME_SIZE XSK_UMEM__DEFAULT_FRAME_SIZE
 
-struct XskUmemInfo
-{
-    struct xsk_ring_prod Fq;
-    struct xsk_ring_cons Cq;
-    struct xsk_umem *Umem;
-    void *Buffer;
+struct XskUmemInfo {
+	struct xsk_ring_prod Fq;
+	struct xsk_ring_cons Cq;
+	struct xsk_umem *Umem;
+	void *Buffer;
 };
 
-struct XdpSocket
-{
-    uint64_t OutstandingTx;
-    struct xsk_ring_cons Rx;
-    struct xsk_ring_prod Tx;
-    struct XskUmemInfo Umem;
-    struct xsk_socket *Xsk;
-    struct xdp_program *Prog;
-    int Fd;
-    bool BusyPollMode;
+struct XdpSocket {
+	uint64_t OutstandingTx;
+	struct xsk_ring_cons Rx;
+	struct xsk_ring_prod Tx;
+	struct XskUmemInfo Umem;
+	struct xsk_socket *Xsk;
+	struct xdp_program *Prog;
+	int Fd;
+	bool BusyPollMode;
 };
 
-struct XdpGenConfig
-{
-    enum SecurityMode Mode;
-    struct SecurityContext *SecurityContext;
-    const unsigned char *IvPrefix;
-    const unsigned char *PayloadPattern;
-    size_t PayloadPatternLength;
-    size_t FrameLength;
-    size_t NumFramesPerCycle;
-    uint32_t *FrameNumber;
-    uint64_t SequenceCounterBegin;
-    uint32_t MetaDataOffset;
-    enum StatFrameType FrameType;
+struct XdpGenConfig {
+	enum SecurityMode Mode;
+	struct SecurityContext *SecurityContext;
+	const unsigned char *IvPrefix;
+	const unsigned char *PayloadPattern;
+	size_t PayloadPatternLength;
+	size_t FrameLength;
+	size_t NumFramesPerCycle;
+	uint32_t *FrameNumber;
+	uint64_t SequenceCounterBegin;
+	uint32_t MetaDataOffset;
+	enum StatFrameType FrameType;
 };
 
-struct XdpSocket *XdpOpenSocket(const char *interface, const char *xdpProgram, int queue, bool skbMode,
-                                bool zeroCopyMode, bool wakeupMode, bool busyPollMode);
+struct XdpSocket *XdpOpenSocket(const char *interface, const char *xdpProgram, int queue,
+				bool skbMode, bool zeroCopyMode, bool wakeupMode,
+				bool busyPollMode);
 void XdpCloseSocket(struct XdpSocket *xsk, const char *interface, bool skbMode);
 void XdpCompleteTxOnly(struct XdpSocket *xsk);
 void XdpCompleteTx(struct XdpSocket *xsk);
 void XdpGenAndSendFrames(struct XdpSocket *xsk, const struct XdpGenConfig *xdp);
 unsigned int XdpReceiveFrames(struct XdpSocket *xsk, size_t frameLength, bool mirrorEnabled,
-                              int (*receiveFunction)(void *data, unsigned char *, size_t), void *data);
+			      int (*receiveFunction)(void *data, unsigned char *, size_t),
+			      void *data);
 
 #endif /* _XDP_H_ */

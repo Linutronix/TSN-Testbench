@@ -18,26 +18,25 @@
 
 #define UDP_TX_FRAME_LENGTH (4096)
 
-struct UdpThreadConfiguration
-{
-    /* UDP configuration */
-    enum StatFrameType FrameType;
-    const char *UdpSuffix;
-    bool UdpRxMirrorEnabled;
-    bool UdpIgnoreRxErrors;
-    uint64_t UdpBurstPeriodNS;
-    size_t UdpNumFramesPerCycle;
-    const char *UdpPayloadPattern;
-    size_t UdpPayloadPatternLength;
-    size_t UdpFrameLength;
-    int UdpSocketPriority;
-    int UdpTxThreadPriority;
-    int UdpRxThreadPriority;
-    int UdpTxThreadCpu;
-    int UdpRxThreadCpu;
-    const char *UdpPort;
-    const char *UdpDestination;
-    const char *UdpSource;
+struct UdpThreadConfiguration {
+	/* UDP configuration */
+	enum StatFrameType FrameType;
+	const char *UdpSuffix;
+	bool UdpRxMirrorEnabled;
+	bool UdpIgnoreRxErrors;
+	uint64_t UdpBurstPeriodNS;
+	size_t UdpNumFramesPerCycle;
+	const char *UdpPayloadPattern;
+	size_t UdpPayloadPatternLength;
+	size_t UdpFrameLength;
+	int UdpSocketPriority;
+	int UdpTxThreadPriority;
+	int UdpRxThreadPriority;
+	int UdpTxThreadCpu;
+	int UdpRxThreadCpu;
+	const char *UdpPort;
+	const char *UdpDestination;
+	const char *UdpSource;
 };
 
 int UdpLowThreadsCreate(struct ThreadContext *threadContext);

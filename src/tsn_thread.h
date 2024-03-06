@@ -20,48 +20,47 @@
 
 #define TSN_TX_FRAME_LENGTH XDP_FRAME_SIZE
 
-struct TsnThreadConfiguration
-{
-    /* TSN configuration */
-    enum StatFrameType FrameType;
-    const char *TsnSuffix;
-    bool TsnTxEnabled;
-    bool TsnRxEnabled;
-    bool TsnRxMirrorEnabled;
-    bool TsnXdpEnabled;
-    bool TsnXdpSkbMode;
-    bool TsnXdpZcMode;
-    bool TsnXdpWakeupMode;
-    bool TsnXdpBusyPollMode;
-    bool TsnTxTimeEnabled;
-    bool TsnIgnoreRxErrors;
-    uint64_t TsnTxTimeOffsetNS;
-    size_t TsnNumFramesPerCycle;
-    const char *TsnPayloadPattern;
-    size_t TsnPayloadPatternLength;
-    size_t TsnFrameLength;
-    enum SecurityMode TsnSecurityMode;
-    enum SecurityAlgorithm TsnSecurityAlgorithm;
-    char *TsnSecurityKey;
-    size_t TsnSecurityKeyLength;
-    char *TsnSecurityIvPrefix;
-    size_t TsnSecurityIvPrefixLength;
-    int TsnRxQueue;
-    int TsnTxQueue;
-    int TsnSocketPriority;
-    int TsnTxThreadPriority;
-    int TsnRxThreadPriority;
-    int TsnTxThreadCpu;
-    int TsnRxThreadCpu;
-    const char *TsnInterface;
-    const unsigned char *TsnDestination;
-    /* Socket create function */
-    int (*CreateTSNSocket)(void);
-    /* TSN low/high specific */
-    int VlanId;
-    int VlanPCP;
-    int FrameIdRangeStart;
-    int FrameIdRangeEnd;
+struct TsnThreadConfiguration {
+	/* TSN configuration */
+	enum StatFrameType FrameType;
+	const char *TsnSuffix;
+	bool TsnTxEnabled;
+	bool TsnRxEnabled;
+	bool TsnRxMirrorEnabled;
+	bool TsnXdpEnabled;
+	bool TsnXdpSkbMode;
+	bool TsnXdpZcMode;
+	bool TsnXdpWakeupMode;
+	bool TsnXdpBusyPollMode;
+	bool TsnTxTimeEnabled;
+	bool TsnIgnoreRxErrors;
+	uint64_t TsnTxTimeOffsetNS;
+	size_t TsnNumFramesPerCycle;
+	const char *TsnPayloadPattern;
+	size_t TsnPayloadPatternLength;
+	size_t TsnFrameLength;
+	enum SecurityMode TsnSecurityMode;
+	enum SecurityAlgorithm TsnSecurityAlgorithm;
+	char *TsnSecurityKey;
+	size_t TsnSecurityKeyLength;
+	char *TsnSecurityIvPrefix;
+	size_t TsnSecurityIvPrefixLength;
+	int TsnRxQueue;
+	int TsnTxQueue;
+	int TsnSocketPriority;
+	int TsnTxThreadPriority;
+	int TsnRxThreadPriority;
+	int TsnTxThreadCpu;
+	int TsnRxThreadCpu;
+	const char *TsnInterface;
+	const unsigned char *TsnDestination;
+	/* Socket create function */
+	int (*CreateTSNSocket)(void);
+	/* TSN low/high specific */
+	int VlanId;
+	int VlanPCP;
+	int FrameIdRangeStart;
+	int FrameIdRangeEnd;
 };
 
 int TsnHighThreadsCreate(struct ThreadContext *threadContext);

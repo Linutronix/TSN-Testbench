@@ -44,86 +44,78 @@
 /*
  * VLAN 802.1Q frame.
  */
-struct VLANEthernetHeader
-{
-    unsigned char Destination[ETH_ALEN];
-    unsigned char Source[ETH_ALEN];
-    __be16 VLANProto;
-    __be16 VLANTCI;
-    __be16 VLANEncapsulatedProto;
+struct VLANEthernetHeader {
+	unsigned char Destination[ETH_ALEN];
+	unsigned char Source[ETH_ALEN];
+	__be16 VLANProto;
+	__be16 VLANTCI;
+	__be16 VLANEncapsulatedProto;
 } __attribute__((packed));
 
 /*
  * VLAN header.
  */
-struct VLANHeader
-{
-    __be16 VLANProto;
-    __be16 VLANTCI;
+struct VLANHeader {
+	__be16 VLANProto;
+	__be16 VLANTCI;
 } __attribute__((packed));
 
 /*
  * MetaData for testing, error checking and coordination.
  */
-struct ReferenceMetaData
-{
-    __be32 FrameCounter;
-    __be32 CycleCounter;
+struct ReferenceMetaData {
+	__be32 FrameCounter;
+	__be32 CycleCounter;
 } __attribute__((packed));
 
 /*
  * PROFINET RT header.
  */
-struct ProfinetRtHeader
-{
-    __be16 FrameId;
-    struct ReferenceMetaData MetaData;
+struct ProfinetRtHeader {
+	__be16 FrameId;
+	struct ReferenceMetaData MetaData;
 } __attribute__((packed));
 
-struct SecurityMetaData
-{
-    /*
-     * Bit 0:   SecurityInformation.ProtectionMode
-     * Bit 1-7: Reserved
-     */
-    __u8 SecurityInformation;
-    /*
-     * Bit 0-3: NextContextID
-     * Bit 4-7: CurrentContextID
-     */
-    __u8 SecurityControl;
-    /*
-     * Bit 0-31: SequenceCounter
-     */
-    __be32 SecuritySequenceCounter;
-    /*
-     * Bit 0-10:  Length
-     * Bit 11-15: Reserved
-     */
-    __be16 SecurityLength;
+struct SecurityMetaData {
+	/*
+	 * Bit 0:   SecurityInformation.ProtectionMode
+	 * Bit 1-7: Reserved
+	 */
+	__u8 SecurityInformation;
+	/*
+	 * Bit 0-3: NextContextID
+	 * Bit 4-7: CurrentContextID
+	 */
+	__u8 SecurityControl;
+	/*
+	 * Bit 0-31: SequenceCounter
+	 */
+	__be32 SecuritySequenceCounter;
+	/*
+	 * Bit 0-10:  Length
+	 * Bit 11-15: Reserved
+	 */
+	__be16 SecurityLength;
 } __attribute__((packed));
 
-struct SecurityChecksum
-{
-    __u8 Checksum[16];
+struct SecurityChecksum {
+	__u8 Checksum[16];
 } __attribute__((packed));
 
 /*
  * PROFINET Secure header.
  */
-struct ProfinetSecureHeader
-{
-    __be16 FrameId;
-    struct SecurityMetaData SecurityMetaData;
-    struct ReferenceMetaData MetaData;
+struct ProfinetSecureHeader {
+	__be16 FrameId;
+	struct SecurityMetaData SecurityMetaData;
+	struct ReferenceMetaData MetaData;
 } __attribute__((packed));
 
 /*
  * Generic Layer 2 header.
  */
-struct GenericL2Header
-{
-    struct ReferenceMetaData MetaData;
+struct GenericL2Header {
+	struct ReferenceMetaData MetaData;
 } __attribute__((packed));
 
 #endif /* _NET_DEF_H_ */

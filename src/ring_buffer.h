@@ -16,18 +16,18 @@
  *
  * Introduce a "generic" ring buffer suitable for both scenarios.
  */
-struct RingBuffer
-{
-    size_t BufferSize;
-    unsigned char *BufferWritePointer;
-    unsigned char *BufferReadPointer;
-    unsigned char *Data;
-    pthread_mutex_t DataMutex;
+struct RingBuffer {
+	size_t BufferSize;
+	unsigned char *BufferWritePointer;
+	unsigned char *BufferReadPointer;
+	unsigned char *Data;
+	pthread_mutex_t DataMutex;
 };
 
 struct RingBuffer *RingBufferAllocate(size_t bufferSize);
 void RingBufferAdd(struct RingBuffer *ringBuffer, const unsigned char *data, size_t len);
-void RingBufferFetch(struct RingBuffer *ringBuffer, unsigned char *data, size_t len, size_t *outLen);
+void RingBufferFetch(struct RingBuffer *ringBuffer, unsigned char *data, size_t len,
+		     size_t *outLen);
 void RingBufferFree(struct RingBuffer *ringBuffer);
 
 #endif /* _RING_BUFFER_H_ */

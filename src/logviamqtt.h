@@ -10,13 +10,12 @@
 struct Statistics;
 enum StatFrameType;
 
-struct LogViaMQTTThreadContext
-{
-    pthread_t MQTTLogTaskId;
-    struct mosquitto *mosq;
-    struct RingBuffer *MQTTLogRingBuffer;
-    unsigned char *MQTTLogData;
-    volatile int Stop;
+struct LogViaMQTTThreadContext {
+	pthread_t MQTTLogTaskId;
+	struct mosquitto *mosq;
+	struct RingBuffer *MQTTLogRingBuffer;
+	unsigned char *MQTTLogData;
+	volatile int Stop;
 };
 
 struct LogViaMQTTThreadContext *LogViaMQTTThreadCreate();
