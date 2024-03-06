@@ -37,7 +37,7 @@ static enum xdp_attach_mode xdp_flags(bool skb_mode)
 }
 
 static int xdp_load_program(struct xdp_socket *xsk, const char *interface, const char *xdp_program,
-			  int skb_mode)
+			    int skb_mode)
 {
 	struct xdp_program *prog;
 	struct bpf_object *obj;
@@ -151,7 +151,8 @@ static int xdp_configure_socket_options(struct xdp_socket *xsk, bool busy_poll_m
 }
 
 struct xdp_socket *xdp_open_socket(const char *interface, const char *xdp_program, int queue,
-				bool skb_mode, bool zero_copy_mode, bool wakeup_mode, bool busy_poll_mode)
+				   bool skb_mode, bool zero_copy_mode, bool wakeup_mode,
+				   bool busy_poll_mode)
 {
 	struct xsk_umem_config cfg = {
 		.fill_size = XSK_RING_PROD__DEFAULT_NUM_DESCS,
@@ -367,7 +368,7 @@ void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config
 
 		*xdp->frame_number += 1;
 		*xdp->frame_number = (*xdp->frame_number % XSK_RING_CONS__DEFAULT_NUM_DESCS) +
-				    XSK_RING_PROD__DEFAULT_NUM_DESCS;
+				     XSK_RING_PROD__DEFAULT_NUM_DESCS;
 
 		/* Get frame and prepare it */
 		data = xsk_umem__get_data(xsk->umem.buffer, tx_desc->addr);
@@ -411,8 +412,8 @@ void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config
 }
 
 unsigned int xdp_receive_frames(struct xdp_socket *xsk, size_t frame_length, bool mirror_enabled,
-			      int (*receive_function)(void *data, unsigned char *, size_t),
-			      void *data)
+				int (*receive_function)(void *data, unsigned char *, size_t),
+				void *data)
 {
 	uint32_t idx_rx = 0, idx_tx = 0, idx_fq = 0, len;
 	unsigned int received, i;

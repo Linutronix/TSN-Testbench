@@ -27,7 +27,7 @@ struct ring_buffer {
 struct ring_buffer *ring_buffer_allocate(size_t buffer_size);
 void ring_buffer_add(struct ring_buffer *ring_buffer, const unsigned char *data, size_t len);
 void ring_buffer_fetch(struct ring_buffer *ring_buffer, unsigned char *data, size_t len,
-		     size_t *out_len);
+		       size_t *out_len);
 void ring_buffer_free(struct ring_buffer *ring_buffer);
 
 #endif /* _RING_BUFFER_H_ */

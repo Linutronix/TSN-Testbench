@@ -26,8 +26,8 @@
 #include "utils.h"
 
 static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_frame_len,
-				unsigned char *new_frame, size_t new_frame_len,
-				const unsigned char *source)
+				    unsigned char *new_frame, size_t new_frame_len,
+				    const unsigned char *source)
 {
 	struct vlan_ethernet_header *eth_new, *eth_old;
 
@@ -58,7 +58,7 @@ static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_f
 }
 
 static void dcp_send_frame(const unsigned char *frame_data, size_t frame_length,
-			 size_t num_frames_per_cycle, int socket_fd)
+			   size_t num_frames_per_cycle, int socket_fd)
 {
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
@@ -73,7 +73,7 @@ static void dcp_send_frame(const unsigned char *frame_data, size_t frame_length,
 	ret = send(socket_fd, frame_data, frame_length, 0);
 	if (ret < 0) {
 		log_message(LOG_LEVEL_ERROR, "DcpTx: send() for %" PRIu64 " failed: %s\n",
-			   sequence_counter, strerror(errno));
+			    sequence_counter, strerror(errno));
 		return;
 	}
 
@@ -81,7 +81,8 @@ static void dcp_send_frame(const unsigned char *frame_data, size_t frame_length,
 }
 
 static void dcp_gen_and_send_frame(unsigned char *frame_data, size_t frame_length,
-			       size_t num_frames_per_cycle, int socket_fd, uint64_t sequence_counter)
+				   size_t num_frames_per_cycle, int socket_fd,
+				   uint64_t sequence_counter)
 {
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
@@ -95,7 +96,7 @@ static void dcp_gen_and_send_frame(unsigned char *frame_data, size_t frame_lengt
 	ret = send(socket_fd, frame_data, frame_length, 0);
 	if (ret < 0) {
 		log_message(LOG_LEVEL_ERROR, "DcpTx: send() for %" PRIu64 " failed: %s\n",
-			   sequence_counter, strerror(errno));
+			    sequence_counter, strerror(errno));
 		return;
 	}
 
@@ -124,9 +125,9 @@ static void *dcp_tx_thread_routine(void *data)
 
 	frame = thread_context->tx_frame_data;
 	initialize_profinet_frame(SECURITY_MODE_NONE, frame, DCP_TX_FRAME_LENGTH, source,
-				app_config.dcp_destination, app_config.dcp_payload_pattern,
-				app_config.dcp_payload_pattern_length,
-				app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT, 0xfefe);
+				  app_config.dcp_destination, app_config.dcp_payload_pattern,
+				  app_config.dcp_payload_pattern_length,
+				  app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT, 0xfefe);
 
 	while (!thread_context->stop) {
 		size_t num_frames, i;
@@ -151,19 +152,19 @@ static void *dcp_tx_thread_routine(void *data)
 			/* Send DcpFrames */
 			for (i = 0; i < num_frames; ++i)
 				dcp_gen_and_send_frame(frame, app_config.dcp_frame_length,
-						   app_config.dcp_num_frames_per_cycle, socket_fd,
-						   sequence_counter++);
+						       app_config.dcp_num_frames_per_cycle,
+						       socket_fd, sequence_counter++);
 		} else {
 			size_t len;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
-					sizeof(received_frames), &len);
+					  sizeof(received_frames), &len);
 
 			/* Len should be a multiple of frame size */
 			for (i = 0; i < len / app_config.dcp_frame_length; ++i)
 				dcp_send_frame(received_frames + i * app_config.dcp_frame_length,
-					     app_config.dcp_frame_length,
-					     app_config.dcp_num_frames_per_cycle, socket_fd);
+					       app_config.dcp_frame_length,
+					       app_config.dcp_num_frames_per_cycle, socket_fd);
 
 			pthread_mutex_lock(&thread_context->data_mutex);
 			thread_context->num_frames_available = 0;
@@ -182,9 +183,11 @@ static void *dcp_tx_thread_routine(void *data)
 	return NULL;
 }
 
-static int dcp_rx_frame(struct thread_context *thread_context, unsigned char *frame_data, size_t len)
+static int dcp_rx_frame(struct thread_context *thread_context, unsigned char *frame_data,
+			size_t len)
 {
-	const unsigned char *expected_pattern = (const unsigned char *)app_config.dcp_payload_pattern;
+	const unsigned char *expected_pattern =
+		(const unsigned char *)app_config.dcp_payload_pattern;
 	const size_t expected_pattern_length = app_config.dcp_payload_pattern_length;
 	const size_t num_frames_per_cycle = app_config.dcp_num_frames_per_cycle;
 	const bool mirror_enabled = app_config.dcp_rx_mirror_enabled;
@@ -208,26 +211,26 @@ static int dcp_rx_frame(struct thread_context *thread_context, unsigned char *fr
 	sequence_counter = meta_data_to_sequence_counter(&rt->meta_data, num_frames_per_cycle);
 
 	out_of_order = sequence_counter != thread_context->rx_sequence_counter;
-	payload_mismatch = memcmp(frame_data + sizeof(struct ethhdr) + sizeof(*rt), expected_pattern,
-				 expected_pattern_length);
+	payload_mismatch = memcmp(frame_data + sizeof(struct ethhdr) + sizeof(*rt),
+				  expected_pattern, expected_pattern_length);
 	frame_id_mismatch = false;
 
 	stat_frame_received(DCP_FRAME_TYPE, sequence_counter, out_of_order, payload_mismatch,
-			  frame_id_mismatch);
+			    frame_id_mismatch);
 
 	if (out_of_order) {
 		if (!ignore_rx_errors)
 			log_message(LOG_LEVEL_WARNING,
-				   "DcpRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64
-				   "!\n",
-				   sequence_counter, thread_context->rx_sequence_counter);
+				    "DcpRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64
+				    "!\n",
+				    sequence_counter, thread_context->rx_sequence_counter);
 		thread_context->rx_sequence_counter++;
 	}
 
 	if (payload_mismatch)
 		log_message(LOG_LEVEL_WARNING,
-			   "DcpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
-			   sequence_counter);
+			    "DcpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
+			    sequence_counter);
 
 	thread_context->rx_sequence_counter++;
 
@@ -240,7 +243,8 @@ static int dcp_rx_frame(struct thread_context *thread_context, unsigned char *fr
 	/*
 	 * Build new frame for Tx with VLAN info.
 	 */
-	dcp_build_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame), thread_context->source);
+	dcp_build_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame),
+				thread_context->source);
 
 	/*
 	 * Store the new frame.
@@ -297,8 +301,8 @@ static void *dcp_tx_generation_thread_routine(void *data)
 	ret = get_thread_start_time(0, &wakeup_time);
 	if (ret) {
 		log_message(LOG_LEVEL_ERROR,
-			   "DcpTxGen: Failed to calculate thread start time: %s!\n",
-			   strerror(errno));
+			    "DcpTxGen: Failed to calculate thread start time: %s!\n",
+			    strerror(errno));
 		return NULL;
 	}
 
@@ -313,7 +317,7 @@ static void *dcp_tx_generation_thread_routine(void *data)
 
 		if (ret) {
 			log_message(LOG_LEVEL_ERROR, "DcpTxGen: clock_nanosleep() failed: %s\n",
-				   strerror(ret));
+				    strerror(ret));
 			return NULL;
 		}
 
@@ -351,7 +355,7 @@ int dcp_threads_create(struct thread_context *thread_context)
 	}
 
 	ret = get_interface_mac_address(app_config.dcp_interface, thread_context->source,
-				     sizeof(thread_context->source));
+					sizeof(thread_context->source));
 	if (ret < 0) {
 		fprintf(stderr, "Failed to get Dcp Source MAC address!\n");
 		goto err_mac;
@@ -361,8 +365,8 @@ int dcp_threads_create(struct thread_context *thread_context)
 		/*
 		 * Per period the expectation is: DcpNumFramesPerCycle * MAX_FRAME
 		 */
-		thread_context->mirror_buffer =
-			ring_buffer_allocate(DCP_TX_FRAME_LENGTH * app_config.dcp_num_frames_per_cycle);
+		thread_context->mirror_buffer = ring_buffer_allocate(
+			DCP_TX_FRAME_LENGTH * app_config.dcp_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Dcp Mirror RingBuffer!\n");
 			ret = -ENOMEM;
@@ -370,23 +374,25 @@ int dcp_threads_create(struct thread_context *thread_context)
 		}
 	}
 
-	ret = create_rt_thread(&thread_context->tx_task_id, "DcpTxThread", app_config.dcp_tx_thread_priority,
-			     app_config.dcp_tx_thread_cpu, dcp_tx_thread_routine, thread_context);
+	ret = create_rt_thread(&thread_context->tx_task_id, "DcpTxThread",
+			       app_config.dcp_tx_thread_priority, app_config.dcp_tx_thread_cpu,
+			       dcp_tx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Dcp Tx Thread!\n");
 		goto err_thread;
 	}
 
 	ret = create_rt_thread(&thread_context->tx_gen_task_id, "DcpTxGenThread",
-			     app_config.dcp_tx_thread_priority, app_config.dcp_tx_thread_cpu,
-			     dcp_tx_generation_thread_routine, thread_context);
+			       app_config.dcp_tx_thread_priority, app_config.dcp_tx_thread_cpu,
+			       dcp_tx_generation_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Dcp Tx Thread!\n");
 		goto err_thread_txgen;
 	}
 
-	ret = create_rt_thread(&thread_context->rx_task_id, "DcpRxThread", app_config.dcp_rx_thread_priority,
-			     app_config.dcp_rx_thread_cpu, dcp_rx_thread_routine, thread_context);
+	ret = create_rt_thread(&thread_context->rx_task_id, "DcpRxThread",
+			       app_config.dcp_rx_thread_priority, app_config.dcp_rx_thread_cpu,
+			       dcp_rx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Dcp Rx Thread!\n");
 		goto err_thread_rx;

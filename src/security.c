@@ -60,9 +60,9 @@ void security_exit(struct security_context *context)
 }
 
 int security_encrypt(struct security_context *context, const unsigned char *plaintext,
-		    size_t plaintext_length, const unsigned char *associated_data,
-		    size_t associated_data_length, const unsigned char *iv, unsigned char *ciphertext,
-		    unsigned char *tag)
+		     size_t plaintext_length, const unsigned char *associated_data,
+		     size_t associated_data_length, const unsigned char *iv,
+		     unsigned char *ciphertext, unsigned char *tag)
 {
 	int ret = -EINVAL, len;
 
@@ -71,7 +71,8 @@ int security_encrypt(struct security_context *context, const unsigned char *plai
 		goto out;
 
 	/* Provide associatedData data. */
-	if (1 != EVP_EncryptUpdate(context->ctx, NULL, &len, associated_data, associated_data_length))
+	if (1 !=
+	    EVP_EncryptUpdate(context->ctx, NULL, &len, associated_data, associated_data_length))
 		goto out;
 
 	/* Provide the message to be encrypted, and obtain the encrypted output. */
@@ -94,9 +95,9 @@ out:
 }
 
 int security_decrypt(struct security_context *context, const unsigned char *ciphertext,
-		    size_t ciphertext_length, const unsigned char *associated_data,
-		    size_t associated_data_length, unsigned char *tag, const unsigned char *iv,
-		    unsigned char *plaintext)
+		     size_t ciphertext_length, const unsigned char *associated_data,
+		     size_t associated_data_length, unsigned char *tag, const unsigned char *iv,
+		     unsigned char *plaintext)
 {
 	int ret = -EINVAL, len;
 
@@ -110,7 +111,8 @@ int security_decrypt(struct security_context *context, const unsigned char *ciph
 
 	/* Provide the message to be decrypted, and obtain the plaintext output. */
 	if (ciphertext) {
-		if (!EVP_DecryptUpdate(context->ctx, plaintext, &len, ciphertext, ciphertext_length))
+		if (!EVP_DecryptUpdate(context->ctx, plaintext, &len, ciphertext,
+				       ciphertext_length))
 			goto out;
 	}
 

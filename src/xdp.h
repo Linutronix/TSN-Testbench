@@ -66,14 +66,14 @@ struct xdp_gen_config {
 };
 
 struct xdp_socket *xdp_open_socket(const char *interface, const char *xdp_program, int queue,
-				bool skb_mode, bool zero_copy_mode, bool wakeup_mode,
-				bool busy_poll_mode);
+				   bool skb_mode, bool zero_copy_mode, bool wakeup_mode,
+				   bool busy_poll_mode);
 void xdp_close_socket(struct xdp_socket *xsk, const char *interface, bool skb_mode);
 void xdp_complete_tx_only(struct xdp_socket *xsk);
 void xdp_complete_tx(struct xdp_socket *xsk);
 void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config *xdp);
 unsigned int xdp_receive_frames(struct xdp_socket *xsk, size_t frame_length, bool mirror_enabled,
-			      int (*receive_function)(void *data, unsigned char *, size_t),
-			      void *data);
+				int (*receive_function)(void *data, unsigned char *, size_t),
+				void *data);
 
 #endif /* _XDP_H_ */

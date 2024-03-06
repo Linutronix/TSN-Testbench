@@ -68,6 +68,6 @@ void stat_free(void);
 const char *stat_frame_type_to_string(enum stat_frame_type frame_type);
 void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number);
 void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number, bool out_of_order,
-		       bool payload_mismatch, bool frame_id_mismatch);
+			 bool payload_mismatch, bool frame_id_mismatch);
 
 #endif /* _STAT_H_ */

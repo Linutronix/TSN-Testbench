@@ -37,7 +37,7 @@ static void lldp_build_frame_from_rx(unsigned char *frame_data, const unsigned c
 }
 
 static void lldp_initialize_frame(unsigned char *frame_data, const unsigned char *source,
-				const unsigned char *destination)
+				  const unsigned char *destination)
 {
 	struct reference_meta_data *meta;
 	size_t payload_offset;
@@ -71,7 +71,7 @@ static void lldp_initialize_frame(unsigned char *frame_data, const unsigned char
 }
 
 static void lldp_send_frame(const unsigned char *frame_data, size_t frame_length,
-			  size_t num_frames_per_cycle, int socket_fd)
+			    size_t num_frames_per_cycle, int socket_fd)
 {
 	struct reference_meta_data *meta;
 	uint64_t sequence_counter;
@@ -86,7 +86,7 @@ static void lldp_send_frame(const unsigned char *frame_data, size_t frame_length
 	ret = send(socket_fd, frame_data, frame_length, 0);
 	if (ret < 0) {
 		log_message(LOG_LEVEL_ERROR, "LldpTx: send() for %" PRIu64 " failed: %s\n",
-			   sequence_counter, strerror(errno));
+			    sequence_counter, strerror(errno));
 		return;
 	}
 
@@ -94,7 +94,8 @@ static void lldp_send_frame(const unsigned char *frame_data, size_t frame_length
 }
 
 static void lldp_gen_and_send_frame(unsigned char *frame_data, size_t frame_length,
-				size_t num_frames_per_cycle, int socket_fd, uint64_t sequence_counter)
+				    size_t num_frames_per_cycle, int socket_fd,
+				    uint64_t sequence_counter)
 {
 	struct reference_meta_data *meta;
 	struct ethhdr *eth;
@@ -108,7 +109,7 @@ static void lldp_gen_and_send_frame(unsigned char *frame_data, size_t frame_leng
 	ret = send(socket_fd, frame_data, frame_length, 0);
 	if (ret < 0) {
 		log_message(LOG_LEVEL_ERROR, "LldpTx: send() for %" PRIu64 " failed: %s\n",
-			   sequence_counter, strerror(errno));
+			    sequence_counter, strerror(errno));
 		return;
 	}
 
@@ -161,19 +162,19 @@ static void *lldp_tx_thread_routine(void *data)
 			/* Send LldpFrames */
 			for (i = 0; i < num_frames; ++i)
 				lldp_gen_and_send_frame(frame, app_config.lldp_frame_length,
-						    app_config.lldp_num_frames_per_cycle, socket_fd,
-						    sequence_counter++);
+							app_config.lldp_num_frames_per_cycle,
+							socket_fd, sequence_counter++);
 		} else {
 			size_t len;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
-					sizeof(received_frames), &len);
+					  sizeof(received_frames), &len);
 
 			/* Len should be a multiple of frame size */
 			for (i = 0; i < len / app_config.lldp_frame_length; ++i)
 				lldp_send_frame(received_frames + i * app_config.lldp_frame_length,
-					      app_config.lldp_frame_length,
-					      app_config.lldp_num_frames_per_cycle, socket_fd);
+						app_config.lldp_frame_length,
+						app_config.lldp_num_frames_per_cycle, socket_fd);
 
 			pthread_mutex_lock(&thread_context->data_mutex);
 			thread_context->num_frames_available = 0;
@@ -195,7 +196,8 @@ static void *lldp_tx_thread_routine(void *data)
 static void *lldp_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	const unsigned char *expected_pattern = (const unsigned char *)app_config.lldp_payload_pattern;
+	const unsigned char *expected_pattern =
+		(const unsigned char *)app_config.lldp_payload_pattern;
 	const size_t expected_pattern_length = app_config.lldp_payload_pattern_length;
 	const size_t num_frames_per_cycle = app_config.lldp_num_frames_per_cycle;
 	unsigned char frame[LLDP_TX_FRAME_LENGTH], source[ETH_ALEN];
@@ -222,7 +224,8 @@ static void *lldp_rx_thread_routine(void *data)
 		/* Wait for LLDP frame */
 		len = recv(socket_fd, frame, sizeof(frame), 0);
 		if (len < 0) {
-			log_message(LOG_LEVEL_ERROR, "LldpRx: recv() failed: %s\n", strerror(errno));
+			log_message(LOG_LEVEL_ERROR, "LldpRx: recv() failed: %s\n",
+				    strerror(errno));
 			return NULL;
 		}
 		if (len == 0)
@@ -230,7 +233,7 @@ static void *lldp_rx_thread_routine(void *data)
 
 		if (len != frame_length) {
 			log_message(LOG_LEVEL_WARNING,
-				   "LldpRx: Frame with wrong length received!\n");
+				    "LldpRx: Frame with wrong length received!\n");
 			continue;
 		}
 
@@ -242,26 +245,27 @@ static void *lldp_rx_thread_routine(void *data)
 		rx_sequence_counter = meta_data_to_sequence_counter(meta, num_frames_per_cycle);
 
 		out_of_order = sequence_counter != rx_sequence_counter;
-		payload_mismatch = memcmp(frame + sizeof(struct ethhdr) + sizeof(rx_sequence_counter),
-					 expected_pattern, expected_pattern_length);
+		payload_mismatch =
+			memcmp(frame + sizeof(struct ethhdr) + sizeof(rx_sequence_counter),
+			       expected_pattern, expected_pattern_length);
 		frame_id_mismatch = false;
 
-		stat_frame_received(LLDP_FRAME_TYPE, rx_sequence_counter, out_of_order, payload_mismatch,
-				  frame_id_mismatch);
+		stat_frame_received(LLDP_FRAME_TYPE, rx_sequence_counter, out_of_order,
+				    payload_mismatch, frame_id_mismatch);
 
 		if (out_of_order) {
 			if (!ignore_rx_errors)
 				log_message(LOG_LEVEL_WARNING,
-					   "LldpRx: frame[%" PRIu64
-					   "] SequenceCounter mismatch: %" PRIu64 "!\n",
-					   rx_sequence_counter, sequence_counter);
+					    "LldpRx: frame[%" PRIu64
+					    "] SequenceCounter mismatch: %" PRIu64 "!\n",
+					    rx_sequence_counter, sequence_counter);
 			sequence_counter++;
 		}
 
 		if (payload_mismatch)
 			log_message(LOG_LEVEL_WARNING,
-				   "LldpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
-				   rx_sequence_counter);
+				    "LldpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
+				    rx_sequence_counter);
 
 		sequence_counter++;
 
@@ -306,8 +310,8 @@ static void *lldp_tx_generation_thread_routine(void *data)
 	ret = get_thread_start_time(0, &wakeup_time);
 	if (ret) {
 		log_message(LOG_LEVEL_ERROR,
-			   "LldpTxGen: Failed to calculate thread start time: %s!\n",
-			   strerror(errno));
+			    "LldpTxGen: Failed to calculate thread start time: %s!\n",
+			    strerror(errno));
 		return NULL;
 	}
 
@@ -322,7 +326,7 @@ static void *lldp_tx_generation_thread_routine(void *data)
 
 		if (ret) {
 			log_message(LOG_LEVEL_ERROR, "LldpTxGen: clock_nanosleep() failed: %s\n",
-				   strerror(ret));
+				    strerror(ret));
 			return NULL;
 		}
 
@@ -363,8 +367,8 @@ int lldp_threads_create(struct thread_context *thread_context)
 		/*
 		 * Per period the expectation is: LldpNumFramesPerCycle * MAX_FRAME
 		 */
-		thread_context->mirror_buffer =
-			ring_buffer_allocate(LLDP_TX_FRAME_LENGTH * app_config.lldp_num_frames_per_cycle);
+		thread_context->mirror_buffer = ring_buffer_allocate(
+			LLDP_TX_FRAME_LENGTH * app_config.lldp_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Lldp Mirror RingBuffer!\n");
 			ret = -ENOMEM;
@@ -373,24 +377,24 @@ int lldp_threads_create(struct thread_context *thread_context)
 	}
 
 	ret = create_rt_thread(&thread_context->tx_task_id, "LldpTxThread",
-			     app_config.lldp_tx_thread_priority, app_config.lldp_tx_thread_cpu,
-			     lldp_tx_thread_routine, thread_context);
+			       app_config.lldp_tx_thread_priority, app_config.lldp_tx_thread_cpu,
+			       lldp_tx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
 		goto err_thread;
 	}
 
 	ret = create_rt_thread(&thread_context->tx_gen_task_id, "LldpTxGenThread",
-			     app_config.lldp_tx_thread_priority, app_config.lldp_tx_thread_cpu,
-			     lldp_tx_generation_thread_routine, thread_context);
+			       app_config.lldp_tx_thread_priority, app_config.lldp_tx_thread_cpu,
+			       lldp_tx_generation_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Lldp Tx Thread!\n");
 		goto err_thread_txgen;
 	}
 
 	ret = create_rt_thread(&thread_context->rx_task_id, "LldpRxThread",
-			     app_config.lldp_rx_thread_priority, app_config.lldp_rx_thread_cpu,
-			     lldp_rx_thread_routine, thread_context);
+			       app_config.lldp_rx_thread_priority, app_config.lldp_rx_thread_cpu,
+			       lldp_rx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Lldp Rx Thread!\n");
 		goto err_thread_rx;

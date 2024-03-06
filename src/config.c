@@ -352,30 +352,37 @@ void config_print_values(void)
 	       "\n");
 	printf("ApplicationClockId=%s\n",
 	       app_config.application_clock_id == CLOCK_TAI ? "CLOCK_TAI" : "CLOCK_MONOTONIC");
-	printf("ApplicationBaseCycleTimeNS=%" PRIu64 "\n", app_config.application_base_cycle_time_ns);
-	printf("ApplicationBaseStartTimeNS=%" PRIu64 "\n", app_config.application_base_start_time_ns);
+	printf("ApplicationBaseCycleTimeNS=%" PRIu64 "\n",
+	       app_config.application_base_cycle_time_ns);
+	printf("ApplicationBaseStartTimeNS=%" PRIu64 "\n",
+	       app_config.application_base_start_time_ns);
 	printf("ApplicationTxBaseOffsetNS=%" PRIu64 "\n", app_config.application_tx_base_offset_ns);
 	printf("ApplicationRxBaseOffsetNS=%" PRIu64 "\n", app_config.application_rx_base_offset_ns);
 	printf("ApplicationXdpProgram=%s\n", app_config.application_xdp_program);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("TsnHighEnabled=%s\n", app_config.tsn_high_enabled ? "True" : "False");
-	printf("TsnHighRxMirrorEnabled=%s\n", app_config.tsn_high_rx_mirror_enabled ? "True" : "False");
+	printf("TsnHighRxMirrorEnabled=%s\n",
+	       app_config.tsn_high_rx_mirror_enabled ? "True" : "False");
 	printf("TsnHighXdpEnabled=%s\n", app_config.tsn_high_xdp_enabled ? "True" : "False");
 	printf("TsnHighXdpSkbMode=%s\n", app_config.tsn_high_xdp_skb_mode ? "True" : "False");
 	printf("TsnHighXdpZcMode=%s\n", app_config.tsn_high_xdp_zc_mode ? "True" : "False");
 	printf("TsnHighXdpWakeupMode=%s\n", app_config.tsn_high_xdp_wakeup_mode ? "True" : "False");
-	printf("TsnHighXdpBusyPollMode=%s\n", app_config.tsn_high_xdp_busy_poll_mode ? "True" : "False");
+	printf("TsnHighXdpBusyPollMode=%s\n",
+	       app_config.tsn_high_xdp_busy_poll_mode ? "True" : "False");
 	printf("TsnHighTxTimeEnabled=%s\n", app_config.tsn_high_tx_time_enabled ? "True" : "False");
-	printf("TsnHighIgnoreRxErrors=%s\n", app_config.tsn_high_ignore_rx_errors ? "True" : "False");
+	printf("TsnHighIgnoreRxErrors=%s\n",
+	       app_config.tsn_high_ignore_rx_errors ? "True" : "False");
 	printf("TsnHighTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_high_tx_time_offset_ns);
 	printf("TsnHighVid=%d\n", app_config.tsn_high_vid);
 	printf("TsnHighNumFramesPerCycle=%zu\n", app_config.tsn_high_num_frames_per_cycle);
 	printf("TsnHighPayloadPattern=");
-	print_payload_pattern(app_config.tsn_high_payload_pattern, app_config.tsn_high_payload_pattern_length);
+	print_payload_pattern(app_config.tsn_high_payload_pattern,
+			      app_config.tsn_high_payload_pattern_length);
 	printf("\n");
 	printf("TsnHighFrameLength=%zu\n", app_config.tsn_high_frame_length);
-	printf("TsnHighSecurityMode=%s\n", security_mode_to_string(app_config.tsn_high_security_mode));
+	printf("TsnHighSecurityMode=%s\n",
+	       security_mode_to_string(app_config.tsn_high_security_mode));
 	printf("TsnHighSecurityAlgorithm=%s\n",
 	       security_algorithm_to_string(app_config.tsn_high_security_algorithm));
 	printf("TsnHighSecurityKey=%s\n", app_config.tsn_high_security_key);
@@ -394,22 +401,26 @@ void config_print_values(void)
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("TsnLowEnabled=%s\n", app_config.tsn_low_enabled ? "True" : "False");
-	printf("TsnLowRxMirrorEnabled=%s\n", app_config.tsn_low_rx_mirror_enabled ? "True" : "False");
+	printf("TsnLowRxMirrorEnabled=%s\n",
+	       app_config.tsn_low_rx_mirror_enabled ? "True" : "False");
 	printf("TsnLowXdpEnabled=%s\n", app_config.tsn_low_xdp_enabled ? "True" : "False");
 	printf("TsnLowXdpSkbMode=%s\n", app_config.tsn_low_xdp_skb_mode ? "True" : "False");
 	printf("TsnLowXdpZcMode=%s\n", app_config.tsn_low_xdp_zc_mode ? "True" : "False");
 	printf("TsnLowXdpWakeupMode=%s\n", app_config.tsn_low_xdp_wakeup_mode ? "True" : "False");
-	printf("TsnLowXdpBusyPollMode=%s\n", app_config.tsn_low_xdp_busy_poll_mode ? "True" : "False");
+	printf("TsnLowXdpBusyPollMode=%s\n",
+	       app_config.tsn_low_xdp_busy_poll_mode ? "True" : "False");
 	printf("TsnLowTxTimeEnabled=%s\n", app_config.tsn_low_tx_time_enabled ? "True" : "False");
 	printf("TsnLowIgnoreRxErrors=%s\n", app_config.tsn_low_ignore_rx_errors ? "True" : "False");
 	printf("TsnLowTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_low_tx_time_offset_ns);
 	printf("TsnLowVid=%d\n", app_config.tsn_low_vid);
 	printf("TsnLowNumFramesPerCycle=%zu\n", app_config.tsn_low_num_frames_per_cycle);
 	printf("TsnLowPayloadPattern=");
-	print_payload_pattern(app_config.tsn_low_payload_pattern, app_config.tsn_low_payload_pattern_length);
+	print_payload_pattern(app_config.tsn_low_payload_pattern,
+			      app_config.tsn_low_payload_pattern_length);
 	printf("\n");
 	printf("TsnLowFrameLength=%zu\n", app_config.tsn_low_frame_length);
-	printf("TsnLowSecurityMode=%s\n", security_mode_to_string(app_config.tsn_low_security_mode));
+	printf("TsnLowSecurityMode=%s\n",
+	       security_mode_to_string(app_config.tsn_low_security_mode));
 	printf("TsnLowSecurityAlgorithm=%s\n",
 	       security_algorithm_to_string(app_config.tsn_low_security_algorithm));
 	printf("TsnLowSecurityKey=%s\n", app_config.tsn_low_security_key);
@@ -438,7 +449,8 @@ void config_print_values(void)
 	printf("RtcVid=%d\n", app_config.rtc_vid);
 	printf("RtcNumFramesPerCycle=%zu\n", app_config.rtc_num_frames_per_cycle);
 	printf("RtcPayloadPattern=");
-	print_payload_pattern(app_config.rtc_payload_pattern, app_config.rtc_payload_pattern_length);
+	print_payload_pattern(app_config.rtc_payload_pattern,
+			      app_config.rtc_payload_pattern_length);
 	printf("\n");
 	printf("RtcFrameLength=%zu\n", app_config.rtc_frame_length);
 	printf("RtcSecurityMode=%s\n", security_mode_to_string(app_config.rtc_security_mode));
@@ -471,7 +483,8 @@ void config_print_values(void)
 	printf("RtaBurstPeriodNS=%" PRIu64 "\n", app_config.rta_burst_period_ns);
 	printf("RtaNumFramesPerCycle=%zu\n", app_config.rta_num_frames_per_cycle);
 	printf("RtaPayloadPattern=");
-	print_payload_pattern(app_config.rta_payload_pattern, app_config.rta_payload_pattern_length);
+	print_payload_pattern(app_config.rta_payload_pattern,
+			      app_config.rta_payload_pattern_length);
 	printf("\n");
 	printf("RtaFrameLength=%zu\n", app_config.rta_frame_length);
 	printf("RtaSecurityMode=%s\n", security_mode_to_string(app_config.rta_security_mode));
@@ -499,7 +512,8 @@ void config_print_values(void)
 	printf("DcpBurstPeriodNS=%" PRIu64 "\n", app_config.dcp_burst_period_ns);
 	printf("DcpNumFramesPerCycle=%zu\n", app_config.dcp_num_frames_per_cycle);
 	printf("DcpPayloadPattern=");
-	print_payload_pattern(app_config.dcp_payload_pattern, app_config.dcp_payload_pattern_length);
+	print_payload_pattern(app_config.dcp_payload_pattern,
+			      app_config.dcp_payload_pattern_length);
 	printf("\n");
 	printf("DcpFrameLength=%zu\n", app_config.dcp_frame_length);
 	printf("DcpRxQueue=%d\n", app_config.dcp_rx_queue);
@@ -521,7 +535,8 @@ void config_print_values(void)
 	printf("LldpBurstPeriodNS=%" PRIu64 "\n", app_config.lldp_burst_period_ns);
 	printf("LldpNumFramesPerCycle=%zu\n", app_config.lldp_num_frames_per_cycle);
 	printf("LldpPayloadPattern=");
-	print_payload_pattern(app_config.lldp_payload_pattern, app_config.lldp_payload_pattern_length);
+	print_payload_pattern(app_config.lldp_payload_pattern,
+			      app_config.lldp_payload_pattern_length);
 	printf("\n");
 	printf("LldpFrameLength=%zu\n", app_config.lldp_frame_length);
 	printf("LldpRxQueue=%d\n", app_config.lldp_rx_queue);
@@ -538,12 +553,15 @@ void config_print_values(void)
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("UdpHighEnabled=%s\n", app_config.udp_high_enabled ? "True" : "False");
-	printf("UdpHighRxMirrorEnabled=%s\n", app_config.udp_high_rx_mirror_enabled ? "True" : "False");
-	printf("UdpHighIgnoreRxErrors=%s\n", app_config.udp_high_ignore_rx_errors ? "True" : "False");
+	printf("UdpHighRxMirrorEnabled=%s\n",
+	       app_config.udp_high_rx_mirror_enabled ? "True" : "False");
+	printf("UdpHighIgnoreRxErrors=%s\n",
+	       app_config.udp_high_ignore_rx_errors ? "True" : "False");
 	printf("UdpHighBurstPeriodNS=%" PRIu64 "\n", app_config.udp_high_burst_period_ns);
 	printf("UdpHighNumFramesPerCycle=%zu\n", app_config.udp_high_num_frames_per_cycle);
 	printf("UdpHighPayloadPattern=");
-	print_payload_pattern(app_config.udp_high_payload_pattern, app_config.udp_high_payload_pattern_length);
+	print_payload_pattern(app_config.udp_high_payload_pattern,
+			      app_config.udp_high_payload_pattern_length);
 	printf("\n");
 	printf("UdpHighFrameLength=%zu\n", app_config.udp_high_frame_length);
 	printf("UdpHighRxQueue=%d\n", app_config.udp_high_rx_queue);
@@ -560,12 +578,14 @@ void config_print_values(void)
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("UdpLowEnabled=%s\n", app_config.udp_low_enabled ? "True" : "False");
-	printf("UdpLowRxMirrorEnabled=%s\n", app_config.udp_low_rx_mirror_enabled ? "True" : "False");
+	printf("UdpLowRxMirrorEnabled=%s\n",
+	       app_config.udp_low_rx_mirror_enabled ? "True" : "False");
 	printf("UdpLowIgnoreRxErrors=%s\n", app_config.udp_low_ignore_rx_errors ? "True" : "False");
 	printf("UdpLowBurstPeriodNS=%" PRIu64 "\n", app_config.udp_low_burst_period_ns);
 	printf("UdpLowNumFramesPerCycle=%zu\n", app_config.udp_low_num_frames_per_cycle);
 	printf("UdpLowPayloadPattern=");
-	print_payload_pattern(app_config.udp_low_payload_pattern, app_config.udp_low_payload_pattern_length);
+	print_payload_pattern(app_config.udp_low_payload_pattern,
+			      app_config.udp_low_payload_pattern_length);
 	printf("\n");
 	printf("UdpLowFrameLength=%zu\n", app_config.udp_low_frame_length);
 	printf("UdpLowRxQueue=%d\n", app_config.udp_low_rx_queue);
@@ -588,10 +608,12 @@ void config_print_values(void)
 	printf("GenericL2XdpEnabled=%s\n", app_config.generic_l2_xdp_enabled ? "True" : "False");
 	printf("GenericL2XdpSkbMode=%s\n", app_config.generic_l2_xdp_skb_mode ? "True" : "False");
 	printf("GenericL2XdpZcMode=%s\n", app_config.generic_l2_xdp_zc_mode ? "True" : "False");
-	printf("GenericL2XdpWakeupMode=%s\n", app_config.generic_l2_xdp_wakeup_mode ? "True" : "False");
+	printf("GenericL2XdpWakeupMode=%s\n",
+	       app_config.generic_l2_xdp_wakeup_mode ? "True" : "False");
 	printf("GenericL2XdpBusyPollMode=%s\n",
 	       app_config.generic_l2_xdp_busy_poll_mode ? "True" : "False");
-	printf("GenericL2TxTimeEnabled=%s\n", app_config.generic_l2_tx_time_enabled ? "True" : "False");
+	printf("GenericL2TxTimeEnabled=%s\n",
+	       app_config.generic_l2_tx_time_enabled ? "True" : "False");
 	printf("GenericL2IgnoreRxErrors=%s\n",
 	       app_config.generic_l2_ignore_rx_errors ? "True" : "False");
 	printf("GenericL2TxTimeOffsetNS=%" PRIu64 "\n", app_config.generic_l2_tx_time_offset_ns);
@@ -601,7 +623,7 @@ void config_print_values(void)
 	printf("GenericL2NumFramesPerCycle=%zu\n", app_config.generic_l2_num_frames_per_cycle);
 	printf("GenericL2PayloadPattern=");
 	print_payload_pattern(app_config.generic_l2_payload_pattern,
-			    app_config.generic_l2_payload_pattern_length);
+			      app_config.generic_l2_payload_pattern_length);
 	printf("\n");
 	printf("GenericL2FrameLength=%zu\n", app_config.generic_l2_frame_length);
 	printf("GenericL2RxQueue=%d\n", app_config.generic_l2_rx_queue);
@@ -625,7 +647,8 @@ void config_print_values(void)
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("DebugStopTraceOnRtt=%s\n", app_config.debug_stop_trace_on_rtt ? "True" : "False");
-	printf("DebugStopTraceOnError=%s\n", app_config.debug_stop_trace_on_error ? "True" : "False");
+	printf("DebugStopTraceOnError=%s\n",
+	       app_config.debug_stop_trace_on_error ? "True" : "False");
 	printf("DebugStopTraceLimitNS=%" PRIu64 "\n", app_config.debug_stop_trace_rtt_limit_ns);
 	printf("DebugMonitorMode=%s\n", app_config.debug_monitor_mode ? "True" : "False");
 	printf("DebugMonitorDestination=");
@@ -651,7 +674,7 @@ void config_print_values(void)
 int config_set_defaults(bool mirror_enabled)
 {
 	static unsigned char default_debug_montitor_destination[] = {0x44, 0x44, 0x44,
-								  0x44, 0x44, 0x44};
+								     0x44, 0x44, 0x44};
 	static unsigned char default_lldp_destination[] = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e};
 	static unsigned char default_destination[] = {0xa8, 0xa1, 0x59, 0x2c, 0xa8, 0xdb};
 	static unsigned char default_dcp_identify[] = {0x01, 0x0e, 0xcf, 0x00, 0x00, 0x00};
@@ -922,7 +945,8 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.generic_l2_payload_pattern = strdup(default_payload_pattern);
 	if (!app_config.generic_l2_payload_pattern)
 		goto out;
-	app_config.generic_l2_payload_pattern_length = strlen(app_config.generic_l2_payload_pattern);
+	app_config.generic_l2_payload_pattern_length =
+		strlen(app_config.generic_l2_payload_pattern);
 	app_config.generic_l2_frame_length = 200;
 	app_config.generic_l2_rx_queue = 1;
 	app_config.generic_l2_tx_queue = 1;
@@ -931,7 +955,8 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.generic_l2_rx_thread_priority = 90;
 	app_config.generic_l2_tx_thread_cpu = 0;
 	app_config.generic_l2_rx_thread_cpu = 0;
-	strncpy(app_config.generic_l2_interface, "enp3s0", sizeof(app_config.generic_l2_interface) - 1);
+	strncpy(app_config.generic_l2_interface, "enp3s0",
+		sizeof(app_config.generic_l2_interface) - 1);
 	memcpy((void *)app_config.generic_l2_destination, default_destination, ETH_ALEN);
 
 	/* Logging */
@@ -977,7 +1002,8 @@ out:
 }
 
 static bool config_check_keys(const char *traffic_class, enum security_mode mode,
-			    enum security_algorithm algorithm, size_t key_len, size_t iv_prefix_len)
+			      enum security_algorithm algorithm, size_t key_len,
+			      size_t iv_prefix_len)
 {
 	const size_t expected_key_len = algorithm == SECURITY_ALGORITHM_AES128_GCM ? 16 : 32;
 
@@ -992,7 +1018,8 @@ static bool config_check_keys(const char *traffic_class, enum security_mode mode
 
 	if (expected_key_len != key_len) {
 		fprintf(stderr, "%s key length mismatch!. Have %zu expected %zu for %s!\n",
-			traffic_class, key_len, expected_key_len, security_algorithm_to_string(algorithm));
+			traffic_class, key_len, expected_key_len,
+			security_algorithm_to_string(algorithm));
 		return false;
 	}
 
@@ -1002,8 +1029,8 @@ static bool config_check_keys(const char *traffic_class, enum security_mode mode
 bool config_sanity_check()
 {
 	const size_t min_secure_profinet_frame_size = sizeof(struct vlan_ethernet_header) +
-						  sizeof(struct profinet_secure_header) +
-						  sizeof(struct security_checksum);
+						      sizeof(struct profinet_secure_header) +
+						      sizeof(struct security_checksum);
 	const size_t min_profinet_frame_size =
 		sizeof(struct vlan_ethernet_header) + sizeof(struct profinet_rt_header);
 	size_t min_frame_size;
@@ -1038,62 +1065,70 @@ bool config_sanity_check()
 	}
 
 	min_frame_size = app_config.tsn_high_security_mode == SECURITY_MODE_NONE
-			       ? min_profinet_frame_size
-			       : min_secure_profinet_frame_size;
+				 ? min_profinet_frame_size
+				 : min_secure_profinet_frame_size;
 	if (app_config.tsn_high_frame_length > TSN_TX_FRAME_LENGTH ||
-	    app_config.tsn_high_frame_length < (min_frame_size + app_config.tsn_high_payload_pattern_length)) {
+	    app_config.tsn_high_frame_length <
+		    (min_frame_size + app_config.tsn_high_payload_pattern_length)) {
 		fprintf(stderr, "TsnHighFrameLength is invalid!\n");
 		return false;
 	}
 
 	min_frame_size = app_config.tsn_low_security_mode == SECURITY_MODE_NONE
-			       ? min_profinet_frame_size
-			       : min_secure_profinet_frame_size;
+				 ? min_profinet_frame_size
+				 : min_secure_profinet_frame_size;
 	if (app_config.tsn_low_frame_length > TSN_TX_FRAME_LENGTH ||
-	    app_config.tsn_low_frame_length < (min_frame_size + app_config.tsn_low_payload_pattern_length)) {
+	    app_config.tsn_low_frame_length <
+		    (min_frame_size + app_config.tsn_low_payload_pattern_length)) {
 		fprintf(stderr, "TsnLowFrameLength is invalid!\n");
 		return false;
 	}
 
-	min_frame_size = app_config.rtc_security_mode == SECURITY_MODE_NONE ? min_profinet_frame_size
-								       : min_secure_profinet_frame_size;
+	min_frame_size = app_config.rtc_security_mode == SECURITY_MODE_NONE
+				 ? min_profinet_frame_size
+				 : min_secure_profinet_frame_size;
 	if (app_config.rtc_frame_length > RTC_TX_FRAME_LENGTH ||
-	    app_config.rtc_frame_length < (min_frame_size + app_config.rtc_payload_pattern_length)) {
+	    app_config.rtc_frame_length <
+		    (min_frame_size + app_config.rtc_payload_pattern_length)) {
 		fprintf(stderr, "RtcFrameLength is invalid!\n");
 		return false;
 	}
 
-	min_frame_size = app_config.rta_security_mode == SECURITY_MODE_NONE ? min_profinet_frame_size
-								       : min_secure_profinet_frame_size;
+	min_frame_size = app_config.rta_security_mode == SECURITY_MODE_NONE
+				 ? min_profinet_frame_size
+				 : min_secure_profinet_frame_size;
 	if (app_config.rta_frame_length > RTA_TX_FRAME_LENGTH ||
-	    app_config.rta_frame_length < (min_frame_size + app_config.rta_payload_pattern_length)) {
+	    app_config.rta_frame_length <
+		    (min_frame_size + app_config.rta_payload_pattern_length)) {
 		fprintf(stderr, "RtaFrameLength is invalid!\n");
 		return false;
 	}
 
 	if (app_config.dcp_frame_length > DCP_TX_FRAME_LENGTH ||
-	    app_config.dcp_frame_length < (min_profinet_frame_size + app_config.dcp_payload_pattern_length)) {
+	    app_config.dcp_frame_length <
+		    (min_profinet_frame_size + app_config.dcp_payload_pattern_length)) {
 		fprintf(stderr, "DcpFrameLength is invalid!\n");
 		return false;
 	}
 
 	if (app_config.lldp_frame_length > LLDP_TX_FRAME_LENGTH ||
-	    app_config.lldp_frame_length < (sizeof(struct ethhdr) + sizeof(struct reference_meta_data) +
-					 app_config.lldp_payload_pattern_length)) {
+	    app_config.lldp_frame_length <
+		    (sizeof(struct ethhdr) + sizeof(struct reference_meta_data) +
+		     app_config.lldp_payload_pattern_length)) {
 		fprintf(stderr, "LldpFrameLength is invalid!\n");
 		return false;
 	}
 
 	if (app_config.udp_high_frame_length > UDP_TX_FRAME_LENGTH ||
-	    app_config.udp_high_frame_length <
-		    (sizeof(struct reference_meta_data) + app_config.udp_high_payload_pattern_length)) {
+	    app_config.udp_high_frame_length < (sizeof(struct reference_meta_data) +
+						app_config.udp_high_payload_pattern_length)) {
 		fprintf(stderr, "UdpHighFrameLength is invalid!\n");
 		return false;
 	}
 
 	if (app_config.udp_low_frame_length > UDP_TX_FRAME_LENGTH ||
-	    app_config.udp_low_frame_length <
-		    (sizeof(struct reference_meta_data) + app_config.udp_low_payload_pattern_length)) {
+	    app_config.udp_low_frame_length < (sizeof(struct reference_meta_data) +
+					       app_config.udp_low_payload_pattern_length)) {
 		fprintf(stderr, "UdpLowFrameLength is invalid!\n");
 		return false;
 	}
@@ -1122,18 +1157,22 @@ bool config_sanity_check()
 
 	/* Check keys and IV */
 	if (!config_check_keys("TsnHigh", app_config.tsn_high_security_mode,
-			     app_config.tsn_high_security_algorithm, app_config.tsn_high_security_key_length,
-			     app_config.tsn_high_security_iv_prefix_length))
+			       app_config.tsn_high_security_algorithm,
+			       app_config.tsn_high_security_key_length,
+			       app_config.tsn_high_security_iv_prefix_length))
 		return false;
 	if (!config_check_keys("TsnLow", app_config.tsn_low_security_mode,
-			     app_config.tsn_low_security_algorithm, app_config.tsn_low_security_key_length,
-			     app_config.tsn_low_security_iv_prefix_length))
+			       app_config.tsn_low_security_algorithm,
+			       app_config.tsn_low_security_key_length,
+			       app_config.tsn_low_security_iv_prefix_length))
 		return false;
-	if (!config_check_keys("Rtc", app_config.rtc_security_mode, app_config.rtc_security_algorithm,
-			     app_config.rtc_security_key_length, app_config.rtc_security_iv_prefix_length))
+	if (!config_check_keys(
+		    "Rtc", app_config.rtc_security_mode, app_config.rtc_security_algorithm,
+		    app_config.rtc_security_key_length, app_config.rtc_security_iv_prefix_length))
 		return false;
-	if (!config_check_keys("Rta", app_config.rta_security_mode, app_config.rta_security_algorithm,
-			     app_config.rta_security_key_length, app_config.rta_security_iv_prefix_length))
+	if (!config_check_keys(
+		    "Rta", app_config.rta_security_mode, app_config.rta_security_algorithm,
+		    app_config.rta_security_key_length, app_config.rta_security_iv_prefix_length))
 		return false;
 
 	return true;

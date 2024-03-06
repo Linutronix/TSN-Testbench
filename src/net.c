@@ -278,11 +278,12 @@ int get_interface_link_speed(const char *if_name, uint32_t *speed)
 int create_tsn_high_socket(void)
 {
 	const struct sock_fprog tsn_high_filter_program = {.len = ARRAY_SIZE(tsn_high_frame_filter),
-							.filter = tsn_high_frame_filter};
+							   .filter = tsn_high_frame_filter};
 	struct sock_txtime sk_txtime;
 	int socket_fd, ret;
 
-	socket_fd = create_raw_socket(app_config.tsn_high_interface, app_config.tsn_high_socket_priority);
+	socket_fd = create_raw_socket(app_config.tsn_high_interface,
+				      app_config.tsn_high_socket_priority);
 	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Profinet TSN High Frames!\n");
 		return socket_fd;
@@ -321,11 +322,12 @@ err_filter:
 int create_tsn_low_socket(void)
 {
 	const struct sock_fprog tsn_low_filter_program = {.len = ARRAY_SIZE(tsn_low_frame_filter),
-						       .filter = tsn_low_frame_filter};
+							  .filter = tsn_low_frame_filter};
 	struct sock_txtime sk_txtime;
 	int socket_fd, ret;
 
-	socket_fd = create_raw_socket(app_config.tsn_low_interface, app_config.tsn_low_socket_priority);
+	socket_fd =
+		create_raw_socket(app_config.tsn_low_interface, app_config.tsn_low_socket_priority);
 	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Profinet TSN Low Frames!\n");
 		return socket_fd;
@@ -364,7 +366,7 @@ err_filter:
 int create_rtc_socket(void)
 {
 	const struct sock_fprog rtc_filter_program = {.len = ARRAY_SIZE(rtc_frame_filter),
-						    .filter = rtc_frame_filter};
+						      .filter = rtc_frame_filter};
 	int socket_fd, ret;
 
 	socket_fd = create_raw_socket(app_config.rtc_interface, app_config.rtc_socket_priority);
@@ -393,7 +395,7 @@ err_filter:
 int create_rta_socket(void)
 {
 	const struct sock_fprog rta_filter_program = {.len = ARRAY_SIZE(rta_frame_filter),
-						    .filter = rta_frame_filter};
+						      .filter = rta_frame_filter};
 	int socket_fd, ret;
 
 	socket_fd = create_raw_socket(app_config.rta_interface, app_config.rta_socket_priority);
@@ -422,7 +424,7 @@ err_filter:
 int create_dcp_socket(void)
 {
 	const struct sock_fprog dcp_filter_program = {.len = ARRAY_SIZE(dcp_frame_filter),
-						    .filter = dcp_frame_filter};
+						      .filter = dcp_frame_filter};
 	int socket_fd, ret;
 
 	socket_fd = create_raw_socket(app_config.dcp_interface, app_config.dcp_socket_priority);
@@ -451,7 +453,7 @@ err_filter:
 int create_lldp_socket(void)
 {
 	const struct sock_fprog lldp_filter_program = {.len = ARRAY_SIZE(lldp_frame_filter),
-						     .filter = lldp_frame_filter};
+						       .filter = lldp_frame_filter};
 	int socket_fd, ret;
 
 	socket_fd = create_raw_socket(app_config.lldp_interface, app_config.lldp_socket_priority);
@@ -476,12 +478,13 @@ err_filter:
 
 int create_generic_l2_socket(void)
 {
-	const struct sock_fprog generic_l2_filter_program = {.len = ARRAY_SIZE(generic_l2_frame_filter),
-							  .filter = generic_l2_frame_filter};
+	const struct sock_fprog generic_l2_filter_program = {
+		.len = ARRAY_SIZE(generic_l2_frame_filter), .filter = generic_l2_frame_filter};
 	struct sock_txtime sk_txtime;
 	int socket_fd, ret;
 
-	socket_fd = create_raw_socket(app_config.generic_l2_interface, app_config.generic_l2_socket_priority);
+	socket_fd = create_raw_socket(app_config.generic_l2_interface,
+				      app_config.generic_l2_socket_priority);
 	if (socket_fd < 0) {
 		fprintf(stderr, "Failed to create RAW socket for Generic L2 Frames!\n");
 		return socket_fd;
@@ -490,7 +493,7 @@ int create_generic_l2_socket(void)
 	/* Adjust filter: EtherType and VLAN TCI */
 	generic_l2_frame_filter[1].k = app_config.generic_l2_ether_type;
 	generic_l2_frame_filter[3].k = app_config.generic_l2_vid | app_config.generic_l2_pcp
-								     << VLAN_PCP_SHIFT;
+									   << VLAN_PCP_SHIFT;
 
 	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &generic_l2_filter_program,
 			 sizeof(generic_l2_filter_program));
@@ -520,7 +523,7 @@ err_filter:
 }
 
 static int dns_lookup(const char *host, const char *port, struct sockaddr_storage *addr,
-		     int *socket_fd)
+		      int *socket_fd)
 {
 	struct addrinfo *sa_head, *sa, hints;
 	int ret, sock;
@@ -570,7 +573,7 @@ err_addrinfo:
 }
 
 int create_udp_socket(const char *udp_destination, const char *udp_source, const char *udp_port,
-		    int socket_priority, struct sockaddr_storage *destination)
+		      int socket_priority, struct sockaddr_storage *destination)
 {
 	struct sockaddr_storage source;
 	int ret, socket_fd = -1;

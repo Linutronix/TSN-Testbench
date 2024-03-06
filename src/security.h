@@ -73,13 +73,13 @@ struct security_context *security_init(enum security_algorithm algorithm, const 
 void security_exit(struct security_context *context);
 
 int security_encrypt(struct security_context *context, const unsigned char *plaintext,
-		    size_t plaintext_length, const unsigned char *associated_data,
-		    size_t associated_data_length, const unsigned char *iv, unsigned char *ciphertext,
-		    unsigned char *tag);
+		     size_t plaintext_length, const unsigned char *associated_data,
+		     size_t associated_data_length, const unsigned char *iv,
+		     unsigned char *ciphertext, unsigned char *tag);
 
 int security_decrypt(struct security_context *context, const unsigned char *ciphertext,
-		    size_t ciphertext_length, const unsigned char *associated_data,
-		    size_t associated_data_length, unsigned char *tag, const unsigned char *iv,
-		    unsigned char *plaintext);
+		     size_t ciphertext_length, const unsigned char *associated_data,
+		     size_t associated_data_length, unsigned char *tag, const unsigned char *iv,
+		     unsigned char *plaintext);
 
 #endif /* _SECURITY_H_ */

@@ -73,8 +73,8 @@ void insert_vlan_tag(void *buffer, size_t len, uint16_t vlan_tci)
 }
 
 void build_vlan_frame_from_rx(const unsigned char *old_frame, size_t old_frame_len,
-			  unsigned char *new_frame, size_t new_frame_len, uint16_t ether_type,
-			  uint16_t vlan_tci)
+			      unsigned char *new_frame, size_t new_frame_len, uint16_t ether_type,
+			      uint16_t vlan_tci)
 {
 	struct vlan_ethernet_header *eth_new, *eth_old;
 
@@ -99,10 +99,11 @@ void build_vlan_frame_from_rx(const unsigned char *old_frame, size_t old_frame_l
 }
 
 static void initialize_secure_profinet_frame(enum security_mode mode, unsigned char *frame_data,
-					  size_t frame_length, const unsigned char *source,
-					  const unsigned char *destination,
-					  const char *payload_pattern, size_t payload_pattern_length,
-					  uint16_t vlan_tci, uint16_t frame_id)
+					     size_t frame_length, const unsigned char *source,
+					     const unsigned char *destination,
+					     const char *payload_pattern,
+					     size_t payload_pattern_length, uint16_t vlan_tci,
+					     uint16_t frame_id)
 {
 	struct profinet_secure_header *rt;
 	struct vlan_ethernet_header *eth;
@@ -154,9 +155,10 @@ static void initialize_secure_profinet_frame(enum security_mode mode, unsigned c
 }
 
 static void initialize_rt_profinet_frame(unsigned char *frame_data, size_t frame_length,
-				      const unsigned char *source, const unsigned char *destination,
-				      const char *payload_pattern, size_t payload_pattern_length,
-				      uint16_t vlan_tci, uint16_t frame_id)
+					 const unsigned char *source,
+					 const unsigned char *destination,
+					 const char *payload_pattern, size_t payload_pattern_length,
+					 uint16_t vlan_tci, uint16_t frame_id)
 {
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
@@ -199,21 +201,22 @@ static void initialize_rt_profinet_frame(unsigned char *frame_data, size_t frame
 	memcpy(frame_data + payload_offset, payload_pattern, payload_pattern_length);
 }
 
-void initialize_profinet_frame(enum security_mode mode, unsigned char *frame_data, size_t frame_length,
-			     const unsigned char *source, const unsigned char *destination,
-			     const char *payload_pattern, size_t payload_pattern_length,
-			     uint16_t vlan_tci, uint16_t frame_id)
+void initialize_profinet_frame(enum security_mode mode, unsigned char *frame_data,
+			       size_t frame_length, const unsigned char *source,
+			       const unsigned char *destination, const char *payload_pattern,
+			       size_t payload_pattern_length, uint16_t vlan_tci, uint16_t frame_id)
 {
 	switch (mode) {
 	case SECURITY_MODE_NONE:
 		initialize_rt_profinet_frame(frame_data, frame_length, source, destination,
-					  payload_pattern, payload_pattern_length, vlan_tci, frame_id);
+					     payload_pattern, payload_pattern_length, vlan_tci,
+					     frame_id);
 		break;
 	case SECURITY_MODE_AE:
 	case SECURITY_MODE_AO:
-		initialize_secure_profinet_frame(mode, frame_data, frame_length, source, destination,
-					      payload_pattern, payload_pattern_length, vlan_tci,
-					      frame_id);
+		initialize_secure_profinet_frame(mode, frame_data, frame_length, source,
+						 destination, payload_pattern,
+						 payload_pattern_length, vlan_tci, frame_id);
 		break;
 	}
 }
@@ -225,10 +228,10 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 		/* Adjust meta data in frame */
 		struct reference_meta_data *meta_data =
 			(struct reference_meta_data *)(frame_config->frame_data +
-						     frame_config->meta_data_offset);
+						       frame_config->meta_data_offset);
 
 		sequence_counter_to_meta_data(meta_data, frame_config->sequence_counter,
-					  frame_config->num_frames_per_cycle);
+					      frame_config->num_frames_per_cycle);
 
 		return 0;
 	}
@@ -244,7 +247,7 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 		/* Adjust meta data first */
 		srt = (struct profinet_secure_header *)(frame_config->frame_data + sizeof(*eth));
 		sequence_counter_to_meta_data(&srt->meta_data, frame_config->sequence_counter,
-					  frame_config->num_frames_per_cycle);
+					      frame_config->num_frames_per_cycle);
 
 		/*
 		 * Then, calculate checksum over data and store it at the end of the frame. The
@@ -253,14 +256,14 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 		 */
 		prepare_iv(frame_config->iv_prefix, frame_config->sequence_counter, &iv);
 		begin_of_aad_data = frame_config->frame_data + sizeof(*eth);
-		size_of_aad_data =
-			frame_config->frame_length - sizeof(*eth) - sizeof(struct security_checksum);
+		size_of_aad_data = frame_config->frame_length - sizeof(*eth) -
+				   sizeof(struct security_checksum);
 		begin_of_security_checksum =
 			frame_config->frame_data +
 			(frame_config->frame_length - sizeof(struct security_checksum));
 		return security_encrypt(frame_config->security_context, NULL, 0, begin_of_aad_data,
-				       size_of_aad_data, (unsigned char *)&iv, NULL,
-				       begin_of_security_checksum);
+					size_of_aad_data, (unsigned char *)&iv, NULL,
+					begin_of_security_checksum);
 	}
 	/* mode == AE is PROFINET specific too */
 	else {
@@ -275,7 +278,7 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 		/* Adjust cycle counter first */
 		srt = (struct profinet_secure_header *)(frame_config->frame_data + sizeof(*eth));
 		sequence_counter_to_meta_data(&srt->meta_data, frame_config->sequence_counter,
-					  frame_config->num_frames_per_cycle);
+					      frame_config->num_frames_per_cycle);
 
 		/*
 		 * Then, calculate checksum over data and store it at the end of the frame. The
@@ -289,10 +292,10 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 			frame_config->frame_data +
 			(frame_config->frame_length - sizeof(struct security_checksum));
 		begin_of_ciphertext = frame_config->frame_data + sizeof(*eth) + sizeof(*srt);
-		return security_encrypt(frame_config->security_context, frame_config->payload_pattern,
-				       frame_config->payload_pattern_length, begin_of_aad_data,
-				       size_of_aad_data, (unsigned char *)&iv, begin_of_ciphertext,
-				       begin_of_security_checksum);
+		return security_encrypt(
+			frame_config->security_context, frame_config->payload_pattern,
+			frame_config->payload_pattern_length, begin_of_aad_data, size_of_aad_data,
+			(unsigned char *)&iv, begin_of_ciphertext, begin_of_security_checksum);
 	}
 }
 
@@ -318,12 +321,13 @@ void prepare_openssl(struct security_context *context)
 		return;
 
 	security_encrypt(context, NULL, 0, dummy_frame,
-			sizeof(dummy_frame) - sizeof(struct security_checksum), iv, NULL,
-			dummy_frame + sizeof(dummy_frame) - sizeof(struct security_checksum));
+			 sizeof(dummy_frame) - sizeof(struct security_checksum), iv, NULL,
+			 dummy_frame + sizeof(dummy_frame) - sizeof(struct security_checksum));
 
-	security_decrypt(
-		context, NULL, 0, dummy_frame, sizeof(dummy_frame) - sizeof(struct security_checksum),
-		dummy_frame + sizeof(dummy_frame) - sizeof(struct security_checksum), iv, NULL);
+	security_decrypt(context, NULL, 0, dummy_frame,
+			 sizeof(dummy_frame) - sizeof(struct security_checksum),
+			 dummy_frame + sizeof(dummy_frame) - sizeof(struct security_checksum), iv,
+			 NULL);
 }
 
 int get_thread_start_time(uint64_t base_offset, struct timespec *wakeup_time)

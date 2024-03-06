@@ -26,28 +26,28 @@ struct thread_context {
 	pthread_t rx_task_id;         /* Receiver Thread */
 	uint64_t rx_sequence_counter; /* Rx cycle counter */
 	pthread_t tx_task_id;         /* Sender Thread */
-	pthread_t tx_gen_task_id;      /* Sender generation thread */
-	volatile int stop;          /* Done? */
+	pthread_t tx_gen_task_id;     /* Sender generation thread */
+	volatile int stop;            /* Done? */
 
 	/* RAW socket related */
-	int socket_fd;                        /* Shared RAW socket */
-	unsigned char *tx_frame_data;          /* Tx frame data */
-	unsigned char *rx_frame_data;          /* Rx frame data */
+	int socket_fd;                       /* Shared RAW socket */
+	unsigned char *tx_frame_data;        /* Tx frame data */
+	unsigned char *rx_frame_data;        /* Rx frame data */
 	unsigned char source[ETH_ALEN];      /* Source MAC Address */
 	struct sockaddr_storage destination; /* Where to send L3 frames to */
-	struct ring_buffer *mirror_buffer;     /* Rx frames to be mirrored */
+	struct ring_buffer *mirror_buffer;   /* Rx frames to be mirrored */
 
 	/* XDP socket related */
-	struct xdp_socket *xsk;        /* XDP socket reference */
-	unsigned int received_frames;  /* Amount of frames received within cycle */
+	struct xdp_socket *xsk;         /* XDP socket reference */
+	unsigned int received_frames;   /* Amount of frames received within cycle */
 	pthread_mutex_t xdp_data_mutex; /* Protect concurrent access to Xsk */
 
 	/* Data flow related */
-	struct thread_context *next; /* Pointer to next traffic class */
-	pthread_mutex_t data_mutex;  /* Mutex to protect frame data */
+	struct thread_context *next;  /* Pointer to next traffic class */
+	pthread_mutex_t data_mutex;   /* Mutex to protect frame data */
 	pthread_cond_t data_cond_var; /* Cond var to signal Tx thread */
 	size_t num_frames_available;  /* How many frames are ready to be sent? */
-	bool is_first;               /* Is this the first active traffic class? */
+	bool is_first;                /* Is this the first active traffic class? */
 
 	/* Security related */
 	struct security_context *tx_security_context; /* Tx context for Auth and Crypt */
@@ -70,7 +70,7 @@ enum pn_thread_type {
 };
 
 int create_rt_thread(pthread_t *task_id, const char *thread_name, int priority, int cpu_core,
-		   void *(*thread_routine)(void *), void *data);
+		     void *(*thread_routine)(void *), void *data);
 void init_mutex(pthread_mutex_t *mutex);
 void init_condition_variable(pthread_cond_t *cond_var);
 int link_pn_threads(struct thread_context *pn_threads);

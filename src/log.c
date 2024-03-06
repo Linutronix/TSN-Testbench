@@ -115,7 +115,7 @@ void log_message(enum log_level level, const char *format, ...)
 }
 
 static void log_add_traffic_class(const char *name, enum stat_frame_type frame_type, char **buffer,
-			       size_t *length)
+				  size_t *length)
 {
 	const struct statistics *stat = &global_statistics[frame_type];
 	int written;
@@ -124,7 +124,8 @@ static void log_add_traffic_class(const char *name, enum stat_frame_type frame_t
 			   "%sSent=%" PRIu64 " | %sReceived=%" PRIu64 " | %sRttMin=%" PRIu64
 			   " [us] | %sRttMax=%" PRIu64 " [us] | %sRttAvg=%lf [us] | ",
 			   name, stat->frames_sent, name, stat->frames_received, name,
-			   stat->round_trip_min, name, stat->round_trip_max, name, stat->round_trip_avg);
+			   stat->round_trip_min, name, stat->round_trip_max, name,
+			   stat->round_trip_avg);
 
 	*buffer += written;
 	*length -= written;
@@ -172,9 +173,11 @@ static void *log_thread_routine(void *data)
 		stat_message_length = sizeof(stat_message) - 1;
 
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high))
-			log_add_traffic_class("TsnHigh", TSN_HIGH_FRAME_TYPE, &p, &stat_message_length);
+			log_add_traffic_class("TsnHigh", TSN_HIGH_FRAME_TYPE, &p,
+					      &stat_message_length);
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_low))
-			log_add_traffic_class("TsnLow", TSN_LOW_FRAME_TYPE, &p, &stat_message_length);
+			log_add_traffic_class("TsnLow", TSN_LOW_FRAME_TYPE, &p,
+					      &stat_message_length);
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc))
 			log_add_traffic_class("Rtc", RTC_FRAME_TYPE, &p, &stat_message_length);
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rta))
@@ -184,18 +187,20 @@ static void *log_thread_routine(void *data)
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(lldp))
 			log_add_traffic_class("Lldp", LLDP_FRAME_TYPE, &p, &stat_message_length);
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_high))
-			log_add_traffic_class("UdpHigh", UDP_HIGH_FRAME_TYPE, &p, &stat_message_length);
+			log_add_traffic_class("UdpHigh", UDP_HIGH_FRAME_TYPE, &p,
+					      &stat_message_length);
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_low))
-			log_add_traffic_class("UdpLow", UDP_LOW_FRAME_TYPE, &p, &stat_message_length);
+			log_add_traffic_class("UdpLow", UDP_LOW_FRAME_TYPE, &p,
+					      &stat_message_length);
 		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2))
 			log_add_traffic_class(app_config.generic_l2_name, GENERICL2_FRAME_TYPE, &p,
-					   &stat_message_length);
+					      &stat_message_length);
 
 		log_message(LOG_LEVEL_INFO, "%s\n", stat_message);
 
 		/* Fetch data */
-		ring_buffer_fetch(log_context->log_ring_buffer, log_context->log_data, LOG_BUFFER_SIZE,
-				&log_data_len);
+		ring_buffer_fetch(log_context->log_ring_buffer, log_context->log_data,
+				  LOG_BUFFER_SIZE, &log_data_len);
 
 		/* Write down to disk */
 		if (log_data_len > 0) {
@@ -231,7 +236,7 @@ struct log_thread_context *log_thread_create(void)
 		goto err_fopen;
 
 	ret = create_rt_thread(&log_context->log_task_id, "Logger", app_config.log_thread_priority,
-			     app_config.log_thread_cpu, log_thread_routine, log_context);
+			       app_config.log_thread_cpu, log_thread_routine, log_context);
 	if (ret)
 		goto err_thread;
 

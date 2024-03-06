@@ -60,7 +60,8 @@ void ring_buffer_add(struct ring_buffer *ring_buffer, const unsigned char *data,
 	pthread_mutex_lock(&ring_buffer->data_mutex);
 
 	/* Wrap? */
-	available = (ring_buffer->data + ring_buffer->buffer_size) - ring_buffer->buffer_write_pointer;
+	available =
+		(ring_buffer->data + ring_buffer->buffer_size) - ring_buffer->buffer_write_pointer;
 	if (len <= available) {
 		memcpy(ring_buffer->buffer_write_pointer, data, len);
 		ring_buffer->buffer_write_pointer += len;
@@ -79,7 +80,8 @@ void ring_buffer_add(struct ring_buffer *ring_buffer, const unsigned char *data,
 	pthread_mutex_unlock(&ring_buffer->data_mutex);
 }
 
-void ring_buffer_fetch(struct ring_buffer *ring_buffer, unsigned char *data, size_t len, size_t *out_len)
+void ring_buffer_fetch(struct ring_buffer *ring_buffer, unsigned char *data, size_t len,
+		       size_t *out_len)
 {
 	intptr_t available;
 	size_t real_len;
@@ -102,8 +104,8 @@ void ring_buffer_fetch(struct ring_buffer *ring_buffer, unsigned char *data, siz
 		ring_buffer->buffer_read_pointer += real_len;
 	} else if (available < 0) {
 		/* Copy first part */
-		available =
-			(ring_buffer->data + ring_buffer->buffer_size) - ring_buffer->buffer_read_pointer;
+		available = (ring_buffer->data + ring_buffer->buffer_size) -
+			    ring_buffer->buffer_read_pointer;
 		real_len = available > len ? len : available;
 		memcpy(data, ring_buffer->buffer_read_pointer, real_len);
 
@@ -112,12 +114,14 @@ void ring_buffer_fetch(struct ring_buffer *ring_buffer, unsigned char *data, siz
 		*out_len = real_len;
 		ring_buffer->buffer_read_pointer += real_len;
 
-		if (ring_buffer->buffer_read_pointer == (ring_buffer->data + ring_buffer->buffer_size))
+		if (ring_buffer->buffer_read_pointer ==
+		    (ring_buffer->data + ring_buffer->buffer_size))
 			ring_buffer->buffer_read_pointer = ring_buffer->data;
 
 		/* Copy second part */
 		if (len > 0) {
-			available = ring_buffer->buffer_write_pointer - ring_buffer->buffer_read_pointer;
+			available = ring_buffer->buffer_write_pointer -
+				    ring_buffer->buffer_read_pointer;
 			real_len = available > len ? len : available;
 
 			memcpy(data, ring_buffer->buffer_read_pointer, real_len);

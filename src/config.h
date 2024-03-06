@@ -305,9 +305,9 @@ void config_free(void);
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
 			if (!strcmp(value, "0") || !strcasecmp(value, "false"))                    \
-				app_config.name = false;                                            \
+				app_config.name = false;                                           \
 			else if (!strcmp(value, "1") || !strcasecmp(value, "true"))                \
-				app_config.name = true;                                             \
+				app_config.name = true;                                            \
 			else {                                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
 				goto err_parse;                                                    \
@@ -318,7 +318,7 @@ void config_free(void);
 #define CONFIG_STORE_INT_PARAM(name)                                                               \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strtol(value, &endptr, 10);                               \
+			app_config.name = strtol(value, &endptr, 10);                              \
 			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
@@ -330,7 +330,7 @@ void config_free(void);
 #define CONFIG_STORE_ULONG_PARAM(name)                                                             \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strtoull(value, &endptr, 10);                             \
+			app_config.name = strtoull(value, &endptr, 10);                            \
 			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
@@ -342,20 +342,20 @@ void config_free(void);
 #define CONFIG_STORE_STRING_PARAM(name)                                                            \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strdup(value);                                            \
-			if (!app_config.name) {                                                     \
+			app_config.name = strdup(value);                                           \
+			if (!app_config.name) {                                                    \
 				ret = -ENOMEM;                                                     \
 				fprintf(stderr, "strdup() for " #name " failed!\n");               \
 				goto err_parse;                                                    \
 			}                                                                          \
-			app_config.name##_length = strlen(value);                                    \
+			app_config.name##_length = strlen(value);                                  \
 		}                                                                                  \
 	} while (0)
 
 #define CONFIG_STORE_INTERFACE_PARAM(name)                                                         \
 	do {                                                                                       \
 		if (!strcmp(key, #name))                                                           \
-			strncpy(app_config.name, value, sizeof(app_config.name) - 1);                \
+			strncpy(app_config.name, value, sizeof(app_config.name) - 1);              \
 	} while (0)
 
 #define CONFIG_STORE_MAC_PARAM(name)                                                               \
@@ -374,7 +374,7 @@ void config_free(void);
 			}                                                                          \
                                                                                                    \
 			for (i = 0; i < ETH_ALEN; ++i)                                             \
-				app_config.name[i] = (unsigned char)tmp[i];                         \
+				app_config.name[i] = (unsigned char)tmp[i];                        \
 		}                                                                                  \
 	} while (0)
 
@@ -387,16 +387,16 @@ void config_free(void);
 			}                                                                          \
                                                                                                    \
 			if (!strcmp(value, "CLOCK_TAI"))                                           \
-				app_config.name = CLOCK_TAI;                                        \
+				app_config.name = CLOCK_TAI;                                       \
 			if (!strcmp(value, "CLOCK_MONOTONIC"))                                     \
-				app_config.name = CLOCK_MONOTONIC;                                  \
+				app_config.name = CLOCK_MONOTONIC;                                 \
 		}                                                                                  \
 	} while (0)
 
 #define CONFIG_STORE_ETHER_TYPE(name)                                                              \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strtoul(value, &endptr, 16);                              \
+			app_config.name = strtoul(value, &endptr, 16);                             \
 			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
@@ -415,11 +415,11 @@ void config_free(void);
 			}                                                                          \
                                                                                                    \
 			if (!strcasecmp(value, "none"))                                            \
-				app_config.name = SECURITY_MODE_NONE;                               \
+				app_config.name = SECURITY_MODE_NONE;                              \
 			if (!strcasecmp(value, "ao"))                                              \
-				app_config.name = SECURITY_MODE_AO;                                 \
+				app_config.name = SECURITY_MODE_AO;                                \
 			if (!strcasecmp(value, "ae"))                                              \
-				app_config.name = SECURITY_MODE_AE;                                 \
+				app_config.name = SECURITY_MODE_AE;                                \
 		}                                                                                  \
 	} while (0)
 
@@ -432,18 +432,18 @@ void config_free(void);
 				goto err_parse;                                                    \
 			}                                                                          \
 			if (!strcasecmp(value, "aes256-gcm"))                                      \
-				app_config.name = SECURITY_ALGORITHM_AES256_GCM;                    \
+				app_config.name = SECURITY_ALGORITHM_AES256_GCM;                   \
 			if (!strcasecmp(value, "aes128-gcm"))                                      \
-				app_config.name = SECURITY_ALGORITHM_AES128_GCM;                    \
+				app_config.name = SECURITY_ALGORITHM_AES128_GCM;                   \
 			if (!strcasecmp(value, "chacha20-poly1305"))                               \
-				app_config.name = SECURITY_ALGORITHM_CHACHA20_POLY1305;             \
+				app_config.name = SECURITY_ALGORITHM_CHACHA20_POLY1305;            \
 		}                                                                                  \
 	} while (0)
 
 #define CONFIG_IS_TRAFFIC_CLASS_ACTIVE(name)                                                       \
 	({                                                                                         \
 		bool __ret = false;                                                                \
-		if (app_config.name##_enabled && app_config.name##_num_frames_per_cycle > 0) \
+		if (app_config.name##_enabled && app_config.name##_num_frames_per_cycle > 0)       \
 			__ret = true;                                                              \
 		__ret;                                                                             \
 	})

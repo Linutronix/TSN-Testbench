@@ -20,9 +20,9 @@ uint64_t tx_time_get_frame_duration(uint32_t link_speed, size_t frame_length)
 	return duration_ns;
 }
 
-uint64_t tx_time_get_frame_tx_time(uint64_t wakeup_time, uint64_t sequence_counter, uint64_t duration,
-			      size_t num_frames_per_cycle, uint64_t tx_time_offset,
-			      const char *traffic_class)
+uint64_t tx_time_get_frame_tx_time(uint64_t wakeup_time, uint64_t sequence_counter,
+				   uint64_t duration, size_t num_frames_per_cycle,
+				   uint64_t tx_time_offset, const char *traffic_class)
 {
 	const uint64_t tx_thread_offset = app_config.application_tx_base_offset_ns;
 	const uint64_t cycle_time = app_config.application_base_cycle_time_ns;

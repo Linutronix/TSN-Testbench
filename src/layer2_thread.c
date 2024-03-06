@@ -28,7 +28,7 @@
 #include "utils.h"
 
 static void generic_l2_initialize_frame(unsigned char *frame_data, const unsigned char *source,
-				     const unsigned char *destination)
+					const unsigned char *destination)
 {
 	struct vlan_ethernet_header *eth;
 	struct generic_l2_header *l2;
@@ -54,7 +54,8 @@ static void generic_l2_initialize_frame(unsigned char *frame_data, const unsigne
 
 	/* VLAN Header */
 	eth->vlan_proto = htons(ETH_P_8021Q);
-	eth->vlantci = htons(app_config.generic_l2_vid | app_config.generic_l2_pcp << VLAN_PCP_SHIFT);
+	eth->vlantci =
+		htons(app_config.generic_l2_vid | app_config.generic_l2_pcp << VLAN_PCP_SHIFT);
 	eth->vlan_encapsulated_proto = htons(app_config.generic_l2_ether_type);
 
 	/* Generic L2 header */
@@ -70,18 +71,20 @@ static void generic_l2_initialize_frame(unsigned char *frame_data, const unsigne
 }
 
 static void generic_l2_initialize_frames(unsigned char *frame_data, size_t num_frames,
-				      const unsigned char *source, const unsigned char *destination)
+					 const unsigned char *source,
+					 const unsigned char *destination)
 {
 	size_t i;
 
 	for (i = 0; i < num_frames; ++i)
 		generic_l2_initialize_frame(frame_data + i * GENL2_TX_FRAME_LENGTH, source,
-					 destination);
+					    destination);
 }
 
 static int generic_l2_send_message(int socket_fd, struct sockaddr_ll *destination,
-				unsigned char *frame_data, size_t frame_length, uint64_t wakeup_time,
-				uint64_t sequence_counter, uint64_t duration)
+				   unsigned char *frame_data, size_t frame_length,
+				   uint64_t wakeup_time, uint64_t sequence_counter,
+				   uint64_t duration)
 {
 	int ret;
 
@@ -94,8 +97,9 @@ static int generic_l2_send_message(int socket_fd, struct sockaddr_ll *destinatio
 		uint64_t tx_time;
 
 		tx_time = tx_time_get_frame_tx_time(wakeup_time, sequence_counter, duration,
-+					      app_config.generic_l2_num_frames_per_cycle,
-					      app_config.generic_l2_tx_time_offset_ns, "GenericL2");
+						    +app_config.generic_l2_num_frames_per_cycle,
+						    app_config.generic_l2_tx_time_offset_ns,
+						    "GenericL2");
 
 		iov.iov_base = frame_data;
 		iov.iov_len = frame_length;
@@ -122,16 +126,16 @@ static int generic_l2_send_message(int socket_fd, struct sockaddr_ll *destinatio
 
 	if (ret < 0) {
 		log_message(LOG_LEVEL_ERROR, "GenericL2Tx: send() for %" PRIu64 " failed: %s\n",
-			   sequence_counter, strerror(errno));
+			    sequence_counter, strerror(errno));
 		return -errno;
 	}
 
 	return 0;
 }
 
-static void generic_l2_send_frame(unsigned char *frame_data, size_t num_frames_per_cycle, int socket_fd,
-			       struct sockaddr_ll *destination, uint64_t wakeup_time,
-			       uint64_t duration)
+static void generic_l2_send_frame(unsigned char *frame_data, size_t num_frames_per_cycle,
+				  int socket_fd, struct sockaddr_ll *destination,
+				  uint64_t wakeup_time, uint64_t duration)
 {
 	struct vlan_ethernet_header *eth;
 	struct generic_l2_header *l2;
@@ -143,8 +147,9 @@ static void generic_l2_send_frame(unsigned char *frame_data, size_t num_frames_p
 	sequence_counter = meta_data_to_sequence_counter(&l2->meta_data, num_frames_per_cycle);
 
 	/* Send it */
-	ret = generic_l2_send_message(socket_fd, destination, frame_data, app_config.generic_l2_frame_length,
-				   wakeup_time, sequence_counter, duration);
+	ret = generic_l2_send_message(socket_fd, destination, frame_data,
+				      app_config.generic_l2_frame_length, wakeup_time,
+				      sequence_counter, duration);
 	if (ret)
 		return;
 
@@ -152,9 +157,9 @@ static void generic_l2_send_frame(unsigned char *frame_data, size_t num_frames_p
 }
 
 static void generic_l2_gen_and_send_frame(unsigned char *frame_data, size_t num_frames_per_cycle,
-				     int socket_fd, struct sockaddr_ll *destination,
-				     uint64_t wakeup_time, uint64_t sequence_counter,
-				     uint64_t duration)
+					  int socket_fd, struct sockaddr_ll *destination,
+					  uint64_t wakeup_time, uint64_t sequence_counter,
+					  uint64_t duration)
 {
 	struct vlan_ethernet_header *eth;
 	struct generic_l2_header *l2;
@@ -165,8 +170,9 @@ static void generic_l2_gen_and_send_frame(unsigned char *frame_data, size_t num_
 	sequence_counter_to_meta_data(&l2->meta_data, sequence_counter, num_frames_per_cycle);
 
 	/* Send it */
-	ret = generic_l2_send_message(socket_fd, destination, frame_data, app_config.generic_l2_frame_length,
-				   wakeup_time, sequence_counter, duration);
+	ret = generic_l2_send_message(socket_fd, destination, frame_data,
+				      app_config.generic_l2_frame_length, wakeup_time,
+				      sequence_counter, duration);
 	if (ret)
 		return;
 
@@ -174,7 +180,7 @@ static void generic_l2_gen_and_send_frame(unsigned char *frame_data, size_t num_
 }
 
 static void generic_l2_gen_and_send_xdp_frames(struct xdp_socket *xsk, size_t num_frames_per_cycle,
-					 uint64_t sequence_counter, uint32_t *frame_number)
+					       uint64_t sequence_counter, uint32_t *frame_number)
 {
 	uint32_t meta_data_offset =
 		sizeof(struct vlan_ethernet_header) + offsetof(struct generic_l2_header, meta_data);
@@ -198,7 +204,8 @@ static void generic_l2_gen_and_send_xdp_frames(struct xdp_socket *xsk, size_t nu
 static void *generic_l2_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	size_t received_frames_length = GENL2_TX_FRAME_LENGTH * app_config.generic_l2_num_frames_per_cycle;
+	size_t received_frames_length =
+		GENL2_TX_FRAME_LENGTH * app_config.generic_l2_num_frames_per_cycle;
 	const long long cycle_time_ns = app_config.application_base_cycle_time_ns;
 	const bool mirror_enabled = app_config.generic_l2_rx_mirror_enabled;
 	unsigned char *received_frames = thread_context->rx_frame_data;
@@ -246,8 +253,8 @@ static void *generic_l2_tx_thread_routine(void *data)
 	ret = get_thread_start_time(app_config.application_tx_base_offset_ns, &wakeup_time);
 	if (ret) {
 		log_message(LOG_LEVEL_ERROR,
-			   "GenericL2Tx: Failed to calculate thread start time: %s!\n",
-			   strerror(errno));
+			    "GenericL2Tx: Failed to calculate thread start time: %s!\n",
+			    strerror(errno));
 		return NULL;
 	}
 
@@ -263,28 +270,28 @@ static void *generic_l2_tx_thread_routine(void *data)
 
 		if (ret) {
 			log_message(LOG_LEVEL_ERROR, "GenericL2Tx: clock_nanosleep() failed: %s\n",
-				   strerror(ret));
+				    strerror(ret));
 			return NULL;
 		}
 
 		if (!mirror_enabled) {
 			for (i = 0; i < app_config.generic_l2_num_frames_per_cycle; ++i)
 				generic_l2_gen_and_send_frame(
-					frame, app_config.generic_l2_num_frames_per_cycle, socket_fd,
-					&destination, ts_to_ns(&wakeup_time), sequence_counter++,
-					duration);
+					frame, app_config.generic_l2_num_frames_per_cycle,
+					socket_fd, &destination, ts_to_ns(&wakeup_time),
+					sequence_counter++, duration);
 		} else {
 			size_t len;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
-					received_frames_length, &len);
+					  received_frames_length, &len);
 
 			/* Len should be a multiple of frame size */
 			for (i = 0; i < len / app_config.generic_l2_frame_length; ++i)
-				generic_l2_send_frame(received_frames +
-							   i * app_config.generic_l2_frame_length,
-						   app_config.generic_l2_num_frames_per_cycle, socket_fd,
-						   &destination, ts_to_ns(&wakeup_time), duration);
+				generic_l2_send_frame(
+					received_frames + i * app_config.generic_l2_frame_length,
+					app_config.generic_l2_num_frames_per_cycle, socket_fd,
+					&destination, ts_to_ns(&wakeup_time), duration);
 		}
 	}
 
@@ -315,17 +322,17 @@ static void *generic_l2_xdp_tx_thread_routine(void *data)
 
 	/* First half of umem area is for Rx, the second half is for Tx. */
 	frame_data = xsk_umem__get_data(xsk->umem.buffer,
-				       XDP_FRAME_SIZE * XSK_RING_PROD__DEFAULT_NUM_DESCS);
+					XDP_FRAME_SIZE * XSK_RING_PROD__DEFAULT_NUM_DESCS);
 
 	/* Initialize all Tx frames */
 	generic_l2_initialize_frames(frame_data, XSK_RING_CONS__DEFAULT_NUM_DESCS, source,
-				  app_config.generic_l2_destination);
+				     app_config.generic_l2_destination);
 
 	ret = get_thread_start_time(app_config.application_tx_base_offset_ns, &wakeup_time);
 	if (ret) {
 		log_message(LOG_LEVEL_ERROR,
-			   "GenericL2Tx: Failed to calculate thread start time: %s!\n",
-			   strerror(errno));
+			    "GenericL2Tx: Failed to calculate thread start time: %s!\n",
+			    strerror(errno));
 		return NULL;
 	}
 
@@ -339,12 +346,13 @@ static void *generic_l2_xdp_tx_thread_routine(void *data)
 
 		if (ret) {
 			log_message(LOG_LEVEL_ERROR, "GenericL2Tx: clock_nanosleep() failed: %s\n",
-				   strerror(ret));
+				    strerror(ret));
 			return NULL;
 		}
 
 		if (!mirror_enabled) {
-			generic_l2_gen_and_send_xdp_frames(xsk, num_frames, sequence_counter, &frame_number);
+			generic_l2_gen_and_send_xdp_frames(xsk, num_frames, sequence_counter,
+							   &frame_number);
 			sequence_counter += num_frames;
 		} else {
 			unsigned int received;
@@ -420,7 +428,7 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 
 	if (proto != htons(app_config.generic_l2_ether_type)) {
 		log_message(LOG_LEVEL_WARNING,
-			   "GenericL2Rx: Frame with wrong Ether Type received!\n");
+			    "GenericL2Rx: Frame with wrong Ether Type received!\n");
 		return -EINVAL;
 	}
 
@@ -445,21 +453,21 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 	frame_id_mismatch = false;
 
 	stat_frame_received(GENERICL2_FRAME_TYPE, sequence_counter, out_of_order, payload_mismatch,
-			  frame_id_mismatch);
+			    frame_id_mismatch);
 
 	if (out_of_order) {
 		if (!ignore_rx_errors)
 			log_message(LOG_LEVEL_WARNING,
-				   "GenericL2Rx: frame[%" PRIu64
-				   "] SequenceCounter mismatch: %" PRIu64 "!\n",
-				   sequence_counter, thread_context->rx_sequence_counter);
+				    "GenericL2Rx: frame[%" PRIu64
+				    "] SequenceCounter mismatch: %" PRIu64 "!\n",
+				    sequence_counter, thread_context->rx_sequence_counter);
 		thread_context->rx_sequence_counter++;
 	}
 
 	if (payload_mismatch)
 		log_message(LOG_LEVEL_WARNING,
-			   "GenericL2Rx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
-			   sequence_counter);
+			    "GenericL2Rx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
+			    sequence_counter);
 
 	thread_context->rx_sequence_counter++;
 
@@ -475,8 +483,8 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 		/* Re-add vlan tag */
 		if (vlan_tag_missing)
 			insert_vlan_tag(frame_data, len,
-				      app_config.generic_l2_vid | app_config.generic_l2_pcp
-								       << VLAN_PCP_SHIFT);
+					app_config.generic_l2_vid | app_config.generic_l2_pcp
+									    << VLAN_PCP_SHIFT);
 
 		/* Swap mac addresses inline */
 		swap_mac_addresses(frame_data, len);
@@ -484,9 +492,10 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 		/*
 		 * Build new frame for Tx with VLAN info.
 		 */
-		build_vlan_frame_from_rx(
-			frame_data, len, new_frame, sizeof(new_frame), app_config.generic_l2_ether_type,
-			app_config.generic_l2_vid | app_config.generic_l2_pcp << VLAN_PCP_SHIFT);
+		build_vlan_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame),
+					 app_config.generic_l2_ether_type,
+					 app_config.generic_l2_vid | app_config.generic_l2_pcp
+									     << VLAN_PCP_SHIFT);
 
 		/*
 		 * Store the new frame.
@@ -511,7 +520,7 @@ static void *generic_l2_rx_thread_routine(void *data)
 		len = recv(socket_fd, frame, sizeof(frame), 0);
 		if (len < 0) {
 			log_message(LOG_LEVEL_ERROR, "GenericL2Rx: recv() failed: %s\n",
-				   strerror(errno));
+				    strerror(errno));
 			return NULL;
 		}
 		if (len == 0)
@@ -536,8 +545,8 @@ static void *generic_l2_xdp_rx_thread_routine(void *data)
 	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
 	if (ret) {
 		log_message(LOG_LEVEL_ERROR,
-			   "GenericL2Rx: Failed to calculate thread start time: %s!\n",
-			   strerror(errno));
+			    "GenericL2Rx: Failed to calculate thread start time: %s!\n",
+			    strerror(errno));
 		return NULL;
 	}
 
@@ -554,13 +563,13 @@ static void *generic_l2_xdp_rx_thread_routine(void *data)
 
 		if (ret) {
 			log_message(LOG_LEVEL_ERROR, "GenericL2Rx: clock_nanosleep() failed: %s\n",
-				   strerror(ret));
+				    strerror(ret));
 			return NULL;
 		}
 
 		pthread_mutex_lock(&thread_context->xdp_data_mutex);
-		received = xdp_receive_frames(xsk, frame_length, mirror_enabled, generic_l2_rx_frame,
-					    thread_context);
+		received = xdp_receive_frames(xsk, frame_length, mirror_enabled,
+					      generic_l2_rx_frame, thread_context);
 		thread_context->received_frames = received;
 		pthread_mutex_unlock(&thread_context->xdp_data_mutex);
 	}
@@ -647,10 +656,11 @@ struct thread_context *generic_l2_threads_create(void)
 	snprintf(thread_name, sizeof(thread_name), "%sTxThread", app_config.generic_l2_name);
 
 	ret = create_rt_thread(&thread_context->tx_task_id, thread_name,
-			     app_config.generic_l2_tx_thread_priority, app_config.generic_l2_tx_thread_cpu,
-			     app_config.generic_l2_xdp_enabled ? generic_l2_xdp_tx_thread_routine
-							   : generic_l2_tx_thread_routine,
-			     thread_context);
+			       app_config.generic_l2_tx_thread_priority,
+			       app_config.generic_l2_tx_thread_cpu,
+			       app_config.generic_l2_xdp_enabled ? generic_l2_xdp_tx_thread_routine
+								 : generic_l2_tx_thread_routine,
+			       thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create GenericL2 Tx Thread!\n");
 		goto err_thread;
@@ -659,10 +669,11 @@ struct thread_context *generic_l2_threads_create(void)
 	snprintf(thread_name, sizeof(thread_name), "%sRxThread", app_config.generic_l2_name);
 
 	ret = create_rt_thread(&thread_context->rx_task_id, thread_name,
-			     app_config.generic_l2_rx_thread_priority, app_config.generic_l2_rx_thread_cpu,
-			     app_config.generic_l2_xdp_enabled ? generic_l2_xdp_rx_thread_routine
-							   : generic_l2_rx_thread_routine,
-			     thread_context);
+			       app_config.generic_l2_rx_thread_priority,
+			       app_config.generic_l2_rx_thread_cpu,
+			       app_config.generic_l2_xdp_enabled ? generic_l2_xdp_rx_thread_routine
+								 : generic_l2_rx_thread_routine,
+			       thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create GenericL2 Rx Thread!\n");
 		goto err_thread_rx;
@@ -681,7 +692,7 @@ err_buffer:
 		close(thread_context->socket_fd);
 	if (thread_context->xsk)
 		xdp_close_socket(thread_context->xsk, app_config.generic_l2_interface,
-			       app_config.generic_l2_xdp_skb_mode);
+				 app_config.generic_l2_xdp_skb_mode);
 err_socket:
 	free(thread_context->rx_frame_data);
 err_rx:
@@ -706,7 +717,7 @@ void generic_l2_threads_free(struct thread_context *thread_context)
 
 	if (thread_context->xsk)
 		xdp_close_socket(thread_context->xsk, app_config.generic_l2_interface,
-			       app_config.generic_l2_xdp_skb_mode);
+				 app_config.generic_l2_xdp_skb_mode);
 
 	free(thread_context);
 }

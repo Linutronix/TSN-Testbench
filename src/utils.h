@@ -47,8 +47,8 @@ void insert_vlan_tag(void *buffer, size_t len, uint16_t vlan_tci);
  * This function does nothing when the @newFrame isn't sufficent in length.
  */
 void build_vlan_frame_from_rx(const unsigned char *old_frame, size_t old_frame_len,
-			  unsigned char *new_frame, size_t new_frame_len, uint16_t ether_type,
-			  uint16_t vlan_tci);
+			      unsigned char *new_frame, size_t new_frame_len, uint16_t ether_type,
+			      uint16_t vlan_tci);
 
 /*
  * This function initializes an PROFINET Ethernet frame. The Ethernet header,
@@ -57,10 +57,10 @@ void build_vlan_frame_from_rx(const unsigned char *old_frame, size_t old_frame_l
  * In case the SecurityMode is AE or AO, the PROFINET Ethernet frames will contain the
  * SecurityHeader after the FrameID.
  */
-void initialize_profinet_frame(enum security_mode mode, unsigned char *frame_data, size_t frame_length,
-			     const unsigned char *source, const unsigned char *destination,
-			     const char *payload_pattern, size_t payload_pattern_length,
-			     uint16_t vlan_tci, uint16_t frame_id);
+void initialize_profinet_frame(enum security_mode mode, unsigned char *frame_data,
+			       size_t frame_length, const unsigned char *source,
+			       const unsigned char *destination, const char *payload_pattern,
+			       size_t payload_pattern_length, uint16_t vlan_tci, uint16_t frame_id);
 
 /*
  * The following function prepares an already initialized PROFINET Ethernet frame for final
@@ -105,7 +105,7 @@ void print_payload_pattern(const char *payload_pattern, size_t payload_pattern_l
 
 /* Meta data handling */
 static inline uint64_t meta_data_to_sequence_counter(const struct reference_meta_data *meta,
-						 size_t num_frames_per_cycle)
+						     size_t num_frames_per_cycle)
 {
 	uint32_t frame_counter, cycle_counter;
 
@@ -116,7 +116,8 @@ static inline uint64_t meta_data_to_sequence_counter(const struct reference_meta
 }
 
 static inline void sequence_counter_to_meta_data(struct reference_meta_data *meta,
-					     uint64_t sequence_counter, size_t num_frames_per_cycle)
+						 uint64_t sequence_counter,
+						 size_t num_frames_per_cycle)
 {
 	meta->frame_counter = htobe32(sequence_counter % num_frames_per_cycle);
 	meta->cycle_counter = htobe32(sequence_counter / num_frames_per_cycle);

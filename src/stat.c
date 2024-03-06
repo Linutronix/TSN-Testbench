@@ -127,7 +127,7 @@ void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number)
 	struct timespec tx_time = {};
 
 	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] sent\n",
-		   stat_frame_type_to_string(frame_type), cycle_number);
+		    stat_frame_type_to_string(frame_type), cycle_number);
 
 	if (log_rtt) {
 		/* Record Tx timestamp in */
@@ -153,8 +153,8 @@ static void stats_reset_stats(struct statistics *stats)
 }
 
 static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
-				       uint64_t rt_time, bool out_of_order, bool payload_mismatch,
-				       bool frame_id_mismatch)
+					   uint64_t rt_time, bool out_of_order,
+					   bool payload_mismatch, bool frame_id_mismatch)
 {
 	struct statistics *stat_per_period_pre = &global_statistics_per_period_prep[frame_type];
 	uint64_t elapsed_t;
@@ -174,7 +174,8 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 
 	if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
 		stat_per_period_pre->round_trip_outliers++;
-	stat_update_min_max(rt_time, &stat_per_period_pre->round_trip_min, &stat_per_period_pre->round_trip_max);
+	stat_update_min_max(rt_time, &stat_per_period_pre->round_trip_min,
+			    &stat_per_period_pre->round_trip_max);
 
 	stat_per_period_pre->round_trip_count++;
 	stat_per_period_pre->round_trip_sum += rt_time;
@@ -197,14 +198,14 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 }
 #else
 static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
-				       uint64_t rt_time, bool out_of_order, bool payload_mismatch,
-				       bool frame_id_mismatch)
+					   uint64_t rt_time, bool out_of_order,
+					   bool payload_mismatch, bool frame_id_mismatch)
 {
 }
 #endif
 
 void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number, bool out_of_order,
-		       bool payload_mismatch, bool frame_id_mismatch)
+			 bool payload_mismatch, bool frame_id_mismatch)
 {
 	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
 	struct statistics *stat = &global_statistics[frame_type];
@@ -212,7 +213,7 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 	uint64_t rt_time, curr_time;
 
 	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] received\n",
-		   stat_frame_type_to_string(frame_type), cycle_number);
+		    stat_frame_type_to_string(frame_type), cycle_number);
 
 	/* Record Rx timestamp in us */
 	if (log_rtt) {
@@ -221,8 +222,8 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 		rt_time = curr_time - rtt->backlog[cycle_number % rtt->backlog_len];
 		rt_time /= 1000;
 
-		stat_frame_received_per_period(frame_type, curr_time, rt_time, out_of_order, payload_mismatch,
-					   frame_id_mismatch);
+		stat_frame_received_per_period(frame_type, curr_time, rt_time, out_of_order,
+					       payload_mismatch, frame_id_mismatch);
 
 		stat_update_min_max(rt_time, &stat->round_trip_min, &stat->round_trip_max);
 		if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
@@ -232,7 +233,8 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 		stat->round_trip_avg = stat->round_trip_sum / (double)stat->round_trip_count;
 
 		/* Stop tracing after certain amount of time */
-		if (app_config.debug_stop_trace_on_rtt && stat_frame_type_is_real_time(frame_type) &&
+		if (app_config.debug_stop_trace_on_rtt &&
+		    stat_frame_type_is_real_time(frame_type) &&
 		    rt_time > (app_config.debug_stop_trace_rtt_limit_ns / 1000)) {
 			fprintf(file_trace_marker,
 				"Round-Trip Limit hit: %" PRIu64

@@ -88,11 +88,11 @@ void log_via_mqtt_stats(enum stat_frame_type frame_type, struct statistics *stat
 	internal.round_trip_avg = stats->round_trip_avg;
 
 	ring_buffer_add(log_via_mqtt_global_log_ring_buffer, (const unsigned char *)&internal,
-		      sizeof(struct log_statistics));
+			sizeof(struct log_statistics));
 }
 
 static void log_via_mqtt_add_traffic_class(struct mosquitto *mosq, const char *mqtt_base_topic_name,
-				      struct log_statistics *stat)
+					   struct log_statistics *stat)
 {
 	char stat_message[1024] = {}, *p;
 	size_t stat_message_length;
@@ -137,8 +137,8 @@ static void log_via_mqtt_add_traffic_class(struct mosquitto *mosq, const char *m
 	p += written;
 	stat_message_length -= written;
 
-	result_pub = mosquitto_publish(mosq, NULL, "testbench", strlen(stat_message), stat_message, 2,
-				      false);
+	result_pub = mosquitto_publish(mosq, NULL, "testbench", strlen(stat_message), stat_message,
+				       2, false);
 	if (result_pub != MOSQ_ERR_SUCCESS)
 		fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(result_pub));
 }
@@ -167,8 +167,8 @@ static void *log_via_mqtt_thread_routine(void *data)
 	}
 
 	connect_status = mosquitto_connect(mqtt_context->mosq, app_config.log_via_mqtt_broker_ip,
-					  app_config.log_via_mqtt_broker_port,
-					  app_config.log_via_mqtt_keep_alive_secs);
+					   app_config.log_via_mqtt_broker_port,
+					   app_config.log_via_mqtt_keep_alive_secs);
 	if (connect_status != MOSQ_ERR_SUCCESS) {
 		fprintf(stderr, "MQTTLog Error by connect: %s\n",
 			mosquitto_strerror(connect_status));
@@ -205,14 +205,14 @@ static void *log_via_mqtt_thread_routine(void *data)
 		}
 
 		ring_buffer_fetch(mqtt_context->mqtt_log_ring_buffer, (unsigned char *)&stats,
-				sizeof(stats), &log_data_len);
+				  sizeof(stats), &log_data_len);
 		nof_read_elements = log_data_len / sizeof(struct log_statistics);
 
 		curr_stats = (struct log_statistics *)stats;
 		for (int i = 0; i < nof_read_elements; i++)
 			log_via_mqtt_add_traffic_class(mqtt_context->mosq,
-						  app_config.log_via_mqtt_measurement_name,
-						  &curr_stats[i]);
+						       app_config.log_via_mqtt_measurement_name,
+						       &curr_stats[i]);
 	}
 
 	return NULL;
@@ -248,8 +248,9 @@ struct log_via_mqtt_thread_context *log_via_mqtt_thread_create(void)
 	mqtt_context->mqtt_log_ring_buffer = log_via_mqtt_global_log_ring_buffer;
 
 	ret = create_rt_thread(&mqtt_context->mqtt_log_task_id, "LoggerGraph",
-			     app_config.log_via_mqtt_thread_priority, app_config.log_via_mqtt_thread_cpu,
-			     log_via_mqtt_thread_routine, mqtt_context);
+			       app_config.log_via_mqtt_thread_priority,
+			       app_config.log_via_mqtt_thread_cpu, log_via_mqtt_thread_routine,
+			       mqtt_context);
 
 	if (ret)
 		goto err_thread;

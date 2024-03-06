@@ -16,7 +16,7 @@
 #include "utils.h"
 
 int create_rt_thread(pthread_t *task_id, const char *thread_name, int thread_priority, int cpu_core,
-		   void *(*thread_routine)(void *), void *data)
+		     void *(*thread_routine)(void *), void *data)
 {
 	struct sched_param param;
 	pthread_attr_t attr;
