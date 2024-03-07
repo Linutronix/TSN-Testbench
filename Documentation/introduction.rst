@@ -40,7 +40,7 @@ Both applications are configured via YAML files. Sample YAML files are provided
 for both applications in the ``configurations`` folder.
 
 The tools are implemented in C and licensed under BSD-2-Clause. The coding style
-is defined by Phoenix Contact and corresponds to the Microsoft one.
+is the Linux kernel one.
 
 Version history:
 

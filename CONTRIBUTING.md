@@ -33,7 +33,7 @@ https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your
 
 ## Code Style
 
-The coding style is the Microsoft one. If unsure about it, run ``clang-format`` on the C files.
+The coding style is the Linux kernel one. If unsure about it, run ``clang-format`` on the C files.
 
 In addition, the reverse xmas tree variable ordering is used:
 

@@ -40,10 +40,10 @@ No errors should be printed.
 Coding Style Check
 ------------------
 
-The coding style for the Linux TSN ``Testbench`` is the Microsoft style. The
+The coding style for the Linux TSN ``Testbench`` is the Linux kernel style. The
 rules are described here:
 
-- https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-style-rule-options?view=vs-2022
+- https://www.kernel.org/doc/html/latest/process/coding-style.html#codingstyle
 
 The coding style can be enforced automatically by using ``clang-format`` (see
 https://clang.llvm.org/docs/ClangFormat.html). Example:
