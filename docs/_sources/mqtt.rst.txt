@@ -17,7 +17,7 @@ This extension provides a visualization of data in grafical format, which is des
 The combination MQTT/Grafana is chosen as it is the most recognized and used application for data visualization, but requires additional services for the visualization. Those services are Telegraf and InfluxDB.
 Telegraf performs the transfer of the MQTT data into InfluxDB insertions. InfluxDB itself is the data provider for Grafana.
 The configuration for those services are provided allowing the direct start with data visualization with Grafana. A docker-composer file that allows that can be generated via a bash script provided.
- 
+
 
 Enabling the build
 ------------------
@@ -47,25 +47,25 @@ The parameters which affect the MQTT integration are presented in the table belo
 
    * - LogViaMQTT
      - Enable and disable MQTT logging
-     
+
    * - LogViaMQTTThreadPriority
      - Thread priority for the logging thread, usually low < 7
-     
+
    * - LogViaMQTTThreadPeriodNS
-     - Interval in which the Logging thread will read push data into MQTT, typically same value as StatsCollectionIntervalNS. 
+     - Interval in which the Logging thread will read push data into MQTT, typically same value as StatsCollectionIntervalNS.
 
    * - LogViaMQTTBrokerIP
      - IP address where MQTT broker is running
-     
+
    * - LogViaMQTTBrokerPort
      - Port used by the MQTT Broker, default value is
-     
+
    * - LogViaMQTTKeepAliveSecs
      - Keep alive time for the connection, default value 60s
-     
+
    * - LogViaMQTTMeasurementName
-     - Used to distinguish measurements coming from different machines.  
-     
+     - Used to distinguish measurements coming from different machines.
+
 
 
 Docker Composer
@@ -82,7 +82,7 @@ an indirect approach to deliver the file was taken. In the docker/mqtt-composer 
 Creating the services
 ^^^^^^^^^^^^^^^^^^^^^
 
-The docker-composer.sh makes the integration into Grafana simple. 
+The docker-composer.sh makes the integration into Grafana simple.
 A simplistic way to have the Grafana running is it can be used, is to instantiate the docker-compose in the machine where reference is running, by doing that all parameters concerning the MQTT broker are default.
 To instantiate the docker-composer you need docker and docker-compose installed.
 Start the services by issuing the commands below from the tsn-testbench directory.
@@ -91,9 +91,9 @@ Start the services by issuing the commands below from the tsn-testbench director
 
    cd docker/mqtt-composer
    docker-compose --compatibility up -d
-   
+
 At this point all services needed to have the data available in Grafana is done.
-The most important part is now how to access the data. 
+The most important part is now how to access the data.
 The verification of data availability can be done in two steps: first at InfluxDB and second via Grafana.
 
 
@@ -102,7 +102,7 @@ Influx Access
 ^^^^^^^^^^^^^^
 
 Used database for the provided configuration is "testbench" and is defined in the telegraf.conf file.
-The measurement name is the "LogViaMQTTMeasurementName" provided in the configuration. 
+The measurement name is the "LogViaMQTTMeasurementName" provided in the configuration.
 The Timestamp provided is the time taken in the application side when the last frame in the recording period "StatsCollectionIntervalNS"
 is received, and the traffic class name is one of the columns of the measurment.
 This way one can investigate the data base by providing the following code when running influx:

@@ -118,10 +118,10 @@ Directories<span class="w"> </span>complete:<span class="w">         </span><spa
 </section>
 <section id="coding-style-check">
 <h2>Coding Style Check<a class="headerlink" href="#coding-style-check" title="Permalink to this heading"></a></h2>
-<p>The coding style for the Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is the Microsoft style. The
+<p>The coding style for the Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is the Linux kernel style. The
 rules are described here:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-style-rule-options?view=vs-2022">https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-style-rule-options?view=vs-2022</a></p></li>
+<li><p><a class="reference external" href="https://www.kernel.org/doc/html/latest/process/coding-style.html#codingstyle">https://www.kernel.org/doc/html/latest/process/coding-style.html#codingstyle</a></p></li>
 </ul>
 <p>The coding style can be enforced automatically by using <code class="docutils literal notranslate"><span class="pre">clang-format</span></code> (see
 <a class="reference external" href="https://clang.llvm.org/docs/ClangFormat.html">https://clang.llvm.org/docs/ClangFormat.html</a>). Example:</p>
@@ -129,6 +129,15 @@ rules are described here:</p>
 </pre></div>
 </div>
 <p>This corrects errors in place for all C source files.</p>
+<p>Furthermore, the naming of variables, structs and function can be checked (and
+fixed inplace) by running <code class="docutils literal notranslate"><span class="pre">clang-tidy</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>mkdir<span class="w"> </span>build
+%<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
+%<span class="w"> </span>cmake<span class="w"> </span>-DCMAKE_EXPORT_COMPILE_COMMANDS<span class="o">=</span>ON<span class="w"> </span>..
+%<span class="w"> </span>make<span class="w"> </span>-j<span class="sb">`</span>nproc<span class="sb">`</span>
+%<span class="w"> </span>run-clang-tidy
+</pre></div>
+</div>
 </section>
 </section>
 
