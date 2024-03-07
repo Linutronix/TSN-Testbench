@@ -689,13 +689,13 @@ void config_print_values(void)
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("StatsCollectionIntervalNS=%ld\n", app_config.stats_collection_interval_ns);
+	printf("StatsCollectionIntervalNS=%" PRIu64 "\n", app_config.stats_collection_interval_ns);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("LogViaMQTT=%s\n", app_config.log_via_mqtt ? "True" : "False");
 	printf("LogViaMQTTThreadPriority=%d\n", app_config.log_via_mqtt_thread_priority);
 	printf("LogViaMQTTThreadCpu=%d\n", app_config.log_via_mqtt_thread_cpu);
-	printf("LogViaMQTTThreadPeriodNS=%ld\n", app_config.log_via_mqtt_thread_period_ns);
+	printf("LogViaMQTTThreadPeriodNS=%" PRIu64 "\n", app_config.log_via_mqtt_thread_period_ns);
 	printf("LogViaMQTTBrokerIP=%s\n", app_config.log_via_mqtt_broker_ip);
 	printf("LogViaMQTTBrokerPort=%d\n", app_config.log_via_mqtt_broker_port);
 	printf("LogViaMQTTKeepAliveSecs=%d\n", app_config.log_via_mqtt_keep_alive_secs);
