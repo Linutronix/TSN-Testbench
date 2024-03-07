@@ -301,13 +301,13 @@ void config_print_values(void);
 bool config_sanity_check(void);
 void config_free(void);
 
-#define CONFIG_STORE_BOOL_PARAM(name)                                                              \
+#define CONFIG_STORE_BOOL_PARAM(name, var)                                                         \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
 			if (!strcmp(value, "0") || !strcasecmp(value, "false"))                    \
-				app_config.name = false;                                           \
+				app_config.var = false;                                            \
 			else if (!strcmp(value, "1") || !strcasecmp(value, "true"))                \
-				app_config.name = true;                                            \
+				app_config.var = true;                                             \
 			else {                                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
 				goto err_parse;                                                    \
@@ -315,10 +315,10 @@ void config_free(void);
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_INT_PARAM(name)                                                               \
+#define CONFIG_STORE_INT_PARAM(name, var)                                                          \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strtol(value, &endptr, 10);                              \
+			app_config.var = strtol(value, &endptr, 10);                               \
 			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
@@ -327,10 +327,10 @@ void config_free(void);
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_ULONG_PARAM(name)                                                             \
+#define CONFIG_STORE_ULONG_PARAM(name, var)                                                        \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strtoull(value, &endptr, 10);                            \
+			app_config.var = strtoull(value, &endptr, 10);                             \
 			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
@@ -339,26 +339,26 @@ void config_free(void);
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_STRING_PARAM(name)                                                            \
+#define CONFIG_STORE_STRING_PARAM(name, var)                                                       \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strdup(value);                                           \
-			if (!app_config.name) {                                                    \
+			app_config.var = strdup(value);                                            \
+			if (!app_config.var) {                                                     \
 				ret = -ENOMEM;                                                     \
 				fprintf(stderr, "strdup() for " #name " failed!\n");               \
 				goto err_parse;                                                    \
 			}                                                                          \
-			app_config.name##_length = strlen(value);                                  \
+			app_config.var##_length = strlen(value);                                   \
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_INTERFACE_PARAM(name)                                                         \
+#define CONFIG_STORE_INTERFACE_PARAM(name, var)                                                    \
 	do {                                                                                       \
 		if (!strcmp(key, #name))                                                           \
-			strncpy(app_config.name, value, sizeof(app_config.name) - 1);              \
+			strncpy(app_config.var, value, sizeof(app_config.var) - 1);                \
 	} while (0)
 
-#define CONFIG_STORE_MAC_PARAM(name)                                                               \
+#define CONFIG_STORE_MAC_PARAM(name, var)                                                          \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
 			unsigned int tmp[ETH_ALEN];                                                \
@@ -374,11 +374,11 @@ void config_free(void);
 			}                                                                          \
                                                                                                    \
 			for (i = 0; i < ETH_ALEN; ++i)                                             \
-				app_config.name[i] = (unsigned char)tmp[i];                        \
+				app_config.var[i] = (unsigned char)tmp[i];                         \
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_CLOCKID_PARAM(name)                                                           \
+#define CONFIG_STORE_CLOCKID_PARAM(name, var)                                                      \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
 			if (strcmp(value, "CLOCK_TAI") && strcmp(value, "CLOCK_MONOTONIC")) {      \
@@ -387,16 +387,16 @@ void config_free(void);
 			}                                                                          \
                                                                                                    \
 			if (!strcmp(value, "CLOCK_TAI"))                                           \
-				app_config.name = CLOCK_TAI;                                       \
+				app_config.var = CLOCK_TAI;                                        \
 			if (!strcmp(value, "CLOCK_MONOTONIC"))                                     \
-				app_config.name = CLOCK_MONOTONIC;                                 \
+				app_config.var = CLOCK_MONOTONIC;                                  \
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_ETHER_TYPE(name)                                                              \
+#define CONFIG_STORE_ETHER_TYPE(name, var)                                                         \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.name = strtoul(value, &endptr, 16);                             \
+			app_config.var = strtoul(value, &endptr, 16);                              \
 			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
@@ -405,7 +405,7 @@ void config_free(void);
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_SECURITY_MODE_PARAM(name)                                                     \
+#define CONFIG_STORE_SECURITY_MODE_PARAM(name, var)                                                \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
 			if (strcasecmp(value, "none") && strcasecmp(value, "ao") &&                \
@@ -415,15 +415,15 @@ void config_free(void);
 			}                                                                          \
                                                                                                    \
 			if (!strcasecmp(value, "none"))                                            \
-				app_config.name = SECURITY_MODE_NONE;                              \
+				app_config.var = SECURITY_MODE_NONE;                               \
 			if (!strcasecmp(value, "ao"))                                              \
-				app_config.name = SECURITY_MODE_AO;                                \
+				app_config.var = SECURITY_MODE_AO;                                 \
 			if (!strcasecmp(value, "ae"))                                              \
-				app_config.name = SECURITY_MODE_AE;                                \
+				app_config.var = SECURITY_MODE_AE;                                 \
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_SECURITY_ALGORITHM_PARAM(name)                                                \
+#define CONFIG_STORE_SECURITY_ALGORITHM_PARAM(name, var)                                           \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
 			if (strcasecmp(value, "aes256-gcm") && strcasecmp(value, "aes128-gcm") &&  \
@@ -432,11 +432,11 @@ void config_free(void);
 				goto err_parse;                                                    \
 			}                                                                          \
 			if (!strcasecmp(value, "aes256-gcm"))                                      \
-				app_config.name = SECURITY_ALGORITHM_AES256_GCM;                   \
+				app_config.var = SECURITY_ALGORITHM_AES256_GCM;                    \
 			if (!strcasecmp(value, "aes128-gcm"))                                      \
-				app_config.name = SECURITY_ALGORITHM_AES128_GCM;                   \
+				app_config.var = SECURITY_ALGORITHM_AES128_GCM;                    \
 			if (!strcasecmp(value, "chacha20-poly1305"))                               \
-				app_config.name = SECURITY_ALGORITHM_CHACHA20_POLY1305;            \
+				app_config.var = SECURITY_ALGORITHM_CHACHA20_POLY1305;             \
 		}                                                                                  \
 	} while (0)
 
