@@ -53,3 +53,14 @@ https://clang.llvm.org/docs/ClangFormat.html). Example:
    % clang-format -i src/*.c src/*.h
 
 This corrects errors in place for all C source files.
+
+Furthermore, the naming of variables, structs and function can be checked (and
+fixed inplace) by running ``clang-tidy``:
+
+.. code:: bash
+
+   % mkdir build
+   % cd build
+   % cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+   % make -j`nproc`
+   % run-clang-tidy
