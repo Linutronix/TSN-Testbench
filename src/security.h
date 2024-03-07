@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (C) 2023 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>

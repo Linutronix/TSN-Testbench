@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (C) 2024 Intel Corporation.
  * Author Walfred Tedeschi <walfred.tedeschi@intel.com>
