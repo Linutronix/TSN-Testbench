@@ -31,7 +31,7 @@ struct log_thread_context {
 	FILE *file_handle;
 };
 
-struct log_thread_context *log_thread_create();
+struct log_thread_context *log_thread_create(void);
 void log_thread_stop(struct log_thread_context *thread_context);
 void log_thread_free(struct log_thread_context *thread_context);
 void log_thread_wait_for_finish(struct log_thread_context *thread_context);

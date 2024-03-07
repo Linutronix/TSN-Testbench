@@ -1059,7 +1059,7 @@ static bool config_check_keys(const char *traffic_class, enum security_mode mode
 	return true;
 }
 
-bool config_sanity_check()
+bool config_sanity_check(void)
 {
 	const size_t min_secure_profinet_frame_size = sizeof(struct vlan_ethernet_header) +
 						      sizeof(struct profinet_secure_header) +

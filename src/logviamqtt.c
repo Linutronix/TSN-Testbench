@@ -27,7 +27,7 @@
 #define LOGVIAMQTT_BUFFER_SIZE (8 * 1024)
 
 #ifndef WITH_MQTT
-struct log_via_mqtt_thread_context *log_via_mqtt_thread_create()
+struct log_via_mqtt_thread_context *log_via_mqtt_thread_create(void)
 {
 	return NULL;
 }
@@ -40,7 +40,7 @@ void log_via_mqtt_stats(enum stat_frame_type frame_type, struct statistics *stat
 {
 }
 
-void log_via_mqtt_free()
+void log_via_mqtt_free(void)
 {
 }
 
@@ -62,7 +62,7 @@ struct log_statistics {
 	double round_trip_avg;
 };
 
-int log_via_mqtt_init()
+int log_via_mqtt_init(void)
 {
 	log_via_mqtt_global_log_ring_buffer = ring_buffer_allocate(LOGVIAMQTT_BUFFER_SIZE);
 	if (!log_via_mqtt_global_log_ring_buffer)
@@ -285,7 +285,7 @@ void log_via_mqtt_thread_stop(struct log_via_mqtt_thread_context *thread_context
 	pthread_join(thread_context->mqtt_log_task_id, NULL);
 }
 
-void log_via_mqtt_free()
+void log_via_mqtt_free(void)
 {
 	ring_buffer_free(log_via_mqtt_global_log_ring_buffer);
 }
