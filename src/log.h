@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2020,2021 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -13,8 +13,8 @@
 
 #include "ring_buffer.h"
 
-/* 4 MiB / core */
-#define LOG_BUFFER_SIZE (32 * 1024 * 1024)
+/* 1 MiB per traffic class */
+#define LOG_BUFFER_SIZE (8 * 1024 * 1024)
 
 enum log_level {
 	LOG_LEVEL_ERROR = 1,
