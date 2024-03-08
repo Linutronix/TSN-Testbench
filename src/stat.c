@@ -35,12 +35,12 @@ const char *stat_frame_type_to_string(enum stat_frame_type frame_type)
 }
 
 /*
- * Keep 2048 periods of backlog available. If a frame is received later than
- * 2048 periods after sending, it's a bug in any case.
+ * Keep 1024 periods of backlog available. If a frame is received later than 1024 periods after
+ * sending, it's a bug in any case.
  *
- * E.g. A period of 500us results in a backlog of 1s.
+ * E.g. A period of 500us results in a backlog of 500ms.
  */
-#define STAT_MAX_BACKLOG 2048
+#define STAT_MAX_BACKLOG 1024
 
 int stat_init(bool local_log_rtt)
 {
