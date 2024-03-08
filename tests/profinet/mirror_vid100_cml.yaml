@@ -117,7 +117,7 @@ DCP:
   DcpInterface: enp3s0
   DcpDestination: a8:74:1d:9d:36:14
 LLDP:
-  LlldEnabled: True
+  LldpEnabled: True
   LldpBurstPeriodNS: 5000000000
   LldpNumFramesPerCycle: 1
   LldpPayloadPattern: |
