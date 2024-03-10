@@ -365,11 +365,9 @@ static void *generic_l2_xdp_tx_thread_routine(void *data)
 			sequence_counter = thread_context->rx_sequence_counter - received;
 
 			/*
-			 * The XDP receiver stored the frames within the umem
-			 * area and populated the Tx ring. Now, the Tx ring can
-			 * be committed to the kernel. Furthermore, already
-			 * transmitted frames from last cycle can be recycled
-			 * for Rx.
+			 * The XDP receiver stored the frames within the umem area and populated the
+			 * Tx ring. Now, the Tx ring can be committed to the kernel. Furthermore,
+			 * already transmitted frames from last cycle can be recycled for Rx.
 			 */
 
 			xsk_ring_prod__submit(&xsk->tx, received);
@@ -432,17 +430,13 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 		return -EINVAL;
 	}
 
-	/*
-	 * Check frame length: VLAN tag might be stripped or not. Check it.
-	 */
+	/* Check frame length: VLAN tag might be stripped or not. Check it. */
 	if (len != expected_frame_length) {
 		log_message(LOG_LEVEL_WARNING, "GenericL2Rx: Frame with wrong length received!\n");
 		return -EINVAL;
 	}
 
-	/*
-	 * Check cycle counter and payload.
-	 */
+	/* Check cycle counter and payload. */
 	l2 = p;
 	p += sizeof(*l2);
 
@@ -489,17 +483,13 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 		/* Swap mac addresses inline */
 		swap_mac_addresses(frame_data, len);
 	} else {
-		/*
-		 * Build new frame for Tx with VLAN info.
-		 */
+		/* Build new frame for Tx with VLAN info. */
 		build_vlan_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame),
 					 app_config.generic_l2_ether_type,
 					 app_config.generic_l2_vid | app_config.generic_l2_pcp
 									     << VLAN_PCP_SHIFT);
 
-		/*
-		 * Store the new frame.
-		 */
+		/* Store the new frame. */
 		ring_buffer_add(thread_context->mirror_buffer, new_frame, len + 4);
 	}
 
@@ -592,10 +582,7 @@ struct thread_context *generic_l2_threads_create(void)
 	if (!CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2))
 		goto out;
 
-	/*
-	 * For XDP the frames are stored in a umem area. That memory is part of
-	 * the socket.
-	 */
+	/* For XDP the frames are stored in a umem area. That memory is part of the socket. */
 	if (!app_config.generic_l2_xdp_enabled) {
 		thread_context->tx_frame_data =
 			calloc(app_config.generic_l2_num_frames_per_cycle, GENL2_TX_FRAME_LENGTH);
@@ -612,10 +599,7 @@ struct thread_context *generic_l2_threads_create(void)
 		}
 	}
 
-	/*
-	 * For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is
-	 * used.
-	 */
+	/* For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is used. */
 	if (app_config.generic_l2_xdp_enabled) {
 		thread_context->socket_fd = 0;
 		thread_context->xsk = xdp_open_socket(
@@ -638,13 +622,9 @@ struct thread_context *generic_l2_threads_create(void)
 
 	init_mutex(&thread_context->xdp_data_mutex);
 
-	/*
-	 * Same as above. For XDP the umem area is used.
-	 */
+	/* Same as above. For XDP the umem area is used. */
 	if (app_config.generic_l2_rx_mirror_enabled && !app_config.generic_l2_xdp_enabled) {
-		/*
-		 * Per period the expectation is: GenericL2NumFramesPerCycle * MAX_FRAME
-		 */
+		/* Per period the expectation is: GenericL2NumFramesPerCycle * MAX_FRAME */
 		thread_context->mirror_buffer = ring_buffer_allocate(
 			GENL2_TX_FRAME_LENGTH * app_config.generic_l2_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {

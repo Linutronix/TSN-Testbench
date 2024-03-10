@@ -30,9 +30,8 @@ uint64_t tx_time_get_frame_tx_time(uint64_t wakeup_time, uint64_t sequence_count
 	struct timespec now;
 
 	/*
-	 * Calculate frame transmission time for next cycle. txTimeOffset is
-	 * used to specify the offset within cycle, which has to be aligned with
-	 * configured Qbv schedule.
+	 * Calculate frame transmission time for next cycle. txTimeOffset is used to specify the
+	 * offset within cycle, which has to be aligned with configured Qbv schedule.
 	 *
 	 *   BaseTime + TxOffset +
 	 *   (sequenceCounter % numFramesPerCycle) * duration
@@ -48,9 +47,8 @@ uint64_t tx_time_get_frame_tx_time(uint64_t wakeup_time, uint64_t sequence_count
 	tx_time = base_time + tx_time_offset + (sequence_counter % num_frames_per_cycle) * duration;
 
 	/*
-	 * TxTime has to be in the future. If not the frame will be dropped by
-	 * ETF Qdisc. This may happen due to delays, preemption and so
-	 * on. Inform the user accordingly.
+	 * TxTime has to be in the future. If not the frame will be dropped by ETF Qdisc. This may
+	 * happen due to delays, preemption and so on. Inform the user accordingly.
 	 */
 	clock_gettime(app_config.application_clock_id, &now);
 	now_ns = ts_to_ns(&now);

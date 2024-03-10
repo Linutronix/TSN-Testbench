@@ -28,9 +28,7 @@
 
 struct application_config app_config;
 
-/*
- * The configuration file is YAML based. Use libyaml to parse it.
- */
+/* The configuration file is YAML based. Use libyaml to parse it. */
 int config_read_from_file(const char *config_file)
 {
 	int ret, state_key = 0;

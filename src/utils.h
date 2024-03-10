@@ -38,8 +38,7 @@ void swap_mac_addresses(void *buffer, size_t len);
 void insert_vlan_tag(void *buffer, size_t len, uint16_t vlan_tci);
 
 /*
- * This function takes an received Ethernet frame by AF_PACKET sockets and
- * performs two tasks:
+ * This function takes an received Ethernet frame by AF_PACKET sockets and performs two tasks:
  *
  *  1.) Inject VLAN header
  *  2.) Swap source and destination
@@ -51,8 +50,8 @@ void build_vlan_frame_from_rx(const unsigned char *old_frame, size_t old_frame_l
 			      uint16_t vlan_tci);
 
 /*
- * This function initializes an PROFINET Ethernet frame. The Ethernet header,
- * PROFINET header and payload is initialized. The sequenceCounter is set to zero.
+ * This function initializes an PROFINET Ethernet frame. The Ethernet header, PROFINET header and
+ * payload is initialized. The sequenceCounter is set to zero.
  *
  * In case the SecurityMode is AE or AO, the PROFINET Ethernet frames will contain the
  * SecurityHeader after the FrameID.

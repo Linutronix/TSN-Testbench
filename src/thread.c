@@ -81,10 +81,7 @@ void init_mutex(pthread_mutex_t *mutex)
 {
 	pthread_mutexattr_t mattr;
 
-	/*
-	 * Set priority inheritance protocol on this mutex. It's disabled by
-	 * default.
-	 */
+	/* Set priority inheritance protocol on this mutex. It's disabled by default. */
 	pthread_mutexattr_init(&mattr);
 	pthread_mutexattr_setprotocol(&mattr, PTHREAD_PRIO_INHERIT);
 	pthread_mutex_init(mutex, &mattr);

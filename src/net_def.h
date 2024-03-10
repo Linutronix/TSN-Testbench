@@ -25,25 +25,19 @@
 #define VLAN_ID_MASK 0x0fff
 #define VLAN_PCP_SHIFT 13
 
-/*
- * PROFINET VID values are predefined too.
- */
+/* PROFINET VID values are predefined too. */
 #define PROFINET_RT_VID_VALUE 0
 #define TSN_LOW_VID_VALUE 0x102
 #define TSN_HIGH_VID_VALUE 0x101
 
-/*
- * PROFINET PCP values are predefined.
- */
+/* PROFINET PCP values are predefined. */
 #define DCP_PCP_VALUE 2
 #define RTA_PCP_VALUE 3
 #define RTC_PCP_VALUE 4
 #define TSN_LOW_PCP_VALUE 5
 #define TSN_HIGH_PCP_VALUE 6
 
-/*
- * VLAN 802.1Q frame.
- */
+/* VLAN 802.1Q frame. */
 struct vlan_ethernet_header {
 	unsigned char destination[ETH_ALEN];
 	unsigned char source[ETH_ALEN];
@@ -52,25 +46,19 @@ struct vlan_ethernet_header {
 	__be16 vlan_encapsulated_proto;
 } __attribute__((packed));
 
-/*
- * VLAN header.
- */
+/* VLAN header. */
 struct vlan_header {
 	__be16 vlan_proto;
 	__be16 vlantci;
 } __attribute__((packed));
 
-/*
- * MetaData for testing, error checking and coordination.
- */
+/* MetaData for testing, error checking and coordination. */
 struct reference_meta_data {
 	__be32 frame_counter;
 	__be32 cycle_counter;
 } __attribute__((packed));
 
-/*
- * PROFINET RT header.
- */
+/* PROFINET RT header. */
 struct profinet_rt_header {
 	__be16 frame_id;
 	struct reference_meta_data meta_data;
@@ -102,18 +90,14 @@ struct security_checksum {
 	__u8 checksum[16];
 } __attribute__((packed));
 
-/*
- * PROFINET Secure header.
- */
+/* PROFINET Secure header. */
 struct profinet_secure_header {
 	__be16 frame_id;
 	struct security_meta_data security_meta_data;
 	struct reference_meta_data meta_data;
 } __attribute__((packed));
 
-/*
- * Generic Layer 2 header.
- */
+/* Generic Layer 2 header. */
 struct generic_l2_header {
 	struct reference_meta_data meta_data;
 } __attribute__((packed));

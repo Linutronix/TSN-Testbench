@@ -416,11 +416,9 @@ static void *tsn_xdp_tx_thread_routine(void *data)
 			sequence_counter = thread_context->rx_sequence_counter - received;
 
 			/*
-			 * The XDP receiver stored the frames within the umem
-			 * area and populated the Tx ring. Now, the Tx ring can
-			 * be committed to the kernel. Furthermore, already
-			 * transmitted frames from last cycle can be recycled
-			 * for Rx.
+			 * The XDP receiver stored the frames within the umem area and populated the
+			 * Tx ring. Now, the Tx ring can be committed to the kernel. Furthermore,
+			 * already transmitted frames from last cycle can be recycled for Rx.
 			 */
 
 			xsk_ring_prod__submit(&xsk->tx, received);
@@ -495,18 +493,14 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		return -EINVAL;
 	}
 
-	/*
-	 * Check frame length: VLAN tag might be stripped or not. Check it.
-	 */
+	/* Check frame length: VLAN tag might be stripped or not. Check it. */
 	if (len != expected_frame_length) {
 		log_message(LOG_LEVEL_WARNING, "Tsn%sRx: Frame with wrong length received!\n",
 			    tsn_config->tsn_suffix);
 		return -EINVAL;
 	}
 
-	/*
-	 * Check cycle counter, frame id range and payload.
-	 */
+	/* Check cycle counter, frame id range and payload. */
 	if (tsn_config->tsn_security_mode == SECURITY_MODE_NONE) {
 		rt = p;
 		p += sizeof(*rt);
@@ -639,16 +633,12 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		/* Swap mac addresses inline */
 		swap_mac_addresses(frame_data, len);
 	} else {
-		/*
-		 * Build new frame for Tx with VLAN info.
-		 */
+		/* Build new frame for Tx with VLAN info. */
 		build_vlan_frame_from_rx(
 			frame_data, len, new_frame, sizeof(new_frame), ETH_P_PROFINET_RT,
 			tsn_config->vlan_id | tsn_config->vlan_pcp << VLAN_PCP_SHIFT);
 
-		/*
-		 * Store the new frame.
-		 */
+		/* Store the new frame. */
 		ring_buffer_add(thread_context->mirror_buffer, new_frame,
 				len + sizeof(struct vlan_header));
 	}
@@ -758,10 +748,7 @@ int tsn_threads_create(struct thread_context *thread_context,
 		goto err_tx;
 	}
 
-	/*
-	 * For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is
-	 * used.
-	 */
+	/* For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is used. */
 	if (tsn_config->tsn_xdp_enabled) {
 		thread_context->socket_fd = 0;
 		thread_context->xsk = xdp_open_socket(
@@ -788,13 +775,9 @@ int tsn_threads_create(struct thread_context *thread_context,
 	init_mutex(&thread_context->xdp_data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	/*
-	 * Same as above. For XDP the umem area is used.
-	 */
+	/* Same as above. For XDP the umem area is used. */
 	if (tsn_config->tsn_rx_mirror_enabled && !tsn_config->tsn_xdp_enabled) {
-		/*
-		 * Per period the expectation is: TsnNumFramesPerCycle * MAX_FRAME
-		 */
+		/* Per period the expectation is: TsnNumFramesPerCycle * MAX_FRAME */
 		thread_context->mirror_buffer = ring_buffer_allocate(
 			TSN_TX_FRAME_LENGTH * tsn_config->tsn_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {

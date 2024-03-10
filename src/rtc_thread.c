@@ -177,8 +177,8 @@ static void *rtc_tx_thread_routine(void *data)
 
 		if (!thread_context->is_first) {
 			/*
-			 * Wait until signalled. These RTC frames have to be sent after
-			 * the TSN Low frames.
+			 * Wait until signalled. These RTC frames have to be sent after the TSN Low
+			 * frames.
 			 */
 			pthread_mutex_lock(&thread_context->data_mutex);
 			pthread_cond_wait(&thread_context->data_cond_var,
@@ -238,8 +238,8 @@ static void *rtc_tx_thread_routine(void *data)
 }
 
 /*
- * This Tx thread routine differs to the standard one in terms of the sending
- * interface. This one uses the AF_XDP user space interface.
+ * This Tx thread routine differs to the standard one in terms of the sending interface. This one
+ * uses the AF_XDP user space interface.
  */
 static void *rtc_xdp_tx_thread_routine(void *data)
 {
@@ -285,8 +285,8 @@ static void *rtc_xdp_tx_thread_routine(void *data)
 	while (!thread_context->stop) {
 		if (!thread_context->is_first) {
 			/*
-			 * Wait until signalled. These RTC frames have to be sent after
-			 * the TSN Low frames.
+			 * Wait until signalled. These RTC frames have to be sent after the TSN Low
+			 * frames.
 			 */
 			pthread_mutex_lock(&thread_context->data_mutex);
 			pthread_cond_wait(&thread_context->data_cond_var,
@@ -329,11 +329,9 @@ static void *rtc_xdp_tx_thread_routine(void *data)
 			sequence_counter = thread_context->rx_sequence_counter - received;
 
 			/*
-			 * The XDP receiver stored the frames within the umem
-			 * area and populated the Tx ring. Now, the Tx ring can
-			 * be committed to the kernel. Furthermore, already
-			 * transmitted frames from last cycle can be recycled
-			 * for Rx.
+			 * The XDP receiver stored the frames within the umem area and populated the
+			 * Tx ring. Now, the Tx ring can be committed to the kernel. Furthermore,
+			 * already transmitted frames from last cycle can be recycled for Rx.
 			 */
 
 			xsk_ring_prod__submit(&xsk->tx, received);
@@ -407,17 +405,13 @@ static int rtc_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		return -EINVAL;
 	}
 
-	/*
-	 * Check frame length: VLAN tag might be stripped or not. Check it.
-	 */
+	/* Check frame length: VLAN tag might be stripped or not. Check it. */
 	if (len != expected_frame_length) {
 		log_message(LOG_LEVEL_WARNING, "RtcRx: Frame with wrong length received!\n");
 		return -EINVAL;
 	}
 
-	/*
-	 * Check cycle counter, frame id range and payload.
-	 */
+	/* Check cycle counter, frame id range and payload. */
 	if (app_config.rtc_security_mode == SECURITY_MODE_NONE) {
 		rt = p;
 		p += sizeof(*rt);
@@ -546,16 +540,12 @@ static int rtc_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		/* Swap mac addresses inline */
 		swap_mac_addresses(frame_data, len);
 	} else {
-		/*
-		 * Build new frame for Tx with VLAN info.
-		 */
+		/* Build new frame for Tx with VLAN info. */
 		build_vlan_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame),
 					 ETH_P_PROFINET_RT,
 					 app_config.rtc_vid | RTC_PCP_VALUE << VLAN_PCP_SHIFT);
 
-		/*
-		 * Store the new frame.
-		 */
+		/* Store the new frame. */
 		ring_buffer_add(thread_context->mirror_buffer, new_frame,
 				len + sizeof(struct vlan_header));
 	}
@@ -654,10 +644,7 @@ int rtc_threads_create(struct thread_context *thread_context)
 		goto err_tx;
 	}
 
-	/*
-	 * For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is
-	 * used.
-	 */
+	/* For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is used. */
 	if (app_config.rtc_xdp_enabled) {
 		thread_context->socket_fd = 0;
 		thread_context->xsk = xdp_open_socket(
@@ -680,13 +667,9 @@ int rtc_threads_create(struct thread_context *thread_context)
 		}
 	}
 
-	/*
-	 * Same as above. For XDP the umem area is used.
-	 */
+	/* Same as above. For XDP the umem area is used. */
 	if (app_config.rtc_rx_mirror_enabled && !app_config.rtc_xdp_enabled) {
-		/*
-		 * Per period the expectation is: RtcNumFramesPerCycle * MAX_FRAME
-		 */
+		/* Per period the expectation is: RtcNumFramesPerCycle * MAX_FRAME */
 		thread_context->mirror_buffer = ring_buffer_allocate(
 			RTC_TX_FRAME_LENGTH * app_config.rtc_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {

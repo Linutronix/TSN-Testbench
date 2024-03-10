@@ -76,8 +76,8 @@ int main(int argc, char *argv[])
 	}
 
 	/*
-	 * The "mirror" application only mirrors traffic and never generate
-	 * frames itself. Make sure, the corresponding options are set.
+	 * The "mirror" application only mirrors traffic and never generate frames itself. Make
+	 * sure, the corresponding options are set.
 	 *
 	 * Note: The user cannot override this.
 	 */

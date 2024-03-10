@@ -79,22 +79,15 @@ void log_message(enum log_level level, const char *format, ...)
 	va_list args;
 	char *p;
 
-	/*
-	 * Stop trace on error if desired.
-	 */
+	/* Stop trace on error if desired. */
 	if (level == LOG_LEVEL_ERROR && app_config.debug_stop_trace_on_error)
 		fprintf(file_tracing_on, "0\n");
 
-	/*
-	 * Log message only if log level fulfilled.
-	 */
+	/* Log message only if log level fulfilled. */
 	if (level > current_log_level)
 		return;
 
-	/*
-	 * Log each message with time stamps.
-	 */
-
+	/* Log each message with time stamps. */
 	ret = clock_gettime(app_config.application_clock_id, &time);
 	if (ret)
 		memset(&time, '\0', sizeof(time));
@@ -146,9 +139,8 @@ static void *log_thread_routine(void *data)
 	int ret;
 
 	/*
-	 * Write the content of the LogBuffer periodically to disk.  This thread
-	 * can run with low priority to not influence to Application Tasks that
-	 * much.
+	 * Write the content of the LogBuffer periodically to disk.  This thread can run with low
+	 * priority to not influence to Application Tasks that much.
 	 */
 	ret = clock_gettime(app_config.application_clock_id, &time);
 	if (ret) {

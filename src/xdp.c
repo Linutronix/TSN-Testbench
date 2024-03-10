@@ -52,14 +52,13 @@ static int xdp_load_program(struct xdp_socket *xsk, const char *interface, const
 	}
 
 	/*
-	 * The eBPF program for this application instance needs to be attached
-	 * to the network interface only once.
+	 * The eBPF program for this application instance needs to be attached to the network
+	 * interface only once.
 	 *
-	 * When multiple instances are executed in parallel,
-	 * xdp_program__attach() will try to automatically attach the new eBPF
-	 * program to the existing ones by utilizing the libxdp dispatcher
-	 * master program. Therefore, all applications have to use libxdp and
-	 * specify their metadata e.g., priority accordingly.
+	 * When multiple instances are executed in parallel, xdp_program__attach() will try to
+	 * automatically attach the new eBPF program to the existing ones by utilizing the libxdp
+	 * dispatcher master program. Therefore, all applications have to use libxdp and specify
+	 * their metadata e.g., priority accordingly.
 	 */
 	if (program_loaded)
 		return 0;
@@ -346,10 +345,9 @@ void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config
 	if (xsk_ring_prod__reserve(&xsk->tx, xdp->num_frames_per_cycle, &idx) <
 	    xdp->num_frames_per_cycle) {
 		/*
-		 * This should never happen. It means there're no more Tx
-		 * descriptors available to transmit the frames from this very
-		 * period. The only thing we can do here, is to come back later
-		 * and hope the hardware did transmit some frames.
+		 * This should never happen. It means there're no more Tx descriptors available to
+		 * transmit the frames from this very period. The only thing we can do here, is to
+		 * come back later and hope the hardware did transmit some frames.
 		 */
 		log_message(LOG_LEVEL_ERROR, "XdpTx: Cannot allocate Tx descriptors!\n");
 		xdp_complete_tx_only(xsk);
@@ -390,9 +388,8 @@ void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config
 			log_message(LOG_LEVEL_ERROR, "XdpTx: Failed to prepare frame for Tx!\n");
 
 		/*
-		 * In debug monitor mode the first frame of each burst should
-		 * have a different DA. This way, the oscilloscope can trigger
-		 * for it.
+		 * In debug monitor mode the first frame of each burst should have a different
+		 * DA. This way, the oscilloscope can trigger for it.
 		 */
 		if (app_config.debug_monitor_mode && i == 0) {
 			eth = (struct vlan_ethernet_header *)data;
@@ -434,8 +431,8 @@ unsigned int xdp_receive_frames(struct xdp_socket *xsk, size_t frame_length, boo
 	}
 
 	/*
-	 * For mirror reserve space in Tx queue to re-transmit the
-	 * frames. Otherwise, recycle the Rx frames immediately.
+	 * For mirror reserve space in Tx queue to re-transmit the frames. Otherwise, recycle the Rx
+	 * frames immediately.
 	 */
 	if (mirror_enabled) {
 		/* Reserve space in Tx ring */
