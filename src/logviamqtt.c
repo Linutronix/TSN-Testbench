@@ -117,7 +117,7 @@ static void log_via_mqtt_add_traffic_class(struct mosquitto *mosq, const char *m
 			   "\t\t\t\"TCName\" : \"%s\",\n"
 			   "\t\t\t\"FramesSent\" : %" PRIu64 ",\n"
 			   "\t\t\t\"FramesReceived\" : %" PRIu64 ",\n"
-			   "\t\t\t\"RoundTripTime\" : %" PRIu64 ",\n"
+			   "\t\t\t\"RoundTripTimeMin\" : %" PRIu64 ",\n"
 			   "\t\t\t\"RoundTripMax\" : %" PRIu64 ",\n"
 			   "\t\t\t\"RoundTripAv\" : %lf,\n"
 			   "\t\t\t\"OutofOrderErrors\" : %" PRIu64 ",\n"
