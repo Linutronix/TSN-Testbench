@@ -12,7 +12,7 @@ Application:
   # ApplicationBaseStartTimeNS: 0
   ApplicationBaseCycleTimeNS: 1000000
   ApplicationTxBaseOffsetNS: 800000
-  ApplicationRxBaseOffsetNS: 600000
+  ApplicationRxBaseOffsetNS: 500000
   ApplicationXdpProgram: xdp_kern_profinet_vid100.o
 RTC:
   RtcEnabled: True
@@ -23,7 +23,7 @@ RTC:
   RtcXdpBusyPollMode: True
   RtcIgnoreRxErrors: True
   RtcVid: 100
-  RtcNumFramesPerCycle: 128
+  RtcNumFramesPerCycle: 256
   RtcPayloadPattern: |
     RtcPayloadPattern
   RtcFrameLength: 128
