@@ -84,10 +84,13 @@ Linux TSN ``Testbench`` features include:
 
 The following list contains ideas for further development:
 
+- Add interface for workload emulation
 - Add support for XDP and Tx Launch Time
 - Add configurations for other hardware platforms and NIC(s)
 - Add a quick start guide
 - Make it more user friendly
+- Improve the AF_PACKET code
+- Test ``chrony`` instead of ``phc2sys``
 
 ## Documentation ##
 
