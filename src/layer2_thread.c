@@ -97,7 +97,7 @@ static int generic_l2_send_message(int socket_fd, struct sockaddr_ll *destinatio
 		uint64_t tx_time;
 
 		tx_time = tx_time_get_frame_tx_time(wakeup_time, sequence_counter, duration,
-						    +app_config.generic_l2_num_frames_per_cycle,
+						    app_config.generic_l2_num_frames_per_cycle,
 						    app_config.generic_l2_tx_time_offset_ns,
 						    "GenericL2");
 
