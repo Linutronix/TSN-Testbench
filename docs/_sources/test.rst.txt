@@ -442,7 +442,7 @@ polling with AF_XDP sockets.
    * - RTC
      - TC 5 / Queue 0
      - 500 us
-     - 128 x 128
+     - 256 x 128
      - 100
      - 4
 
