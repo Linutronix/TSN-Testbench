@@ -26,6 +26,11 @@ Welcome to Linux TSN Testbench's documentation!
 .. toctree::
    :maxdepth: 2
 
+   contribution.rst
+
+.. toctree::
+   :maxdepth: 2
+
    build.rst
 
 .. toctree::
