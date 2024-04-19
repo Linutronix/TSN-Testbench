@@ -90,6 +90,7 @@ The following list contains ideas for further development:
 - Make it more user friendly
 - Improve the AF_PACKET code
 - Test ``chrony`` instead of ``phc2sys``
+- Test 10G+ NIC(s) especially wrt to IPG
 
 ## Documentation ##
 
