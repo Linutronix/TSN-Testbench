@@ -462,6 +462,7 @@ Hardware platforms:
 - Intel Elkhart Lake
 - Intel Comet Lake
 - Intel Apollo Lake
+- NXP imx93
 
 TSN NIC(s):
 
