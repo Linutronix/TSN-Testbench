@@ -195,81 +195,114 @@ static void *udp_rx_thread_routine(void *data)
 	const unsigned char *expected_pattern =
 		(const unsigned char *)udp_config->udp_payload_pattern;
 	const size_t expected_pattern_length = udp_config->udp_payload_pattern_length;
+	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	const size_t num_frames_per_cycle = udp_config->udp_num_frames_per_cycle;
 	const bool mirror_enabled = udp_config->udp_rx_mirror_enabled;
 	const bool ignore_rx_errors = udp_config->udp_ignore_rx_errors;
 	const ssize_t frame_length = udp_config->udp_frame_length;
 	unsigned char frame[UDP_TX_FRAME_LENGTH];
 	uint64_t sequence_counter = 0;
-	int socket_fd;
+	struct timespec wakeup_time;
+	int socket_fd, ret;
 
 	socket_fd = thread_context->socket_fd;
 
+	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
+	if (ret) {
+		log_message(LOG_LEVEL_ERROR,
+			    "Udp%sRx: Failed to calculate thread start time: %s!\n",
+			    udp_config->udp_suffix, strerror(errno));
+		return NULL;
+	}
+
 	while (!thread_context->stop) {
-		bool out_of_order, payload_mismatch, frame_id_mismatch;
-		struct reference_meta_data *meta;
-		uint64_t rx_sequence_counter;
-		ssize_t len;
+		/* Wait until next period. */
+		increment_period(&wakeup_time, cycle_time_ns);
 
-		/* Wait for UDP frame */
-		len = recv(socket_fd, frame, sizeof(frame), 0);
-		if (len < 0) {
-			log_message(LOG_LEVEL_ERROR, "Udp%sRx: recv() failed: %s\n",
-				    udp_config->udp_suffix, strerror(errno));
+		do {
+			ret = clock_nanosleep(app_config.application_clock_id, TIMER_ABSTIME,
+					      &wakeup_time, NULL);
+		} while (ret == EINTR);
+
+		if (ret) {
+			log_message(LOG_LEVEL_ERROR, "Udp%sRx: clock_nanosleep() failed: %s\n",
+				    udp_config->udp_suffix, strerror(ret));
 			return NULL;
 		}
-		if (len == 0)
-			return NULL;
 
-		if (len != frame_length) {
-			log_message(LOG_LEVEL_WARNING,
-				    "Udp%sRx: Frame with wrong length received!\n",
-				    udp_config->udp_suffix);
-			continue;
-		}
+		/* Receive Udp packets. */
+		while (true) {
+			bool out_of_order, payload_mismatch, frame_id_mismatch;
+			struct reference_meta_data *meta;
+			uint64_t rx_sequence_counter;
+			ssize_t len;
 
-		/*
-		 * Check cycle counter and payload. The ether type is checked by the attached BPF
-		 * filter.
-		 */
-		meta = (struct reference_meta_data *)frame;
-		rx_sequence_counter = meta_data_to_sequence_counter(meta, num_frames_per_cycle);
+			len = recv(socket_fd, frame, sizeof(frame), 0);
+			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+				log_message(LOG_LEVEL_ERROR, "Udp%sRx: recv() failed: %s\n",
+					    udp_config->udp_suffix, strerror(errno));
+				continue;
+			}
+			if (len == 0)
+				continue;
 
-		out_of_order = sequence_counter != rx_sequence_counter;
-		payload_mismatch = memcmp(frame + sizeof(struct reference_meta_data),
-					  expected_pattern, expected_pattern_length);
-		frame_id_mismatch = false;
+			/* No more frames. Comeback within next period. */
+			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+				break;
 
-		stat_frame_received(udp_config->frame_type, sequence_counter, out_of_order,
-				    payload_mismatch, frame_id_mismatch);
+			/* Process received packet. */
+			if (len != frame_length) {
+				log_message(LOG_LEVEL_WARNING,
+					    "Udp%sRx: Frame with wrong length received!\n",
+					    udp_config->udp_suffix);
+				continue;
+			}
 
-		if (out_of_order) {
-			if (!ignore_rx_errors)
+			/*
+			 * Check cycle counter and payload. The ether type is checked by the
+			 * attached BPF filter.
+			 */
+			meta = (struct reference_meta_data *)frame;
+			rx_sequence_counter =
+				meta_data_to_sequence_counter(meta, num_frames_per_cycle);
+
+			out_of_order = sequence_counter != rx_sequence_counter;
+			payload_mismatch = memcmp(frame + sizeof(struct reference_meta_data),
+						  expected_pattern, expected_pattern_length);
+			frame_id_mismatch = false;
+
+			stat_frame_received(udp_config->frame_type, sequence_counter, out_of_order,
+					    payload_mismatch, frame_id_mismatch);
+
+			if (out_of_order) {
+				if (!ignore_rx_errors)
+					log_message(LOG_LEVEL_WARNING,
+						    "Udp%sRx: frame[%" PRIu64
+						    "] SequenceCounter mismatch: %" PRIu64 "!\n",
+						    udp_config->udp_suffix, rx_sequence_counter,
+						    sequence_counter);
+				sequence_counter++;
+			}
+
+			sequence_counter++;
+
+			if (payload_mismatch)
 				log_message(LOG_LEVEL_WARNING,
 					    "Udp%sRx: frame[%" PRIu64
-					    "] SequenceCounter mismatch: %" PRIu64 "!\n",
-					    udp_config->udp_suffix, rx_sequence_counter,
-					    sequence_counter);
-			sequence_counter++;
+					    "] Payload Pattern mismatch!\n",
+					    udp_config->udp_suffix, rx_sequence_counter);
+
+			/* If mirror enabled, assemble and store the frame for Tx later. */
+			if (!mirror_enabled)
+				continue;
+
+			/* Store the new frame. */
+			ring_buffer_add(thread_context->mirror_buffer, frame, len);
+
+			pthread_mutex_lock(&thread_context->data_mutex);
+			thread_context->num_frames_available++;
+			pthread_mutex_unlock(&thread_context->data_mutex);
 		}
-
-		sequence_counter++;
-
-		if (payload_mismatch)
-			log_message(LOG_LEVEL_WARNING,
-				    "Udp%sRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
-				    udp_config->udp_suffix, rx_sequence_counter);
-
-		/* If mirror enabled, assemble and store the frame for Tx later. */
-		if (!mirror_enabled)
-			continue;
-
-		/* Store the new frame. */
-		ring_buffer_add(thread_context->mirror_buffer, frame, len);
-
-		pthread_mutex_lock(&thread_context->data_mutex);
-		thread_context->num_frames_available++;
-		pthread_mutex_unlock(&thread_context->data_mutex);
 	}
 
 	return NULL;

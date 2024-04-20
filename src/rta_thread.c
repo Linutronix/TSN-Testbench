@@ -4,6 +4,7 @@
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -520,26 +521,57 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 static void *rta_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
+	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	unsigned char frame[RTA_TX_FRAME_LENGTH];
-	int socket_fd;
+	struct timespec wakeup_time;
+	int socket_fd, ret;
 
 	socket_fd = thread_context->socket_fd;
 
 	prepare_openssl(thread_context->rx_security_context);
 
-	while (!thread_context->stop) {
-		ssize_t len;
+	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
+	if (ret) {
+		log_message(LOG_LEVEL_ERROR, "RtaRx: Failed to calculate thread start time: %s!\n",
+			    strerror(errno));
+		return NULL;
+	}
 
-		/* Wait for RTA frame */
-		len = recv(socket_fd, frame, sizeof(frame), 0);
-		if (len < 0) {
-			log_message(LOG_LEVEL_ERROR, "RtaRx: recv() failed: %s\n", strerror(errno));
+	while (!thread_context->stop) {
+		/* Wait until next period. */
+		increment_period(&wakeup_time, cycle_time_ns);
+
+		do {
+			ret = clock_nanosleep(app_config.application_clock_id, TIMER_ABSTIME,
+					      &wakeup_time, NULL);
+		} while (ret == EINTR);
+
+		if (ret) {
+			log_message(LOG_LEVEL_ERROR, "RtaRx: clock_nanosleep() failed: %s\n",
+				    strerror(ret));
 			return NULL;
 		}
-		if (len == 0)
-			return NULL;
 
-		rta_rx_frame(thread_context, frame, len);
+		/* Receive Rta frames. */
+		while (true) {
+			ssize_t len;
+
+			len = recv(socket_fd, frame, sizeof(frame), 0);
+			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+				log_message(LOG_LEVEL_ERROR, "RtaRx: recv() failed: %s\n",
+					    strerror(errno));
+				continue;
+			}
+			if (len == 0)
+				continue;
+
+			/* No more frames. Comeback within next period. */
+			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+				break;
+
+			/* Process received frame. */
+			rta_rx_frame(thread_context, frame, len);
+		}
 	}
 
 	return NULL;

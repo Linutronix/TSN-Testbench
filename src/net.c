@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -163,6 +164,25 @@ static int set_promiscuous_mode(int socket, int interface)
 	return 0;
 }
 
+static int mark_socket_non_blocking(int socket_fd)
+{
+	int ret;
+
+	ret = fcntl(socket_fd, F_GETFL);
+	if (ret == -1) {
+		perror("fcntl() failed");
+		return -errno;
+	}
+
+	ret = fcntl(socket_fd, F_SETFL, ret | O_NONBLOCK);
+	if (ret == -1) {
+		perror("fcntl() failed");
+		return -errno;
+	}
+
+	return 0;
+}
+
 static int create_raw_socket(const char *if_name, int socket_priority)
 {
 	struct sockaddr_ll address = {0};
@@ -299,6 +319,13 @@ int create_tsn_high_socket(void)
 		goto err_filter;
 	}
 
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark TSN High socket as non-blocking!\n");
+		goto err_filter;
+	}
+
 	/* Enable SO_TXTIME */
 	if (!app_config.tsn_high_tx_time_enabled)
 		goto out;
@@ -340,6 +367,13 @@ int create_tsn_low_socket(void)
 			 sizeof(tsn_low_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
+		goto err_filter;
+	}
+
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark TSN Low socket as non-blocking!\n");
 		goto err_filter;
 	}
 
@@ -385,6 +419,13 @@ int create_rtc_socket(void)
 		goto err_filter;
 	}
 
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark Rtc socket as non-blocking!\n");
+		goto err_filter;
+	}
+
 	return socket_fd;
 
 err_filter:
@@ -411,6 +452,13 @@ int create_rta_socket(void)
 			 sizeof(rta_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
+		goto err_filter;
+	}
+
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark TSN High socket as non-blocking!\n");
 		goto err_filter;
 	}
 
@@ -443,6 +491,13 @@ int create_dcp_socket(void)
 		goto err_filter;
 	}
 
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark Dcp socket as non-blocking!\n");
+		goto err_filter;
+	}
+
 	return socket_fd;
 
 err_filter:
@@ -466,6 +521,13 @@ int create_lldp_socket(void)
 			 sizeof(lldp_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
+		goto err_filter;
+	}
+
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark Lldp socket as non-blocking!\n");
 		goto err_filter;
 	}
 
@@ -499,6 +561,13 @@ int create_generic_l2_socket(void)
 			 sizeof(generic_l2_filter_program));
 	if (ret < 0) {
 		perror("setsockopt() failed");
+		goto err_filter;
+	}
+
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark Generic L2 socket as non-blocking!\n");
 		goto err_filter;
 	}
 
@@ -609,8 +678,16 @@ int create_udp_socket(const char *udp_destination, const char *udp_source, const
 		goto err_prio;
 	}
 
+	/* Mark socket as non-blocking */
+	ret = mark_socket_non_blocking(socket_fd);
+	if (ret) {
+		fprintf(stderr, "Failed to mark UDP socket as non-blocking!\n");
+		goto err_nonblocking;
+	}
+
 	return socket_fd;
 
+err_nonblocking:
 err_prio:
 err_bind:
 	close(socket_fd);

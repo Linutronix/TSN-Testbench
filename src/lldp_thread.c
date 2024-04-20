@@ -4,6 +4,7 @@
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -196,88 +197,120 @@ static void *lldp_rx_thread_routine(void *data)
 		(const unsigned char *)app_config.lldp_payload_pattern;
 	const size_t expected_pattern_length = app_config.lldp_payload_pattern_length;
 	const size_t num_frames_per_cycle = app_config.lldp_num_frames_per_cycle;
-	unsigned char frame[LLDP_TX_FRAME_LENGTH], source[ETH_ALEN];
-	const bool mirror_enabled = app_config.lldp_rx_mirror_enabled;
+	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	const bool ignore_rx_errors = app_config.lldp_ignore_rx_errors;
+	const bool mirror_enabled = app_config.lldp_rx_mirror_enabled;
+	unsigned char frame[LLDP_TX_FRAME_LENGTH], source[ETH_ALEN];
 	const ssize_t frame_length = app_config.lldp_frame_length;
 	uint64_t sequence_counter = 0;
+	struct timespec wakeup_time;
 	int socket_fd, ret;
 
 	socket_fd = thread_context->socket_fd;
 
 	ret = get_interface_mac_address(app_config.lldp_interface, source, ETH_ALEN);
 	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "LldpTx: Failed to get Source MAC address!\n");
+		log_message(LOG_LEVEL_ERROR, "LldpRx: Failed to get Source MAC address!\n");
+		return NULL;
+	}
+
+	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
+	if (ret) {
+		log_message(LOG_LEVEL_ERROR, "LldpRx: Failed to calculate thread start time: %s!\n",
+			    strerror(errno));
 		return NULL;
 	}
 
 	while (!thread_context->stop) {
-		bool out_of_order, payload_mismatch, frame_id_mismatch;
-		struct reference_meta_data *meta;
-		uint64_t rx_sequence_counter;
-		ssize_t len;
+		/* Wait until next period. */
+		increment_period(&wakeup_time, cycle_time_ns);
 
-		/* Wait for LLDP frame */
-		len = recv(socket_fd, frame, sizeof(frame), 0);
-		if (len < 0) {
-			log_message(LOG_LEVEL_ERROR, "LldpRx: recv() failed: %s\n",
-				    strerror(errno));
+		do {
+			ret = clock_nanosleep(app_config.application_clock_id, TIMER_ABSTIME,
+					      &wakeup_time, NULL);
+		} while (ret == EINTR);
+
+		if (ret) {
+			log_message(LOG_LEVEL_ERROR, "LldpRx: clock_nanosleep() failed: %s\n",
+				    strerror(ret));
 			return NULL;
 		}
-		if (len == 0)
-			return NULL;
 
-		if (len != frame_length) {
-			log_message(LOG_LEVEL_WARNING,
-				    "LldpRx: Frame with wrong length received!\n");
-			continue;
-		}
+		/* Receive Lldp frames. */
+		while (true) {
+			bool out_of_order, payload_mismatch, frame_id_mismatch;
+			struct reference_meta_data *meta;
+			uint64_t rx_sequence_counter;
+			ssize_t len;
 
-		/*
-		 * Check cycle counter and payload. The ether type is checked by the attached BPF
-		 * filter.
-		 */
-		meta = (struct reference_meta_data *)(frame + sizeof(struct ethhdr));
-		rx_sequence_counter = meta_data_to_sequence_counter(meta, num_frames_per_cycle);
+			len = recv(socket_fd, frame, sizeof(frame), 0);
+			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+				log_message(LOG_LEVEL_ERROR, "LldpRx: recv() failed: %s\n",
+					    strerror(errno));
+				continue;
+			}
+			if (len == 0)
+				continue;
 
-		out_of_order = sequence_counter != rx_sequence_counter;
-		payload_mismatch =
-			memcmp(frame + sizeof(struct ethhdr) + sizeof(rx_sequence_counter),
-			       expected_pattern, expected_pattern_length);
-		frame_id_mismatch = false;
+			/* No more frames. Comeback within next period. */
+			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+				break;
 
-		stat_frame_received(LLDP_FRAME_TYPE, rx_sequence_counter, out_of_order,
-				    payload_mismatch, frame_id_mismatch);
+			/* Process received frame. */
+			if (len != frame_length) {
+				log_message(LOG_LEVEL_WARNING,
+					    "LldpRx: Frame with wrong length received!\n");
+				continue;
+			}
 
-		if (out_of_order) {
-			if (!ignore_rx_errors)
+			/*
+			 * Check cycle counter and payload. The ether type is checked by the
+			 * attached BPF filter.
+			 */
+			meta = (struct reference_meta_data *)(frame + sizeof(struct ethhdr));
+			rx_sequence_counter =
+				meta_data_to_sequence_counter(meta, num_frames_per_cycle);
+
+			out_of_order = sequence_counter != rx_sequence_counter;
+			payload_mismatch =
+				memcmp(frame + sizeof(struct ethhdr) + sizeof(rx_sequence_counter),
+				       expected_pattern, expected_pattern_length);
+			frame_id_mismatch = false;
+
+			stat_frame_received(LLDP_FRAME_TYPE, rx_sequence_counter, out_of_order,
+					    payload_mismatch, frame_id_mismatch);
+
+			if (out_of_order) {
+				if (!ignore_rx_errors)
+					log_message(LOG_LEVEL_WARNING,
+						    "LldpRx: frame[%" PRIu64
+						    "] SequenceCounter mismatch: %" PRIu64 "!\n",
+						    rx_sequence_counter, sequence_counter);
+				sequence_counter++;
+			}
+
+			if (payload_mismatch)
 				log_message(LOG_LEVEL_WARNING,
 					    "LldpRx: frame[%" PRIu64
-					    "] SequenceCounter mismatch: %" PRIu64 "!\n",
-					    rx_sequence_counter, sequence_counter);
+					    "] Payload Pattern mismatch!\n",
+					    rx_sequence_counter);
+
 			sequence_counter++;
+
+			/* If mirror enabled, assemble and store the frame for Tx later. */
+			if (!mirror_enabled)
+				continue;
+
+			/* Build new frame for Tx without VLAN info. */
+			lldp_build_frame_from_rx(frame, source);
+
+			/* Store the new frame. */
+			ring_buffer_add(thread_context->mirror_buffer, frame, len);
+
+			pthread_mutex_lock(&thread_context->data_mutex);
+			thread_context->num_frames_available++;
+			pthread_mutex_unlock(&thread_context->data_mutex);
 		}
-
-		if (payload_mismatch)
-			log_message(LOG_LEVEL_WARNING,
-				    "LldpRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
-				    rx_sequence_counter);
-
-		sequence_counter++;
-
-		/* If mirror enabled, assemble and store the frame for Tx later. */
-		if (!mirror_enabled)
-			continue;
-
-		/* Build new frame for Tx without VLAN info. */
-		lldp_build_frame_from_rx(frame, source);
-
-		/* Store the new frame. */
-		ring_buffer_add(thread_context->mirror_buffer, frame, len);
-
-		pthread_mutex_lock(&thread_context->data_mutex);
-		thread_context->num_frames_available++;
-		pthread_mutex_unlock(&thread_context->data_mutex);
 	}
 
 	return NULL;

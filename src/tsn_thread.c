@@ -5,6 +5,7 @@
  */
 
 #include <endian.h>
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -650,27 +651,58 @@ static void *tsn_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const struct tsn_thread_configuration *tsn_config = thread_context->private_data;
+	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	unsigned char frame[TSN_TX_FRAME_LENGTH];
-	int socket_fd;
+	struct timespec wakeup_time;
+	int socket_fd, ret;
 
 	socket_fd = thread_context->socket_fd;
 
 	prepare_openssl(thread_context->rx_security_context);
 
-	while (!thread_context->stop) {
-		ssize_t len;
+	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
+	if (ret) {
+		log_message(LOG_LEVEL_ERROR,
+			    "Tsn%sRx: Failed to calculate thread start time: %s!\n",
+			    tsn_config->tsn_suffix, strerror(errno));
+		return NULL;
+	}
 
-		/* Wait for TSN frame */
-		len = recv(socket_fd, frame, sizeof(frame), 0);
-		if (len < 0) {
-			log_message(LOG_LEVEL_ERROR, "Tsn%sRx: recv() failed: %s\n",
-				    tsn_config->tsn_suffix, strerror(errno));
+	while (!thread_context->stop) {
+		/* Wait until next period. */
+		increment_period(&wakeup_time, cycle_time_ns);
+
+		do {
+			ret = clock_nanosleep(app_config.application_clock_id, TIMER_ABSTIME,
+					      &wakeup_time, NULL);
+		} while (ret == EINTR);
+
+		if (ret) {
+			log_message(LOG_LEVEL_ERROR, "Tsn%sRx: clock_nanosleep() failed: %s\n",
+				    tsn_config->tsn_suffix, strerror(ret));
 			return NULL;
 		}
-		if (len == 0)
-			return NULL;
 
-		tsn_rx_frame(thread_context, frame, len);
+		/* Receive Tsn frames. */
+		while (true) {
+			ssize_t len;
+
+			len = recv(socket_fd, frame, sizeof(frame), 0);
+			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+				log_message(LOG_LEVEL_ERROR, "Tsn%sRx: recv() failed: %s\n",
+					    tsn_config->tsn_suffix, strerror(errno));
+				continue;
+			}
+			if (len == 0)
+				continue;
+
+			/* No more frames. Comeback within next period. */
+			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+				break;
+
+			/* Process received frame. */
+			tsn_rx_frame(thread_context, frame, len);
+		}
 	}
 
 	return NULL;
