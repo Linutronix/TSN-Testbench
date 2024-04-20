@@ -584,10 +584,10 @@ static void *rtc_rx_thread_routine(void *data)
 static void *rtc_xdp_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	struct xdp_socket *xsk = thread_context->xsk;
 	const long long cycle_time_ns = app_config.application_base_cycle_time_ns;
-	const size_t frame_length = app_config.rtc_frame_length;
 	const bool mirror_enabled = app_config.rtc_rx_mirror_enabled;
+	const size_t frame_length = app_config.rtc_frame_length;
+	struct xdp_socket *xsk = thread_context->xsk;
 	struct timespec wakeup_time;
 	int ret;
 

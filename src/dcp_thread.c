@@ -108,8 +108,8 @@ static void *dcp_tx_thread_routine(void *data)
 	struct thread_context *thread_context = data;
 	unsigned char received_frames[DCP_TX_FRAME_LENGTH * app_config.dcp_num_frames_per_cycle];
 	const bool mirror_enabled = app_config.dcp_rx_mirror_enabled;
-	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
+	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	unsigned char source[ETH_ALEN];
 	uint64_t sequence_counter = 0;
 	unsigned char *frame;

@@ -549,8 +549,8 @@ static void *rta_tx_generation_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	uint64_t num_frames = app_config.rta_num_frames_per_cycle;
-	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	uint64_t cycle_time_ns = app_config.rta_burst_period_ns;
+	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	struct timespec wakeup_time;
 	int ret;
 
