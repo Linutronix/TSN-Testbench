@@ -20,7 +20,7 @@ INTERFACE=$1
 CYCLETIME_NS=$2
 BASETIME=$3
 
-[ -z $INTERFACE ]    && INTERFACE="eno1"       # default: eno1
+[ -z $INTERFACE ]    && INTERFACE="enp0s29f2"       # default: enp0s29f2
 [ -z $CYCLETIME_NS ] && CYCLETIME_NS="1000000" # default: 1ms
 [ -z $BASETIME ]     && BASETIME=`date '+%s000000000' -d '60 sec'` # default: now + 60s
 

@@ -36,8 +36,8 @@ GenericL2:
   GenericL2RxThreadPriority: 98
   GenericL2TxThreadCpu: 1
   GenericL2RxThreadCpu: 1
-  GenericL2Interface: eno1
-  GenericL2Destination: 00:13:95:48:97:b3
+  GenericL2Interface: enp0s29f2
+  GenericL2Destination: 4e:e4:85:53:c8:78
 Log:
   LogThreadPeriodNS: 500000000
   LogThreadPriority: 1

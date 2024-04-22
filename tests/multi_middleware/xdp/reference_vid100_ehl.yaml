@@ -31,8 +31,8 @@ TSNHigh:
   TsnHighRxThreadPriority: 98
   TsnHighTxThreadCpu: 0
   TsnHighRxThreadCpu: 0
-  TsnHighInterface: eno1
-  TsnHighDestination: 00:13:95:48:97:b3
+  TsnHighInterface: enp0s29f2
+  TsnHighDestination: 4e:e4:85:53:c8:78
 Log:
   LogThreadPeriodNS: 500000000
   LogThreadPriority: 1
