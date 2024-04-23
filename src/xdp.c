@@ -383,7 +383,6 @@ void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config
 		frame_config.meta_data_offset = xdp->meta_data_offset;
 
 		ret = prepare_frame_for_tx(&frame_config);
-
 		if (ret)
 			log_message(LOG_LEVEL_ERROR, "XdpTx: Failed to prepare frame for Tx!\n");
 
