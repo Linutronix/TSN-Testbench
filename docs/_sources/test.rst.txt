@@ -327,6 +327,9 @@ and ``tests/profinet_zc``.
 In addition, PROFINET supports authentication and encryption. These mechanisms are demonstrated by
 ``tests/profinet_auth/`` and ``tests/profinet_crypt/``.
 
+Furthermore, most test scenarios utilize XDP for acceleration. However, there is one PROFINET
+scenario which tests standard AF_PACKET sockets instead. It is located in ``tests/profinet_packet``.
+
 Hardware: Intel CPU with Intel i225/i226
 
 PROFINET RT
@@ -462,6 +465,7 @@ Hardware platforms:
 - Intel Elkhart Lake
 - Intel Comet Lake
 - Intel Apollo Lake
+- NXP imx93
 
 TSN NIC(s):
 
