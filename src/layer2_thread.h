@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2022 Linutronix GmbH
+ * Copyright (C) 2022-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -17,6 +17,11 @@
 #include "xdp.h"
 
 #define GENL2_TX_FRAME_LENGTH XDP_FRAME_SIZE
+
+static inline unsigned char *g2_idx(unsigned char *frame_data, int idx)
+{
+	return frame_data + idx * GENL2_TX_FRAME_LENGTH;
+}
 
 struct thread_context *generic_l2_threads_create(void);
 void generic_l2_threads_stop(struct thread_context *thread_context);

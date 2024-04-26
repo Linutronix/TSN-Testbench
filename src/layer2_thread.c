@@ -19,6 +19,8 @@
 #include <linux/if_packet.h>
 #include <linux/if_vlan.h>
 
+#include <sys/socket.h>
+
 #include "config.h"
 #include "layer2_thread.h"
 #include "log.h"
@@ -78,106 +80,134 @@ static void generic_l2_initialize_frames(unsigned char *frame_data, size_t num_f
 	size_t i;
 
 	for (i = 0; i < num_frames; ++i)
-		generic_l2_initialize_frame(frame_data + i * GENL2_TX_FRAME_LENGTH, source,
-					    destination);
+		generic_l2_initialize_frame(g2_idx(frame_data, i), source, destination);
 }
 
-static int generic_l2_send_message(int socket_fd, struct sockaddr_ll *destination,
-				   unsigned char *frame_data, size_t frame_length,
-				   uint64_t wakeup_time, uint64_t sequence_counter,
-				   uint64_t duration)
-{
-	int ret;
-
-	if (app_config.generic_l2_tx_time_enabled) {
-		/* Send message but with specified transmission time. */
-		char control[CMSG_SPACE(sizeof(uint64_t))] = {0};
-		struct cmsghdr *cmsg;
-		struct msghdr msg;
-		struct iovec iov;
-		uint64_t tx_time;
-
-		tx_time = tx_time_get_frame_tx_time(wakeup_time, sequence_counter, duration,
-						    app_config.generic_l2_num_frames_per_cycle,
-						    app_config.generic_l2_tx_time_offset_ns,
-						    "GenericL2");
-
-		iov.iov_base = frame_data;
-		iov.iov_len = frame_length;
-
-		memset(&msg, 0, sizeof(msg));
-		msg.msg_name = destination;
-		msg.msg_namelen = sizeof(*destination);
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
-		msg.msg_control = control;
-		msg.msg_controllen = sizeof(control);
-
-		cmsg = CMSG_FIRSTHDR(&msg);
-		cmsg->cmsg_level = SOL_SOCKET;
-		cmsg->cmsg_type = SO_TXTIME;
-		cmsg->cmsg_len = CMSG_LEN(sizeof(int64_t));
-		*((uint64_t *)CMSG_DATA(cmsg)) = tx_time;
-
-		ret = sendmsg(socket_fd, &msg, 0);
-	} else {
-		/* Regular send case. */
-		ret = send(socket_fd, frame_data, frame_length, 0);
-	}
-
-	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "GenericL2Tx: send() for %" PRIu64 " failed: %s\n",
-			    sequence_counter, strerror(errno));
-		return -errno;
-	}
-
-	return 0;
-}
-
-static void generic_l2_send_frame(unsigned char *frame_data, size_t num_frames_per_cycle,
-				  int socket_fd, struct sockaddr_ll *destination,
-				  uint64_t wakeup_time, uint64_t duration)
+static uint64_t generic_l2_get_sequence_counter(unsigned char *frame_data,
+						size_t num_frames_per_cycle)
 {
 	struct vlan_ethernet_header *eth;
 	struct generic_l2_header *l2;
-	uint64_t sequence_counter;
-	ssize_t ret;
 
-	/* Fetch meta data */
 	l2 = (struct generic_l2_header *)(frame_data + sizeof(*eth));
-	sequence_counter = meta_data_to_sequence_counter(&l2->meta_data, num_frames_per_cycle);
 
-	/* Send it */
-	ret = generic_l2_send_message(socket_fd, destination, frame_data,
-				      app_config.generic_l2_frame_length, wakeup_time,
-				      sequence_counter, duration);
-	if (ret)
-		return;
-
-	stat_frame_sent(GENERICL2_FRAME_TYPE, sequence_counter);
+	return meta_data_to_sequence_counter(&l2->meta_data, num_frames_per_cycle);
 }
 
-static void generic_l2_gen_and_send_frame(unsigned char *frame_data, size_t num_frames_per_cycle,
+static int generic_l2_send_messages(int socket_fd, struct sockaddr_ll *destination,
+				    unsigned char *frame_data, size_t num_frames,
+				    size_t num_frames_per_cycle, size_t frame_length,
+				    uint64_t wakeup_time, uint64_t duration)
+{
+	const bool mirror_enabled = app_config.generic_l2_rx_mirror_enabled;
+	struct iovec iovecs[num_frames];
+	struct mmsghdr msgs[num_frames];
+	int i, sent = 0;
+
+	/* Prepare all messages to be sent. */
+	memset(iovecs, '\0', num_frames * sizeof(struct iovec));
+	memset(msgs, '\0', num_frames * sizeof(struct mmsghdr));
+	for (i = 0; i < num_frames; i++) {
+		unsigned char *frame;
+
+		frame = mirror_enabled ? frame_data + i * frame_length : g2_idx(frame_data, i);
+		iovecs[i].iov_base = frame;
+		iovecs[i].iov_len = frame_length;
+		msgs[i].msg_hdr.msg_iov = &iovecs[i];
+		msgs[i].msg_hdr.msg_iovlen = 1;
+		msgs[i].msg_hdr.msg_name = destination;
+		msgs[i].msg_hdr.msg_namelen = sizeof(*destination);
+
+		/* In case the user configured Tx Time also add it. */
+		if (app_config.generic_l2_tx_time_enabled) {
+			char control[CMSG_SPACE(sizeof(uint64_t))] = {0};
+			uint64_t tx_time, sequence_counter;
+			struct cmsghdr *cmsg;
+
+			sequence_counter =
+				generic_l2_get_sequence_counter(frame, num_frames_per_cycle);
+			tx_time = tx_time_get_frame_tx_time(
+				wakeup_time, sequence_counter, duration,
+				app_config.generic_l2_num_frames_per_cycle,
+				app_config.generic_l2_tx_time_offset_ns, "GenericL2");
+
+			cmsg = CMSG_FIRSTHDR(&msgs[i].msg_hdr);
+			cmsg->cmsg_level = SOL_SOCKET;
+			cmsg->cmsg_type = SO_TXTIME;
+			cmsg->cmsg_len = CMSG_LEN(sizeof(int64_t));
+			*((uint64_t *)CMSG_DATA(cmsg)) = tx_time;
+
+			msgs[i].msg_hdr.msg_control = control;
+			msgs[i].msg_hdr.msg_controllen = sizeof(control);
+		}
+	}
+
+	/* Send them. */
+	while (sent < num_frames) {
+		int len;
+
+		len = sendmmsg(socket_fd, &msgs[sent], num_frames - sent, 0);
+		if (len == -1) {
+			log_message(LOG_LEVEL_ERROR, "GenericL2Tx: sendmmsg() failed: %s\n",
+				    strerror(errno));
+			return -errno;
+		}
+
+		sent += len;
+	}
+
+	return sent;
+}
+
+static int generic_l2_send_frames(unsigned char *frame_data, size_t num_frames,
+				  size_t num_frames_per_cycle, int socket_fd,
+				  struct sockaddr_ll *destination, uint64_t wakeup_time,
+				  uint64_t duration)
+{
+	size_t frame_length;
+	int len, i;
+
+	/* Send it */
+	frame_length = app_config.generic_l2_frame_length;
+	len = generic_l2_send_messages(socket_fd, destination, frame_data, num_frames,
+				       num_frames_per_cycle, frame_length, wakeup_time, duration);
+
+	for (i = 0; i < len; i++) {
+		uint64_t sequence_counter;
+
+		sequence_counter = generic_l2_get_sequence_counter(frame_data + i * frame_length,
+								   num_frames_per_cycle);
+		stat_frame_sent(GENERICL2_FRAME_TYPE, sequence_counter);
+	}
+
+	return len;
+}
+
+static int generic_l2_gen_and_send_frames(unsigned char *frame_data, size_t num_frames_per_cycle,
 					  int socket_fd, struct sockaddr_ll *destination,
-					  uint64_t wakeup_time, uint64_t sequence_counter,
+					  uint64_t wakeup_time, uint64_t sequence_counter_begin,
 					  uint64_t duration)
 {
 	struct vlan_ethernet_header *eth;
 	struct generic_l2_header *l2;
-	ssize_t ret;
+	int len, i;
 
 	/* Adjust meta data */
-	l2 = (struct generic_l2_header *)(frame_data + sizeof(*eth));
-	sequence_counter_to_meta_data(&l2->meta_data, sequence_counter, num_frames_per_cycle);
+	for (i = 0; i < num_frames_per_cycle; i++) {
+		l2 = (struct generic_l2_header *)(g2_idx(frame_data, i) + sizeof(*eth));
+		sequence_counter_to_meta_data(&l2->meta_data, sequence_counter_begin + i,
+					      num_frames_per_cycle);
+	}
 
-	/* Send it */
-	ret = generic_l2_send_message(socket_fd, destination, frame_data,
-				      app_config.generic_l2_frame_length, wakeup_time,
-				      sequence_counter, duration);
-	if (ret)
-		return;
+	/* Send them */
+	len = generic_l2_send_messages(socket_fd, destination, frame_data, num_frames_per_cycle,
+				       num_frames_per_cycle, app_config.generic_l2_frame_length,
+				       wakeup_time, duration);
 
-	stat_frame_sent(GENERICL2_FRAME_TYPE, sequence_counter);
+	for (i = 0; i < len; i++)
+		stat_frame_sent(GENERICL2_FRAME_TYPE, sequence_counter_begin + i);
+
+	return len;
 }
 
 static void generic_l2_gen_and_send_xdp_frames(struct xdp_socket *xsk, size_t num_frames_per_cycle,
@@ -249,7 +279,8 @@ static void *generic_l2_tx_thread_routine(void *data)
 	duration = tx_time_get_frame_duration(link_speed, app_config.generic_l2_frame_length);
 
 	frame = thread_context->tx_frame_data;
-	generic_l2_initialize_frame(frame, source, app_config.generic_l2_destination);
+	generic_l2_initialize_frames(frame, app_config.generic_l2_num_frames_per_cycle, source,
+				     app_config.generic_l2_destination);
 
 	ret = get_thread_start_time(app_config.application_tx_base_offset_ns, &wakeup_time);
 	if (ret) {
@@ -260,8 +291,6 @@ static void *generic_l2_tx_thread_routine(void *data)
 	}
 
 	while (!thread_context->stop) {
-		size_t i;
-
 		increment_period(&wakeup_time, cycle_time_ns);
 
 		do {
@@ -276,23 +305,23 @@ static void *generic_l2_tx_thread_routine(void *data)
 		}
 
 		if (!mirror_enabled) {
-			for (i = 0; i < app_config.generic_l2_num_frames_per_cycle; ++i)
-				generic_l2_gen_and_send_frame(
-					frame, app_config.generic_l2_num_frames_per_cycle,
-					socket_fd, &destination, ts_to_ns(&wakeup_time),
-					sequence_counter++, duration);
+			generic_l2_gen_and_send_frames(
+				frame, app_config.generic_l2_num_frames_per_cycle, socket_fd,
+				&destination, ts_to_ns(&wakeup_time), sequence_counter, duration);
+
+			sequence_counter += app_config.generic_l2_num_frames_per_cycle;
 		} else {
-			size_t len;
+			size_t len, num_frames;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
 					  received_frames_length, &len);
 
 			/* Len should be a multiple of frame size */
-			for (i = 0; i < len / app_config.generic_l2_frame_length; ++i)
-				generic_l2_send_frame(
-					received_frames + i * app_config.generic_l2_frame_length,
-					app_config.generic_l2_num_frames_per_cycle, socket_fd,
-					&destination, ts_to_ns(&wakeup_time), duration);
+			num_frames = len / app_config.generic_l2_frame_length;
+			generic_l2_send_frames(received_frames, num_frames,
+					       app_config.generic_l2_num_frames_per_cycle,
+					       socket_fd, &destination, ts_to_ns(&wakeup_time),
+					       duration);
 		}
 	}
 
@@ -500,8 +529,8 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 static void *generic_l2_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
+	unsigned char frames[GENL2_TX_FRAME_LENGTH * app_config.generic_l2_num_frames_per_cycle];
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[GENL2_TX_FRAME_LENGTH];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -532,23 +561,39 @@ static void *generic_l2_rx_thread_routine(void *data)
 
 		/* Receive Layer 2 frames. */
 		while (true) {
-			ssize_t len;
+			struct iovec iovecs[app_config.generic_l2_num_frames_per_cycle];
+			struct mmsghdr msgs[app_config.generic_l2_num_frames_per_cycle];
+			int i, len;
 
-			len = recv(socket_fd, frame, sizeof(frame), 0);
-			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-				log_message(LOG_LEVEL_ERROR, "GenericL2Rx: recv() failed: %s\n",
-					    strerror(errno));
-				continue;
+			memset(iovecs, '\0',
+			       app_config.generic_l2_num_frames_per_cycle * sizeof(struct iovec));
+			memset(msgs, '\0',
+			       app_config.generic_l2_num_frames_per_cycle * sizeof(struct mmsghdr));
+			for (i = 0; i < app_config.generic_l2_num_frames_per_cycle; i++) {
+				iovecs[i].iov_base = g2_idx(frames, i);
+				iovecs[i].iov_len = GENL2_TX_FRAME_LENGTH;
+				msgs[i].msg_hdr.msg_iov = &iovecs[i];
+				msgs[i].msg_hdr.msg_iovlen = 1;
 			}
-			if (len == 0)
-				continue;
 
-			/* No more frames. Comeback within next period. */
-			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-				break;
+			len = recvmmsg(socket_fd, msgs, app_config.generic_l2_num_frames_per_cycle,
+				       0, NULL);
+			if (len == -1) {
+				if (errno != EAGAIN && errno != EWOULDBLOCK) {
+					log_message(LOG_LEVEL_ERROR,
+						    "GenericL2Rx: recvmmsg() failed: %s\n",
+						    strerror(errno));
+					continue;
+				} else {
+					/* No more frames. Comeback within next period. */
+					break;
+				}
+			}
 
-			/* Process received frame. */
-			generic_l2_rx_frame(thread_context, frame, len);
+			/* Process received frames. */
+			for (i = 0; i < len; i++)
+				generic_l2_rx_frame(thread_context, g2_idx(frames, i),
+						    msgs[i].msg_len);
 		}
 	}
 
