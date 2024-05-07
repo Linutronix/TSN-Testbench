@@ -14,13 +14,10 @@
 #include <linux/if_ether.h>
 
 #include "thread.h"
-#include "xdp.h"
-
-#define GENL2_TX_FRAME_LENGTH XDP_FRAME_SIZE
 
 static inline unsigned char *g2_idx(unsigned char *frame_data, int idx)
 {
-	return frame_data + idx * GENL2_TX_FRAME_LENGTH;
+	return frame_data + idx * MAX_FRAME_SIZE;
 }
 
 struct thread_context *generic_l2_threads_create(void);

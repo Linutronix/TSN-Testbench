@@ -107,7 +107,7 @@ static void dcp_gen_and_send_frame(unsigned char *frame_data, size_t frame_lengt
 static void *dcp_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	unsigned char received_frames[DCP_TX_FRAME_LENGTH * app_config.dcp_num_frames_per_cycle];
+	unsigned char received_frames[MAX_FRAME_SIZE * app_config.dcp_num_frames_per_cycle];
 	const bool mirror_enabled = app_config.dcp_rx_mirror_enabled;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
@@ -125,7 +125,7 @@ static void *dcp_tx_thread_routine(void *data)
 	}
 
 	frame = thread_context->tx_frame_data;
-	initialize_profinet_frame(SECURITY_MODE_NONE, frame, DCP_TX_FRAME_LENGTH, source,
+	initialize_profinet_frame(SECURITY_MODE_NONE, frame, MAX_FRAME_SIZE, source,
 				  app_config.dcp_destination, app_config.dcp_payload_pattern,
 				  app_config.dcp_payload_pattern_length,
 				  app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT, 0xfefe);
@@ -194,7 +194,7 @@ static int dcp_rx_frame(struct thread_context *thread_context, unsigned char *fr
 	const bool ignore_rx_errors = app_config.dcp_ignore_rx_errors;
 	const size_t frame_length = app_config.dcp_frame_length;
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
-	unsigned char new_frame[DCP_TX_FRAME_LENGTH];
+	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
 
@@ -256,7 +256,7 @@ static void *dcp_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[DCP_TX_FRAME_LENGTH];
+	unsigned char frame[MAX_FRAME_SIZE];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -372,7 +372,7 @@ int dcp_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(1, DCP_TX_FRAME_LENGTH);
+	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate Dcp TxFrameData!\n");
 		ret = -ENOMEM;
@@ -388,8 +388,8 @@ int dcp_threads_create(struct thread_context *thread_context)
 
 	if (app_config.dcp_rx_mirror_enabled) {
 		/* Per period the expectation is: DcpNumFramesPerCycle * MAX_FRAME */
-		thread_context->mirror_buffer = ring_buffer_allocate(
-			DCP_TX_FRAME_LENGTH * app_config.dcp_num_frames_per_cycle);
+		thread_context->mirror_buffer =
+			ring_buffer_allocate(MAX_FRAME_SIZE * app_config.dcp_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Dcp Mirror RingBuffer!\n");
 			ret = -ENOMEM;

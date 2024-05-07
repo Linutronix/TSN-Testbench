@@ -235,8 +235,7 @@ static void generic_l2_gen_and_send_xdp_frames(struct xdp_socket *xsk, size_t nu
 static void *generic_l2_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	size_t received_frames_length =
-		GENL2_TX_FRAME_LENGTH * app_config.generic_l2_num_frames_per_cycle;
+	size_t received_frames_length = MAX_FRAME_SIZE * app_config.generic_l2_num_frames_per_cycle;
 	const long long cycle_time_ns = app_config.application_base_cycle_time_ns;
 	const bool mirror_enabled = app_config.generic_l2_rx_mirror_enabled;
 	unsigned char *received_frames = thread_context->rx_frame_data;
@@ -427,7 +426,7 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 	const bool ignore_rx_errors = app_config.generic_l2_ignore_rx_errors;
 	size_t expected_frame_length = app_config.generic_l2_frame_length;
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
-	unsigned char new_frame[GENL2_TX_FRAME_LENGTH];
+	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct generic_l2_header *l2;
 	uint64_t sequence_counter;
 	bool vlan_tag_missing;
@@ -529,7 +528,7 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 static void *generic_l2_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	unsigned char frames[GENL2_TX_FRAME_LENGTH * app_config.generic_l2_num_frames_per_cycle];
+	unsigned char frames[MAX_FRAME_SIZE * app_config.generic_l2_num_frames_per_cycle];
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	struct timespec wakeup_time;
 	int socket_fd, ret;
@@ -571,7 +570,7 @@ static void *generic_l2_rx_thread_routine(void *data)
 			       app_config.generic_l2_num_frames_per_cycle * sizeof(struct mmsghdr));
 			for (i = 0; i < app_config.generic_l2_num_frames_per_cycle; i++) {
 				iovecs[i].iov_base = g2_idx(frames, i);
-				iovecs[i].iov_len = GENL2_TX_FRAME_LENGTH;
+				iovecs[i].iov_len = MAX_FRAME_SIZE;
 				msgs[i].msg_hdr.msg_iov = &iovecs[i];
 				msgs[i].msg_hdr.msg_iovlen = 1;
 			}
@@ -663,14 +662,14 @@ struct thread_context *generic_l2_threads_create(void)
 	/* For XDP the frames are stored in a umem area. That memory is part of the socket. */
 	if (!app_config.generic_l2_xdp_enabled) {
 		thread_context->tx_frame_data =
-			calloc(app_config.generic_l2_num_frames_per_cycle, GENL2_TX_FRAME_LENGTH);
+			calloc(app_config.generic_l2_num_frames_per_cycle, MAX_FRAME_SIZE);
 		if (!thread_context->tx_frame_data) {
 			fprintf(stderr, "Failed to allocate GenericL2TxFrameData\n");
 			goto err_tx;
 		}
 
 		thread_context->rx_frame_data =
-			calloc(app_config.generic_l2_num_frames_per_cycle, GENL2_TX_FRAME_LENGTH);
+			calloc(app_config.generic_l2_num_frames_per_cycle, MAX_FRAME_SIZE);
 		if (!thread_context->rx_frame_data) {
 			fprintf(stderr, "Failed to allocate GenericL2RxFrameData\n");
 			goto err_rx;
@@ -704,7 +703,7 @@ struct thread_context *generic_l2_threads_create(void)
 	if (app_config.generic_l2_rx_mirror_enabled && !app_config.generic_l2_xdp_enabled) {
 		/* Per period the expectation is: GenericL2NumFramesPerCycle * MAX_FRAME */
 		thread_context->mirror_buffer = ring_buffer_allocate(
-			GENL2_TX_FRAME_LENGTH * app_config.generic_l2_num_frames_per_cycle);
+			MAX_FRAME_SIZE * app_config.generic_l2_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate GenericL2 Mirror RingBuffer!\n");
 			goto err_buffer;

@@ -34,8 +34,8 @@ static void rta_initialize_frames(unsigned char *frame_data, size_t num_frames,
 
 	for (i = 0; i < num_frames; ++i)
 		initialize_profinet_frame(
-			app_config.rta_security_mode, frame_data + i * RTA_TX_FRAME_LENGTH,
-			RTA_TX_FRAME_LENGTH, source, destination, app_config.rta_payload_pattern,
+			app_config.rta_security_mode, frame_data + i * MAX_FRAME_SIZE,
+			MAX_FRAME_SIZE, source, destination, app_config.rta_payload_pattern,
 			app_config.rta_payload_pattern_length,
 			app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT, 0xfc01);
 }
@@ -86,7 +86,7 @@ static void rta_gen_and_send_frame(struct security_context *security_context,
 	frame_config.mode = app_config.rta_security_mode;
 	frame_config.security_context = security_context;
 	frame_config.iv_prefix = (const unsigned char *)app_config.rta_security_iv_prefix;
-	frame_config.payload_pattern = frame_data + 1 * RTA_TX_FRAME_LENGTH +
+	frame_config.payload_pattern = frame_data + 1 * MAX_FRAME_SIZE +
 				       sizeof(struct vlan_ethernet_header) +
 				       sizeof(struct profinet_secure_header);
 	frame_config.payload_pattern_length = frame_length - sizeof(struct vlan_ethernet_header) -
@@ -125,7 +125,7 @@ static void rta_gen_and_send_xdp_frames(struct security_context *security_contex
 	xdp.mode = app_config.rta_security_mode;
 	xdp.security_context = security_context;
 	xdp.iv_prefix = (const unsigned char *)app_config.rta_security_iv_prefix;
-	xdp.payload_pattern = tx_frame_data + 1 * RTA_TX_FRAME_LENGTH +
+	xdp.payload_pattern = tx_frame_data + 1 * MAX_FRAME_SIZE +
 			      sizeof(struct vlan_ethernet_header) +
 			      sizeof(struct profinet_secure_header);
 	xdp.payload_pattern_length =
@@ -144,7 +144,7 @@ static void rta_gen_and_send_xdp_frames(struct security_context *security_contex
 static void *rta_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	unsigned char received_frames[RTA_TX_FRAME_LENGTH * app_config.rta_num_frames_per_cycle];
+	unsigned char received_frames[MAX_FRAME_SIZE * app_config.rta_num_frames_per_cycle];
 	struct security_context *security_context = thread_context->tx_security_context;
 	const bool mirror_enabled = app_config.rta_rx_mirror_enabled;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
@@ -331,8 +331,8 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	const bool ignore_rx_errors = app_config.rta_ignore_rx_errors;
 	size_t expected_frame_length = app_config.rta_frame_length;
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
-	unsigned char plaintext[RTA_TX_FRAME_LENGTH];
-	unsigned char new_frame[RTA_TX_FRAME_LENGTH];
+	unsigned char plaintext[MAX_FRAME_SIZE];
+	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct profinet_secure_header *srt;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
@@ -522,7 +522,7 @@ static void *rta_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[RTA_TX_FRAME_LENGTH];
+	unsigned char frame[MAX_FRAME_SIZE];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -680,7 +680,7 @@ int rta_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->xdp_data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(2, RTA_TX_FRAME_LENGTH);
+	thread_context->tx_frame_data = calloc(2, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate RtaTxFrameData\n");
 		ret = -ENOMEM;
@@ -713,8 +713,8 @@ int rta_threads_create(struct thread_context *thread_context)
 	/* Same as above. For XDP the umem area is used. */
 	if (app_config.rta_rx_mirror_enabled && !app_config.rta_xdp_enabled) {
 		/* Per period the expectation is: RtaNumFramesPerCycle * MAX_FRAME */
-		thread_context->mirror_buffer = ring_buffer_allocate(
-			RTA_TX_FRAME_LENGTH * app_config.rta_num_frames_per_cycle);
+		thread_context->mirror_buffer =
+			ring_buffer_allocate(MAX_FRAME_SIZE * app_config.rta_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Rta Mirror RingBuffer!\n");
 			ret = -ENOMEM;

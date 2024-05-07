@@ -35,8 +35,8 @@ static void rtc_initialize_frames(unsigned char *frame_data, size_t num_frames,
 
 	for (i = 0; i < num_frames; ++i)
 		initialize_profinet_frame(
-			app_config.rtc_security_mode, frame_data + i * RTC_TX_FRAME_LENGTH,
-			RTC_TX_FRAME_LENGTH, source, destination, app_config.rtc_payload_pattern,
+			app_config.rtc_security_mode, frame_data + i * MAX_FRAME_SIZE,
+			MAX_FRAME_SIZE, source, destination, app_config.rtc_payload_pattern,
 			app_config.rtc_payload_pattern_length,
 			app_config.rtc_vid | RTC_PCP_VALUE << VLAN_PCP_SHIFT, 0x8000);
 }
@@ -87,7 +87,7 @@ static void rtc_gen_and_send_frame(struct security_context *security_context,
 	frame_config.mode = app_config.rtc_security_mode;
 	frame_config.security_context = security_context;
 	frame_config.iv_prefix = (const unsigned char *)app_config.rtc_security_iv_prefix;
-	frame_config.payload_pattern = frame_data + 1 * RTC_TX_FRAME_LENGTH +
+	frame_config.payload_pattern = frame_data + 1 * MAX_FRAME_SIZE +
 				       sizeof(struct vlan_ethernet_header) +
 				       sizeof(struct profinet_secure_header);
 	frame_config.payload_pattern_length = frame_length - sizeof(struct vlan_ethernet_header) -
@@ -126,7 +126,7 @@ static void rtc_gen_and_send_xdp_frames(struct security_context *security_contex
 	xdp.mode = app_config.rtc_security_mode;
 	xdp.security_context = security_context;
 	xdp.iv_prefix = (const unsigned char *)app_config.rtc_security_iv_prefix;
-	xdp.payload_pattern = tx_frame_data + 1 * RTC_TX_FRAME_LENGTH +
+	xdp.payload_pattern = tx_frame_data + 1 * MAX_FRAME_SIZE +
 			      sizeof(struct vlan_ethernet_header) +
 			      sizeof(struct profinet_secure_header);
 	xdp.payload_pattern_length =
@@ -145,7 +145,7 @@ static void rtc_gen_and_send_xdp_frames(struct security_context *security_contex
 static void *rtc_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	unsigned char received_frames[RTC_TX_FRAME_LENGTH * app_config.rtc_num_frames_per_cycle];
+	unsigned char received_frames[MAX_FRAME_SIZE * app_config.rtc_num_frames_per_cycle];
 	struct security_context *security_context = thread_context->tx_security_context;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	const bool mirror_enabled = app_config.rtc_rx_mirror_enabled;
@@ -371,8 +371,8 @@ static int rtc_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	const bool ignore_rx_errors = app_config.rtc_ignore_rx_errors;
 	size_t expected_frame_length = app_config.rtc_frame_length;
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
-	unsigned char plaintext[RTC_TX_FRAME_LENGTH];
-	unsigned char new_frame[RTC_TX_FRAME_LENGTH];
+	unsigned char plaintext[MAX_FRAME_SIZE];
+	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct profinet_secure_header *srt;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
@@ -558,7 +558,7 @@ static void *rtc_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[RTC_TX_FRAME_LENGTH];
+	unsigned char frame[MAX_FRAME_SIZE];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -669,7 +669,7 @@ int rtc_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(2, RTC_TX_FRAME_LENGTH);
+	thread_context->tx_frame_data = calloc(2, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate RtcTxFrameData\n");
 		ret = -ENOMEM;
@@ -702,8 +702,8 @@ int rtc_threads_create(struct thread_context *thread_context)
 	/* Same as above. For XDP the umem area is used. */
 	if (app_config.rtc_rx_mirror_enabled && !app_config.rtc_xdp_enabled) {
 		/* Per period the expectation is: RtcNumFramesPerCycle * MAX_FRAME */
-		thread_context->mirror_buffer = ring_buffer_allocate(
-			RTC_TX_FRAME_LENGTH * app_config.rtc_num_frames_per_cycle);
+		thread_context->mirror_buffer =
+			ring_buffer_allocate(MAX_FRAME_SIZE * app_config.rtc_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Rtc Mirror RingBuffer!\n");
 			ret = -ENOMEM;

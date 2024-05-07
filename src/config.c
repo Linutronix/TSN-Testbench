@@ -1087,7 +1087,7 @@ bool config_sanity_check(void)
 	}
 
 	/* Frame lengths */
-	if (app_config.generic_l2_frame_length > GENL2_TX_FRAME_LENGTH ||
+	if (app_config.generic_l2_frame_length > MAX_FRAME_SIZE ||
 	    app_config.generic_l2_frame_length <
 		    (sizeof(struct vlan_ethernet_header) + sizeof(struct generic_l2_header) +
 		     app_config.generic_l2_payload_pattern_length)) {
@@ -1098,7 +1098,7 @@ bool config_sanity_check(void)
 	min_frame_size = app_config.tsn_high_security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.tsn_high_frame_length > TSN_TX_FRAME_LENGTH ||
+	if (app_config.tsn_high_frame_length > MAX_FRAME_SIZE ||
 	    app_config.tsn_high_frame_length <
 		    (min_frame_size + app_config.tsn_high_payload_pattern_length)) {
 		fprintf(stderr, "TsnHighFrameLength is invalid!\n");
@@ -1108,7 +1108,7 @@ bool config_sanity_check(void)
 	min_frame_size = app_config.tsn_low_security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.tsn_low_frame_length > TSN_TX_FRAME_LENGTH ||
+	if (app_config.tsn_low_frame_length > MAX_FRAME_SIZE ||
 	    app_config.tsn_low_frame_length <
 		    (min_frame_size + app_config.tsn_low_payload_pattern_length)) {
 		fprintf(stderr, "TsnLowFrameLength is invalid!\n");
@@ -1118,7 +1118,7 @@ bool config_sanity_check(void)
 	min_frame_size = app_config.rtc_security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.rtc_frame_length > RTC_TX_FRAME_LENGTH ||
+	if (app_config.rtc_frame_length > MAX_FRAME_SIZE ||
 	    app_config.rtc_frame_length <
 		    (min_frame_size + app_config.rtc_payload_pattern_length)) {
 		fprintf(stderr, "RtcFrameLength is invalid!\n");
@@ -1128,21 +1128,21 @@ bool config_sanity_check(void)
 	min_frame_size = app_config.rta_security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.rta_frame_length > RTA_TX_FRAME_LENGTH ||
+	if (app_config.rta_frame_length > MAX_FRAME_SIZE ||
 	    app_config.rta_frame_length <
 		    (min_frame_size + app_config.rta_payload_pattern_length)) {
 		fprintf(stderr, "RtaFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (app_config.dcp_frame_length > DCP_TX_FRAME_LENGTH ||
+	if (app_config.dcp_frame_length > MAX_FRAME_SIZE ||
 	    app_config.dcp_frame_length <
 		    (min_profinet_frame_size + app_config.dcp_payload_pattern_length)) {
 		fprintf(stderr, "DcpFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (app_config.lldp_frame_length > LLDP_TX_FRAME_LENGTH ||
+	if (app_config.lldp_frame_length > MAX_FRAME_SIZE ||
 	    app_config.lldp_frame_length <
 		    (sizeof(struct ethhdr) + sizeof(struct reference_meta_data) +
 		     app_config.lldp_payload_pattern_length)) {
@@ -1150,14 +1150,14 @@ bool config_sanity_check(void)
 		return false;
 	}
 
-	if (app_config.udp_high_frame_length > UDP_TX_FRAME_LENGTH ||
+	if (app_config.udp_high_frame_length > MAX_FRAME_SIZE ||
 	    app_config.udp_high_frame_length < (sizeof(struct reference_meta_data) +
 						app_config.udp_high_payload_pattern_length)) {
 		fprintf(stderr, "UdpHighFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (app_config.udp_low_frame_length > UDP_TX_FRAME_LENGTH ||
+	if (app_config.udp_low_frame_length > MAX_FRAME_SIZE ||
 	    app_config.udp_low_frame_length < (sizeof(struct reference_meta_data) +
 					       app_config.udp_low_payload_pattern_length)) {
 		fprintf(stderr, "UdpLowFrameLength is invalid!\n");

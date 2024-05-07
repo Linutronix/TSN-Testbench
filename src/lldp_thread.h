@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2020,2022 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -10,8 +10,6 @@
 #include <pthread.h>
 
 #include "thread.h"
-
-#define LLDP_TX_FRAME_LENGTH (4096)
 
 int lldp_threads_create(struct thread_context *thread_context);
 void lldp_threads_stop(struct thread_context *thread_context);

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2020-2022 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -13,8 +13,6 @@
 #include <linux/if_ether.h>
 
 #include "thread.h"
-
-#define DCP_TX_FRAME_LENGTH (4096)
 
 int dcp_threads_create(struct thread_context *thread_context);
 void dcp_threads_stop(struct thread_context *thread_context);

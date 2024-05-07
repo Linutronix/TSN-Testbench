@@ -16,9 +16,6 @@
 #include "security.h"
 #include "stat.h"
 #include "thread.h"
-#include "xdp.h"
-
-#define TSN_TX_FRAME_LENGTH XDP_FRAME_SIZE
 
 struct tsn_thread_configuration {
 	/* TSN configuration */

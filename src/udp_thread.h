@@ -16,8 +16,6 @@
 #include "stat.h"
 #include "thread.h"
 
-#define UDP_TX_FRAME_LENGTH (4096)
-
 struct udp_thread_configuration {
 	/* UDP configuration */
 	enum stat_frame_type frame_type;

@@ -39,8 +39,8 @@ static void tsn_initialize_frames(const struct tsn_thread_configuration *tsn_con
 
 	for (i = 0; i < num_frames; ++i)
 		initialize_profinet_frame(
-			tsn_config->tsn_security_mode, frame_data + i * TSN_TX_FRAME_LENGTH,
-			TSN_TX_FRAME_LENGTH, source, destination, tsn_config->tsn_payload_pattern,
+			tsn_config->tsn_security_mode, frame_data + i * MAX_FRAME_SIZE,
+			MAX_FRAME_SIZE, source, destination, tsn_config->tsn_payload_pattern,
 			tsn_config->tsn_payload_pattern_length,
 			tsn_config->vlan_id | tsn_config->vlan_pcp << VLAN_PCP_SHIFT,
 			tsn_config->frame_id_range_start);
@@ -147,7 +147,7 @@ static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_co
 	frame_config.mode = tsn_config->tsn_security_mode;
 	frame_config.security_context = security_context;
 	frame_config.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
-	frame_config.payload_pattern = frame_data + 1 * TSN_TX_FRAME_LENGTH +
+	frame_config.payload_pattern = frame_data + 1 * MAX_FRAME_SIZE +
 				       sizeof(struct vlan_ethernet_header) +
 				       sizeof(struct profinet_secure_header);
 	frame_config.payload_pattern_length =
@@ -186,7 +186,7 @@ static void tsn_gen_and_send_xdp_frames(const struct tsn_thread_configuration *t
 	xdp.mode = tsn_config->tsn_security_mode;
 	xdp.security_context = security_context;
 	xdp.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
-	xdp.payload_pattern = tx_frame_data + 1 * TSN_TX_FRAME_LENGTH +
+	xdp.payload_pattern = tx_frame_data + 1 * MAX_FRAME_SIZE +
 			      sizeof(struct vlan_ethernet_header) +
 			      sizeof(struct profinet_secure_header);
 	xdp.payload_pattern_length =
@@ -206,7 +206,7 @@ static void *tsn_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const struct tsn_thread_configuration *tsn_config = thread_context->private_data;
-	unsigned char received_frames[TSN_TX_FRAME_LENGTH * tsn_config->tsn_num_frames_per_cycle];
+	unsigned char received_frames[MAX_FRAME_SIZE * tsn_config->tsn_num_frames_per_cycle];
 	struct security_context *security_context = thread_context->tx_security_context;
 	const long long cycle_time_ns = app_config.application_base_cycle_time_ns;
 	const bool mirror_enabled = tsn_config->tsn_rx_mirror_enabled;
@@ -457,8 +457,8 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	const bool ignore_rx_errors = tsn_config->tsn_ignore_rx_errors;
 	size_t expected_frame_length = tsn_config->tsn_frame_length;
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
-	unsigned char plaintext[TSN_TX_FRAME_LENGTH];
-	unsigned char new_frame[TSN_TX_FRAME_LENGTH];
+	unsigned char plaintext[MAX_FRAME_SIZE];
+	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct profinet_secure_header *srt;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
@@ -652,7 +652,7 @@ static void *tsn_rx_thread_routine(void *data)
 	struct thread_context *thread_context = data;
 	const struct tsn_thread_configuration *tsn_config = thread_context->private_data;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[TSN_TX_FRAME_LENGTH];
+	unsigned char frame[MAX_FRAME_SIZE];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -773,7 +773,7 @@ int tsn_threads_create(struct thread_context *thread_context,
 
 	thread_context->private_data = tsn_config;
 
-	thread_context->tx_frame_data = calloc(2, TSN_TX_FRAME_LENGTH);
+	thread_context->tx_frame_data = calloc(2, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate TsnTxFrameData\n");
 		ret = -ENOMEM;
@@ -810,8 +810,8 @@ int tsn_threads_create(struct thread_context *thread_context,
 	/* Same as above. For XDP the umem area is used. */
 	if (tsn_config->tsn_rx_mirror_enabled && !tsn_config->tsn_xdp_enabled) {
 		/* Per period the expectation is: TsnNumFramesPerCycle * MAX_FRAME */
-		thread_context->mirror_buffer = ring_buffer_allocate(
-			TSN_TX_FRAME_LENGTH * tsn_config->tsn_num_frames_per_cycle);
+		thread_context->mirror_buffer =
+			ring_buffer_allocate(MAX_FRAME_SIZE * tsn_config->tsn_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Tsn Mirror RingBuffer!\n");
 			ret = -ENOMEM;

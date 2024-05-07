@@ -117,7 +117,7 @@ static void lldp_gen_and_send_frame(unsigned char *frame_data, size_t frame_leng
 static void *lldp_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	unsigned char received_frames[LLDP_TX_FRAME_LENGTH * app_config.lldp_num_frames_per_cycle];
+	unsigned char received_frames[MAX_FRAME_SIZE * app_config.lldp_num_frames_per_cycle];
 	const bool mirror_enabled = app_config.lldp_rx_mirror_enabled;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
@@ -200,7 +200,7 @@ static void *lldp_rx_thread_routine(void *data)
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	const bool ignore_rx_errors = app_config.lldp_ignore_rx_errors;
 	const bool mirror_enabled = app_config.lldp_rx_mirror_enabled;
-	unsigned char frame[LLDP_TX_FRAME_LENGTH], source[ETH_ALEN];
+	unsigned char frame[MAX_FRAME_SIZE], source[ETH_ALEN];
 	const ssize_t frame_length = app_config.lldp_frame_length;
 	uint64_t sequence_counter = 0;
 	struct timespec wakeup_time;
@@ -379,7 +379,7 @@ int lldp_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(1, LLDP_TX_FRAME_LENGTH);
+	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate Lldp TxFrameData!\n");
 		ret = -ENOMEM;
@@ -388,8 +388,8 @@ int lldp_threads_create(struct thread_context *thread_context)
 
 	if (app_config.lldp_rx_mirror_enabled) {
 		/* Per period the expectation is: LldpNumFramesPerCycle * MAX_FRAME */
-		thread_context->mirror_buffer = ring_buffer_allocate(
-			LLDP_TX_FRAME_LENGTH * app_config.lldp_num_frames_per_cycle);
+		thread_context->mirror_buffer =
+			ring_buffer_allocate(MAX_FRAME_SIZE * app_config.lldp_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Lldp Mirror RingBuffer!\n");
 			ret = -ENOMEM;

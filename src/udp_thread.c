@@ -119,7 +119,7 @@ static void *udp_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const struct udp_thread_configuration *udp_config = thread_context->private_data;
-	unsigned char received_frames[UDP_TX_FRAME_LENGTH * udp_config->udp_num_frames_per_cycle];
+	unsigned char received_frames[MAX_FRAME_SIZE * udp_config->udp_num_frames_per_cycle];
 	const bool mirror_enabled = udp_config->udp_rx_mirror_enabled;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
@@ -200,7 +200,7 @@ static void *udp_rx_thread_routine(void *data)
 	const bool mirror_enabled = udp_config->udp_rx_mirror_enabled;
 	const bool ignore_rx_errors = udp_config->udp_ignore_rx_errors;
 	const ssize_t frame_length = udp_config->udp_frame_length;
-	unsigned char frame[UDP_TX_FRAME_LENGTH];
+	unsigned char frame[MAX_FRAME_SIZE];
 	uint64_t sequence_counter = 0;
 	struct timespec wakeup_time;
 	int socket_fd, ret;
@@ -386,7 +386,7 @@ static int udp_threads_create(struct thread_context *thread_context,
 	init_mutex(&thread_context->data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(1, UDP_TX_FRAME_LENGTH);
+	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate Udp TxFrameData!\n");
 		ret = -ENOMEM;
@@ -396,7 +396,7 @@ static int udp_threads_create(struct thread_context *thread_context,
 	if (udp_thread_config->udp_rx_mirror_enabled) {
 		/* Per period the expectation is: UdpNumFramesPerCycle * MAX_FRAME */
 		thread_context->mirror_buffer = ring_buffer_allocate(
-			UDP_TX_FRAME_LENGTH * udp_thread_config->udp_num_frames_per_cycle);
+			MAX_FRAME_SIZE * udp_thread_config->udp_num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Udp Mirror RingBuffer!\n");
 			ret = -ENOMEM;
