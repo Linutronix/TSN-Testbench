@@ -15,11 +15,6 @@
 
 #include "thread.h"
 
-static inline unsigned char *g2_idx(unsigned char *frame_data, int idx)
-{
-	return frame_data + idx * MAX_FRAME_SIZE;
-}
-
 struct thread_context *generic_l2_threads_create(void);
 void generic_l2_threads_stop(struct thread_context *thread_context);
 void generic_l2_threads_free(struct thread_context *thread_context);

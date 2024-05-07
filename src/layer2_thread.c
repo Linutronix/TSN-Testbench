@@ -80,7 +80,7 @@ static void generic_l2_initialize_frames(unsigned char *frame_data, size_t num_f
 	size_t i;
 
 	for (i = 0; i < num_frames; ++i)
-		generic_l2_initialize_frame(g2_idx(frame_data, i), source, destination);
+		generic_l2_initialize_frame(frame_idx(frame_data, i), source, destination);
 }
 
 static uint64_t generic_l2_get_sequence_counter(unsigned char *frame_data,
@@ -110,7 +110,7 @@ static int generic_l2_send_messages(int socket_fd, struct sockaddr_ll *destinati
 	for (i = 0; i < num_frames; i++) {
 		unsigned char *frame;
 
-		frame = mirror_enabled ? frame_data + i * frame_length : g2_idx(frame_data, i);
+		frame = mirror_enabled ? frame_data + i * frame_length : frame_idx(frame_data, i);
 		iovecs[i].iov_base = frame;
 		iovecs[i].iov_len = frame_length;
 		msgs[i].msg_hdr.msg_iov = &iovecs[i];
@@ -194,7 +194,7 @@ static int generic_l2_gen_and_send_frames(unsigned char *frame_data, size_t num_
 
 	/* Adjust meta data */
 	for (i = 0; i < num_frames_per_cycle; i++) {
-		l2 = (struct generic_l2_header *)(g2_idx(frame_data, i) + sizeof(*eth));
+		l2 = (struct generic_l2_header *)(frame_idx(frame_data, i) + sizeof(*eth));
 		sequence_counter_to_meta_data(&l2->meta_data, sequence_counter_begin + i,
 					      num_frames_per_cycle);
 	}
@@ -569,7 +569,7 @@ static void *generic_l2_rx_thread_routine(void *data)
 			memset(msgs, '\0',
 			       app_config.generic_l2_num_frames_per_cycle * sizeof(struct mmsghdr));
 			for (i = 0; i < app_config.generic_l2_num_frames_per_cycle; i++) {
-				iovecs[i].iov_base = g2_idx(frames, i);
+				iovecs[i].iov_base = frame_idx(frames, i);
 				iovecs[i].iov_len = MAX_FRAME_SIZE;
 				msgs[i].msg_hdr.msg_iov = &iovecs[i];
 				msgs[i].msg_hdr.msg_iovlen = 1;
@@ -591,7 +591,7 @@ static void *generic_l2_rx_thread_routine(void *data)
 
 			/* Process received frames. */
 			for (i = 0; i < len; i++)
-				generic_l2_rx_frame(thread_context, g2_idx(frames, i),
+				generic_l2_rx_frame(thread_context, frame_idx(frames, i),
 						    msgs[i].msg_len);
 		}
 	}

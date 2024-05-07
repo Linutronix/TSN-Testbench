@@ -21,6 +21,11 @@
 
 #define MAX_FRAME_SIZE XDP_FRAME_SIZE
 
+static inline unsigned char *frame_idx(unsigned char *frame_data, int idx)
+{
+	return frame_data + idx * MAX_FRAME_SIZE;
+}
+
 struct ring_buffer;
 struct xdp_socket;
 struct security_context;
