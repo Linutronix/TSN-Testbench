@@ -210,16 +210,13 @@ struct log_thread_context *log_thread_create(void)
 	struct log_thread_context *log_context;
 	int ret;
 
-	log_context = malloc(sizeof(*log_context));
+	log_context = calloc(1, sizeof(*log_context));
 	if (!log_context)
 		return NULL;
 
-	memset(log_context, '\0', sizeof(*log_context));
-
-	log_context->log_data = malloc(LOG_BUFFER_SIZE);
+	log_context->log_data = calloc(LOG_BUFFER_SIZE, sizeof(char));
 	if (!log_context->log_data)
 		goto err_log_data;
-	memset(log_context->log_data, '\0', LOG_BUFFER_SIZE);
 
 	log_context->log_ring_buffer = global_log_ring_buffer;
 

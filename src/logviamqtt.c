@@ -235,11 +235,9 @@ struct log_via_mqtt_thread_context *log_via_mqtt_thread_create(void)
 	if (!app_config.log_via_mqtt)
 		return NULL;
 
-	mqtt_context = malloc(sizeof(*mqtt_context));
+	mqtt_context = calloc(1, sizeof(*mqtt_context));
 	if (!mqtt_context)
 		return NULL;
-
-	memset(mqtt_context, '\0', sizeof(*mqtt_context));
 
 	init_val = log_via_mqtt_init();
 	if (init_val != 0)

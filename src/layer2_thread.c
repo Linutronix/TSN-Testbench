@@ -650,11 +650,9 @@ struct thread_context *generic_l2_threads_create(void)
 	char thread_name[128];
 	int ret;
 
-	thread_context = malloc(sizeof(*thread_context));
+	thread_context = calloc(1, sizeof(*thread_context));
 	if (!thread_context)
 		return NULL;
-
-	memset(thread_context, '\0', sizeof(*thread_context));
 
 	if (!CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2))
 		goto out;

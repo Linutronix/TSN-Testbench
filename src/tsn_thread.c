@@ -943,11 +943,10 @@ int tsn_low_threads_create(struct thread_context *tsn_thread_context)
 {
 	struct tsn_thread_configuration *tsn_config;
 
-	tsn_config = malloc(sizeof(*tsn_config));
+	tsn_config = calloc(1, sizeof(*tsn_config));
 	if (!tsn_config)
 		return -ENOMEM;
 
-	memset(tsn_config, '\0', sizeof(*tsn_config));
 	tsn_config->frame_type = TSN_LOW_FRAME_TYPE;
 	tsn_config->tsn_suffix = "Low";
 	tsn_config->tsn_rx_mirror_enabled = app_config.tsn_low_rx_mirror_enabled;
@@ -1006,11 +1005,10 @@ int tsn_high_threads_create(struct thread_context *tsn_thread_context)
 {
 	struct tsn_thread_configuration *tsn_config;
 
-	tsn_config = malloc(sizeof(*tsn_config));
+	tsn_config = calloc(1, sizeof(*tsn_config));
 	if (!tsn_config)
 		return -ENOMEM;
 
-	memset(tsn_config, '\0', sizeof(*tsn_config));
 	tsn_config->frame_type = TSN_HIGH_FRAME_TYPE;
 	tsn_config->tsn_suffix = "High";
 	tsn_config->tsn_rx_mirror_enabled = app_config.tsn_high_rx_mirror_enabled;

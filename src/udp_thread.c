@@ -497,11 +497,10 @@ int udp_low_threads_create(struct thread_context *udp_thread_context)
 {
 	struct udp_thread_configuration *udp_config;
 
-	udp_config = malloc(sizeof(*udp_config));
+	udp_config = calloc(1, sizeof(*udp_config));
 	if (!udp_config)
 		return -ENOMEM;
 
-	memset(udp_config, '\0', sizeof(*udp_config));
 	udp_config->frame_type = UDP_LOW_FRAME_TYPE;
 	udp_config->udp_suffix = "Low";
 	udp_config->udp_rx_mirror_enabled = app_config.udp_low_rx_mirror_enabled;
@@ -542,11 +541,10 @@ int udp_high_threads_create(struct thread_context *udp_thread_context)
 {
 	struct udp_thread_configuration *udp_config;
 
-	udp_config = malloc(sizeof(*udp_config));
+	udp_config = calloc(1, sizeof(*udp_config));
 	if (!udp_config)
 		return -ENOMEM;
 
-	memset(udp_config, '\0', sizeof(*udp_config));
 	udp_config->frame_type = UDP_HIGH_FRAME_TYPE;
 	udp_config->udp_suffix = "High";
 	udp_config->udp_rx_mirror_enabled = app_config.udp_high_rx_mirror_enabled;

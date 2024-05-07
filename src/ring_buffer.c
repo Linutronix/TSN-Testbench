@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -14,20 +14,17 @@
 
 struct ring_buffer *ring_buffer_allocate(size_t buffer_size)
 {
-	struct ring_buffer *ring_buffer = malloc(sizeof(*ring_buffer));
+	struct ring_buffer *ring_buffer;
 
+	ring_buffer = calloc(1, sizeof(*ring_buffer));
 	if (!ring_buffer)
 		return NULL;
 
-	memset(ring_buffer, '\0', sizeof(*ring_buffer));
-
-	ring_buffer->data = malloc(buffer_size);
+	ring_buffer->data = calloc(buffer_size, sizeof(char));
 	if (!ring_buffer->data) {
 		free(ring_buffer);
 		return NULL;
 	}
-
-	memset(ring_buffer->data, '\0', buffer_size);
 
 	ring_buffer->buffer_size = buffer_size;
 	ring_buffer->buffer_write_pointer = ring_buffer->data;

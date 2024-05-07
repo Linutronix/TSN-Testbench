@@ -166,10 +166,9 @@ struct xdp_socket *xdp_open_socket(const char *interface, const char *xdp_progra
 	int ret, i, fd;
 	uint32_t idx;
 
-	xsk = malloc(sizeof(*xsk));
+	xsk = calloc(1, sizeof(*xsk));
 	if (!xsk)
 		return NULL;
-	memset(xsk, '\0', sizeof(*xsk));
 
 	ret = xdp_load_program(xsk, interface, xdp_program, skb_mode);
 	if (ret)
