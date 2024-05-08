@@ -26,13 +26,8 @@ static bool log_rtt;
 static FILE *file_tracing_on;
 static FILE *file_trace_marker;
 
-static const char *stat_frame_type_names[NUM_FRAME_TYPES] = {
+const char *stat_frame_type_names[NUM_FRAME_TYPES] = {
 	"TsnHigh", "TsnLow", "Rtc", "Rta", "Dcp", "Lldp", "UdpHigh", "UdpLow", "GenericL2"};
-
-const char *stat_frame_type_to_string(enum stat_frame_type frame_type)
-{
-	return stat_frame_type_names[frame_type];
-}
 
 /*
  * Keep 1024 periods of backlog available. If a frame is received later than 1024 periods after

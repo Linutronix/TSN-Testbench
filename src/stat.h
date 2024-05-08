@@ -37,6 +37,13 @@ static inline bool stat_frame_type_is_real_time(enum stat_frame_type frame_type)
 	}
 }
 
+extern const char *stat_frame_type_names[NUM_FRAME_TYPES];
+
+static inline const char *stat_frame_type_to_string(enum stat_frame_type frame_type)
+{
+	return stat_frame_type_names[frame_type];
+}
+
 struct statistics {
 	uint64_t first_time_stamp;
 	uint64_t last_time_stamp;
