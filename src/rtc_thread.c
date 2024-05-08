@@ -35,8 +35,8 @@ static void rtc_initialize_frames(unsigned char *frame_data, size_t num_frames,
 
 	for (i = 0; i < num_frames; ++i)
 		initialize_profinet_frame(
-			app_config.rtc_security_mode, frame_data + i * MAX_FRAME_SIZE,
-			MAX_FRAME_SIZE, source, destination, app_config.rtc_payload_pattern,
+			app_config.rtc_security_mode, frame_idx(frame_data, i), MAX_FRAME_SIZE,
+			source, destination, app_config.rtc_payload_pattern,
 			app_config.rtc_payload_pattern_length,
 			app_config.rtc_vid | RTC_PCP_VALUE << VLAN_PCP_SHIFT, 0x8000);
 }
@@ -87,7 +87,7 @@ static void rtc_gen_and_send_frame(struct security_context *security_context,
 	frame_config.mode = app_config.rtc_security_mode;
 	frame_config.security_context = security_context;
 	frame_config.iv_prefix = (const unsigned char *)app_config.rtc_security_iv_prefix;
-	frame_config.payload_pattern = frame_data + 1 * MAX_FRAME_SIZE +
+	frame_config.payload_pattern = frame_idx(frame_data, 1) +
 				       sizeof(struct vlan_ethernet_header) +
 				       sizeof(struct profinet_secure_header);
 	frame_config.payload_pattern_length = frame_length - sizeof(struct vlan_ethernet_header) -
@@ -115,7 +115,7 @@ static void rtc_gen_and_send_frame(struct security_context *security_context,
 }
 
 static void rtc_gen_and_send_xdp_frames(struct security_context *security_context,
-					struct xdp_socket *xsk, const unsigned char *tx_frame_data,
+					struct xdp_socket *xsk, unsigned char *tx_frame_data,
 					size_t num_frames_per_cycle, uint64_t sequence_counter,
 					uint32_t *frame_number)
 {
@@ -126,8 +126,7 @@ static void rtc_gen_and_send_xdp_frames(struct security_context *security_contex
 	xdp.mode = app_config.rtc_security_mode;
 	xdp.security_context = security_context;
 	xdp.iv_prefix = (const unsigned char *)app_config.rtc_security_iv_prefix;
-	xdp.payload_pattern = tx_frame_data + 1 * MAX_FRAME_SIZE +
-			      sizeof(struct vlan_ethernet_header) +
+	xdp.payload_pattern = frame_idx(tx_frame_data, 1) + sizeof(struct vlan_ethernet_header) +
 			      sizeof(struct profinet_secure_header);
 	xdp.payload_pattern_length =
 		app_config.rtc_frame_length - sizeof(struct vlan_ethernet_header) -

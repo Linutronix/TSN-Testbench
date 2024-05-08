@@ -26,6 +26,7 @@
 #include "net_def.h"
 #include "security.h"
 #include "stat.h"
+#include "thread.h"
 #include "tsn_thread.h"
 #include "tx_time.h"
 #include "utils.h"
@@ -39,8 +40,8 @@ static void tsn_initialize_frames(const struct tsn_thread_configuration *tsn_con
 
 	for (i = 0; i < num_frames; ++i)
 		initialize_profinet_frame(
-			tsn_config->tsn_security_mode, frame_data + i * MAX_FRAME_SIZE,
-			MAX_FRAME_SIZE, source, destination, tsn_config->tsn_payload_pattern,
+			tsn_config->tsn_security_mode, frame_idx(frame_data, i), MAX_FRAME_SIZE,
+			source, destination, tsn_config->tsn_payload_pattern,
 			tsn_config->tsn_payload_pattern_length,
 			tsn_config->vlan_id | tsn_config->vlan_pcp << VLAN_PCP_SHIFT,
 			tsn_config->frame_id_range_start);
@@ -147,7 +148,7 @@ static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_co
 	frame_config.mode = tsn_config->tsn_security_mode;
 	frame_config.security_context = security_context;
 	frame_config.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
-	frame_config.payload_pattern = frame_data + 1 * MAX_FRAME_SIZE +
+	frame_config.payload_pattern = frame_idx(frame_data, 1) +
 				       sizeof(struct vlan_ethernet_header) +
 				       sizeof(struct profinet_secure_header);
 	frame_config.payload_pattern_length =
@@ -176,7 +177,7 @@ static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_co
 
 static void tsn_gen_and_send_xdp_frames(const struct tsn_thread_configuration *tsn_config,
 					struct security_context *security_context,
-					struct xdp_socket *xsk, const unsigned char *tx_frame_data,
+					struct xdp_socket *xsk, unsigned char *tx_frame_data,
 					uint64_t sequence_counter, uint32_t *frame_number)
 {
 	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
@@ -186,8 +187,7 @@ static void tsn_gen_and_send_xdp_frames(const struct tsn_thread_configuration *t
 	xdp.mode = tsn_config->tsn_security_mode;
 	xdp.security_context = security_context;
 	xdp.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
-	xdp.payload_pattern = tx_frame_data + 1 * MAX_FRAME_SIZE +
-			      sizeof(struct vlan_ethernet_header) +
+	xdp.payload_pattern = frame_idx(tx_frame_data, 1) + sizeof(struct vlan_ethernet_header) +
 			      sizeof(struct profinet_secure_header);
 	xdp.payload_pattern_length =
 		tsn_config->tsn_frame_length - sizeof(struct vlan_ethernet_header) -
