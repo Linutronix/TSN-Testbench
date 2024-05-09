@@ -20,7 +20,7 @@
 struct tsn_thread_configuration {
 	/* TSN configuration */
 	enum stat_frame_type frame_type;
-	const char *tsn_suffix;
+	const char *traffic_class;
 	bool tsn_tx_enabled;
 	bool tsn_rx_enabled;
 	bool tsn_rx_mirror_enabled;

@@ -57,18 +57,15 @@ static int tsn_send_message(const struct tsn_thread_configuration *tsn_config, i
 	if (tsn_config->tsn_tx_time_enabled) {
 		/* Send message but with specified transmission time. */
 		char control[CMSG_SPACE(sizeof(uint64_t))] = {0};
-		char traffic_class[128] = {0};
 		struct cmsghdr *cmsg;
 		struct msghdr msg;
 		struct iovec iov;
 		uint64_t tx_time;
 
-		snprintf(traffic_class, sizeof(traffic_class), "Tsn%s", tsn_config->tsn_suffix);
-
-		tx_time =
-			tx_time_get_frame_tx_time(wakeup_time, sequence_counter, duration,
-						  tsn_config->tsn_num_frames_per_cycle,
-						  tsn_config->tsn_tx_time_offset_ns, traffic_class);
+		tx_time = tx_time_get_frame_tx_time(wakeup_time, sequence_counter, duration,
+						    tsn_config->tsn_num_frames_per_cycle,
+						    tsn_config->tsn_tx_time_offset_ns,
+						    tsn_config->traffic_class);
 
 		iov.iov_base = frame_data;
 		iov.iov_len = frame_length;
@@ -94,8 +91,8 @@ static int tsn_send_message(const struct tsn_thread_configuration *tsn_config, i
 	}
 
 	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "Tsn%sTx: send() for %" PRIu64 " failed: %s\n",
-			    tsn_config->tsn_suffix, sequence_counter, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sTx: send() for %" PRIu64 " failed: %s\n",
+			    tsn_config->traffic_class, sequence_counter, strerror(errno));
 		return -errno;
 	}
 
@@ -162,8 +159,8 @@ static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_co
 
 	err = prepare_frame_for_tx(&frame_config);
 	if (err)
-		log_message(LOG_LEVEL_ERROR, "Tsn%sTx: Failed to prepare frame for Tx!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_ERROR, "%sTx: Failed to prepare frame for Tx!\n",
+			    tsn_config->traffic_class);
 
 	/* Send it */
 	ret = tsn_send_message(tsn_config, socket_fd, destination, frame_data,
@@ -223,22 +220,22 @@ static void *tsn_tx_thread_routine(void *data)
 
 	ret = get_interface_mac_address(tsn_config->tsn_interface, source, ETH_ALEN);
 	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "Tsn%sTx: Failed to get Source MAC address!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_ERROR, "%sTx: Failed to get Source MAC address!\n",
+			    tsn_config->traffic_class);
 		return NULL;
 	}
 
 	ret = get_interface_link_speed(tsn_config->tsn_interface, &link_speed);
 	if (ret) {
-		log_message(LOG_LEVEL_ERROR, "Tsn%sTx: Failed to get link speed!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_ERROR, "%sTx: Failed to get link speed!\n",
+			    tsn_config->traffic_class);
 		return NULL;
 	}
 
 	if_index = if_nametoindex(tsn_config->tsn_interface);
 	if (!if_index) {
-		log_message(LOG_LEVEL_ERROR, "Tsn%sTx: if_nametoindex() failed!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_ERROR, "%sTx: if_nametoindex() failed!\n",
+			    tsn_config->traffic_class);
 		return NULL;
 	}
 
@@ -257,9 +254,8 @@ static void *tsn_tx_thread_routine(void *data)
 
 	ret = get_thread_start_time(app_config.application_tx_base_offset_ns, &wakeup_time);
 	if (ret) {
-		log_message(LOG_LEVEL_ERROR,
-			    "Tsn%sTx: Failed to calculate thread start time: %s!\n",
-			    tsn_config->tsn_suffix, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sTx: Failed to calculate thread start time: %s!\n",
+			    tsn_config->traffic_class, strerror(errno));
 		return NULL;
 	}
 
@@ -281,9 +277,8 @@ static void *tsn_tx_thread_routine(void *data)
 			} while (ret == EINTR);
 
 			if (ret) {
-				log_message(LOG_LEVEL_ERROR,
-					    "Tsn%sTx: clock_nanosleep() failed: %s\n",
-					    tsn_config->tsn_suffix, strerror(ret));
+				log_message(LOG_LEVEL_ERROR, "%sTx: clock_nanosleep() failed: %s\n",
+					    tsn_config->traffic_class, strerror(ret));
 				return NULL;
 			}
 		}
@@ -348,8 +343,8 @@ static void *tsn_xdp_tx_thread_routine(void *data)
 
 	ret = get_interface_mac_address(tsn_config->tsn_interface, source, ETH_ALEN);
 	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "Tsn%sTx: Failed to get Source MAC address!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_ERROR, "%sTx: Failed to get Source MAC address!\n",
+			    tsn_config->traffic_class);
 		return NULL;
 	}
 
@@ -367,9 +362,8 @@ static void *tsn_xdp_tx_thread_routine(void *data)
 
 	ret = get_thread_start_time(app_config.application_tx_base_offset_ns, &wakeup_time);
 	if (ret) {
-		log_message(LOG_LEVEL_ERROR,
-			    "Tsn%sTx: Failed to calculate thread start time: %s!\n",
-			    tsn_config->tsn_suffix, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sTx: Failed to calculate thread start time: %s!\n",
+			    tsn_config->traffic_class, strerror(errno));
 		return NULL;
 	}
 
@@ -389,9 +383,8 @@ static void *tsn_xdp_tx_thread_routine(void *data)
 			} while (ret == EINTR);
 
 			if (ret) {
-				log_message(LOG_LEVEL_ERROR,
-					    "Tsn%sTx: clock_nanosleep() failed: %s\n",
-					    tsn_config->tsn_suffix, strerror(ret));
+				log_message(LOG_LEVEL_ERROR, "%sTx: clock_nanosleep() failed: %s\n",
+					    tsn_config->traffic_class, strerror(ret));
 				return NULL;
 			}
 		}
@@ -469,8 +462,8 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	uint16_t proto;
 
 	if (len < sizeof(struct vlan_ethernet_header)) {
-		log_message(LOG_LEVEL_WARNING, "Tsn%sRx: Too small frame received!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_WARNING, "%sRx: Too small frame received!\n",
+			    tsn_config->traffic_class);
 		return -EINVAL;
 	}
 
@@ -489,15 +482,15 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	}
 
 	if (proto != htons(ETH_P_PROFINET_RT)) {
-		log_message(LOG_LEVEL_WARNING, "Tsn%sRx: Not a Profinet frame received!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_WARNING, "%sRx: Not a Profinet frame received!\n",
+			    tsn_config->traffic_class);
 		return -EINVAL;
 	}
 
 	/* Check frame length: VLAN tag might be stripped or not. Check it. */
 	if (len != expected_frame_length) {
-		log_message(LOG_LEVEL_WARNING, "Tsn%sRx: Frame with wrong length received!\n",
-			    tsn_config->tsn_suffix);
+		log_message(LOG_LEVEL_WARNING, "%sRx: Frame with wrong length received!\n",
+			    tsn_config->traffic_class);
 		return -EINVAL;
 	}
 
@@ -541,8 +534,8 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 				       (unsigned char *)&iv, NULL);
 		if (ret)
 			log_message(LOG_LEVEL_WARNING,
-				    "Tsn%sRx: frame[%" PRIu64 "] Not authentificated\n",
-				    tsn_config->tsn_suffix, sequence_counter);
+				    "%sRx: frame[%" PRIu64 "] Not authentificated\n",
+				    tsn_config->traffic_class, sequence_counter);
 	} else {
 		unsigned char *begin_of_security_checksum;
 		unsigned char *begin_of_ciphertext;
@@ -579,9 +572,8 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 				       begin_of_security_checksum, (unsigned char *)&iv, plaintext);
 		if (ret)
 			log_message(LOG_LEVEL_WARNING,
-				    "Tsn%sRx: frame[%" PRIu64
-				    "] Not authentificated and decrypted\n",
-				    tsn_config->tsn_suffix, sequence_counter);
+				    "%sRx: frame[%" PRIu64 "] Not authentificated and decrypted\n",
+				    tsn_config->traffic_class, sequence_counter);
 
 		/* plaintext points to the decrypted payload */
 		p = plaintext;
@@ -595,24 +587,25 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 			    payload_mismatch, frame_id_mismatch);
 
 	if (frame_id_mismatch)
-		log_message(
-			LOG_LEVEL_WARNING, "Tsn%sRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n",
-			tsn_config->tsn_suffix, sequence_counter, tsn_config->frame_id_range_start);
+		log_message(LOG_LEVEL_WARNING,
+			    "%sRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n",
+			    tsn_config->traffic_class, sequence_counter,
+			    tsn_config->frame_id_range_start);
 
 	if (out_of_order) {
 		if (!ignore_rx_errors)
 			log_message(LOG_LEVEL_WARNING,
-				    "Tsn%sRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64
+				    "%sRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64
 				    "!\n",
-				    tsn_config->tsn_suffix, sequence_counter,
+				    tsn_config->traffic_class, sequence_counter,
 				    thread_context->rx_sequence_counter);
 		thread_context->rx_sequence_counter++;
 	}
 
 	if (payload_mismatch)
 		log_message(LOG_LEVEL_WARNING,
-			    "Tsn%sRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
-			    tsn_config->tsn_suffix, sequence_counter);
+			    "%sRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
+			    tsn_config->traffic_class, sequence_counter);
 
 	thread_context->rx_sequence_counter++;
 
@@ -662,9 +655,8 @@ static void *tsn_rx_thread_routine(void *data)
 
 	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
 	if (ret) {
-		log_message(LOG_LEVEL_ERROR,
-			    "Tsn%sRx: Failed to calculate thread start time: %s!\n",
-			    tsn_config->tsn_suffix, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sRx: Failed to calculate thread start time: %s!\n",
+			    tsn_config->traffic_class, strerror(errno));
 		return NULL;
 	}
 
@@ -678,8 +670,8 @@ static void *tsn_rx_thread_routine(void *data)
 		} while (ret == EINTR);
 
 		if (ret) {
-			log_message(LOG_LEVEL_ERROR, "Tsn%sRx: clock_nanosleep() failed: %s\n",
-				    tsn_config->tsn_suffix, strerror(ret));
+			log_message(LOG_LEVEL_ERROR, "%sRx: clock_nanosleep() failed: %s\n",
+				    tsn_config->traffic_class, strerror(ret));
 			return NULL;
 		}
 
@@ -689,8 +681,8 @@ static void *tsn_rx_thread_routine(void *data)
 
 			len = recv(socket_fd, frame, sizeof(frame), 0);
 			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-				log_message(LOG_LEVEL_ERROR, "Tsn%sRx: recv() failed: %s\n",
-					    tsn_config->tsn_suffix, strerror(errno));
+				log_message(LOG_LEVEL_ERROR, "%sRx: recv() failed: %s\n",
+					    tsn_config->traffic_class, strerror(errno));
 				continue;
 			}
 			if (len == 0)
@@ -723,9 +715,8 @@ static void *tsn_xdp_rx_thread_routine(void *data)
 
 	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
 	if (ret) {
-		log_message(LOG_LEVEL_ERROR,
-			    "Tsn%sRx: Failed to calculate thread start time: %s!\n",
-			    tsn_config->tsn_suffix, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sRx: Failed to calculate thread start time: %s!\n",
+			    tsn_config->traffic_class, strerror(errno));
 		return NULL;
 	}
 
@@ -741,8 +732,8 @@ static void *tsn_xdp_rx_thread_routine(void *data)
 		} while (ret == EINTR);
 
 		if (ret) {
-			log_message(LOG_LEVEL_ERROR, "Tsn%sRx: clock_nanosleep() failed: %s\n",
-				    tsn_config->tsn_suffix, strerror(ret));
+			log_message(LOG_LEVEL_ERROR, "%sRx: clock_nanosleep() failed: %s\n",
+				    tsn_config->traffic_class, strerror(ret));
 			return NULL;
 		}
 
@@ -762,11 +753,13 @@ int tsn_threads_create(struct thread_context *thread_context,
 	char thread_name[128];
 	int ret;
 
-	if (!strcmp(tsn_config->tsn_suffix, "High") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high)) {
+	if (tsn_config->frame_type == TSN_HIGH_FRAME_TYPE &&
+	    !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high)) {
 		ret = 0;
 		goto out;
 	}
-	if (!strcmp(tsn_config->tsn_suffix, "Low") && !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_low)) {
+	if (tsn_config->frame_type == TSN_LOW_FRAME_TYPE &&
+	    !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_low)) {
 		ret = 0;
 		goto out;
 	}
@@ -842,7 +835,7 @@ int tsn_threads_create(struct thread_context *thread_context,
 		thread_context->rx_security_context = NULL;
 	}
 
-	snprintf(thread_name, sizeof(thread_name), "Tsn%sTxThread", tsn_config->tsn_suffix);
+	snprintf(thread_name, sizeof(thread_name), "%sTxThread", tsn_config->traffic_class);
 
 	ret = create_rt_thread(&thread_context->tx_task_id, thread_name,
 			       tsn_config->tsn_tx_thread_priority, tsn_config->tsn_tx_thread_cpu,
@@ -854,7 +847,7 @@ int tsn_threads_create(struct thread_context *thread_context,
 		goto err_thread;
 	}
 
-	snprintf(thread_name, sizeof(thread_name), "Tsn%sRxThread", tsn_config->tsn_suffix);
+	snprintf(thread_name, sizeof(thread_name), "%sRxThread", tsn_config->traffic_class);
 
 	ret = create_rt_thread(&thread_context->rx_task_id, thread_name,
 			       tsn_config->tsn_rx_thread_priority, tsn_config->tsn_rx_thread_cpu,
@@ -948,7 +941,7 @@ int tsn_low_threads_create(struct thread_context *tsn_thread_context)
 		return -ENOMEM;
 
 	tsn_config->frame_type = TSN_LOW_FRAME_TYPE;
-	tsn_config->tsn_suffix = "Low";
+	tsn_config->traffic_class = stat_frame_type_to_string(TSN_LOW_FRAME_TYPE);
 	tsn_config->tsn_rx_mirror_enabled = app_config.tsn_low_rx_mirror_enabled;
 	tsn_config->tsn_xdp_enabled = app_config.tsn_low_xdp_enabled;
 	tsn_config->tsn_xdp_skb_mode = app_config.tsn_low_xdp_skb_mode;
@@ -1010,7 +1003,7 @@ int tsn_high_threads_create(struct thread_context *tsn_thread_context)
 		return -ENOMEM;
 
 	tsn_config->frame_type = TSN_HIGH_FRAME_TYPE;
-	tsn_config->tsn_suffix = "High";
+	tsn_config->traffic_class = stat_frame_type_to_string(TSN_HIGH_FRAME_TYPE);
 	tsn_config->tsn_rx_mirror_enabled = app_config.tsn_high_rx_mirror_enabled;
 	tsn_config->tsn_xdp_enabled = app_config.tsn_high_xdp_enabled;
 	tsn_config->tsn_xdp_skb_mode = app_config.tsn_high_xdp_skb_mode;
