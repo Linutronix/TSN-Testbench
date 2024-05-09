@@ -19,7 +19,7 @@
 struct udp_thread_configuration {
 	/* UDP configuration */
 	enum stat_frame_type frame_type;
-	const char *udp_suffix;
+	const char *traffic_class;
 	bool udp_rx_mirror_enabled;
 	bool udp_ignore_rx_errors;
 	uint64_t udp_burst_period_ns;

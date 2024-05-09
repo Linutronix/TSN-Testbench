@@ -72,8 +72,8 @@ static void udp_send_frame(const struct udp_thread_configuration *udp_config,
 		break;
 	}
 	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "Udp%sTx: send() for %" PRIu64 " failed: %s\n",
-			    udp_config->udp_suffix, sequence_counter, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sTx: send() for %" PRIu64 " failed: %s\n",
+			    udp_config->traffic_class, sequence_counter, strerror(errno));
 		return;
 	}
 
@@ -107,8 +107,8 @@ static void udp_gen_and_send_frame(const struct udp_thread_configuration *udp_co
 		ret = -EINVAL;
 	}
 	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "Udp%sTx: send() for %" PRIu64 " failed: %s\n",
-			    udp_config->udp_suffix, sequence_counter, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sTx: send() for %" PRIu64 " failed: %s\n",
+			    udp_config->traffic_class, sequence_counter, strerror(errno));
 		return;
 	}
 
@@ -209,9 +209,8 @@ static void *udp_rx_thread_routine(void *data)
 
 	ret = get_thread_start_time(app_config.application_rx_base_offset_ns, &wakeup_time);
 	if (ret) {
-		log_message(LOG_LEVEL_ERROR,
-			    "Udp%sRx: Failed to calculate thread start time: %s!\n",
-			    udp_config->udp_suffix, strerror(errno));
+		log_message(LOG_LEVEL_ERROR, "%sRx: Failed to calculate thread start time: %s!\n",
+			    udp_config->traffic_class, strerror(errno));
 		return NULL;
 	}
 
@@ -225,8 +224,8 @@ static void *udp_rx_thread_routine(void *data)
 		} while (ret == EINTR);
 
 		if (ret) {
-			log_message(LOG_LEVEL_ERROR, "Udp%sRx: clock_nanosleep() failed: %s\n",
-				    udp_config->udp_suffix, strerror(ret));
+			log_message(LOG_LEVEL_ERROR, "%sRx: clock_nanosleep() failed: %s\n",
+				    udp_config->traffic_class, strerror(ret));
 			return NULL;
 		}
 
@@ -239,8 +238,8 @@ static void *udp_rx_thread_routine(void *data)
 
 			len = recv(socket_fd, frame, sizeof(frame), 0);
 			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-				log_message(LOG_LEVEL_ERROR, "Udp%sRx: recv() failed: %s\n",
-					    udp_config->udp_suffix, strerror(errno));
+				log_message(LOG_LEVEL_ERROR, "%sRx: recv() failed: %s\n",
+					    udp_config->traffic_class, strerror(errno));
 				continue;
 			}
 			if (len == 0)
@@ -253,8 +252,8 @@ static void *udp_rx_thread_routine(void *data)
 			/* Process received packet. */
 			if (len != frame_length) {
 				log_message(LOG_LEVEL_WARNING,
-					    "Udp%sRx: Frame with wrong length received!\n",
-					    udp_config->udp_suffix);
+					    "%sRx: Frame with wrong length received!\n",
+					    udp_config->traffic_class);
 				continue;
 			}
 
@@ -277,9 +276,9 @@ static void *udp_rx_thread_routine(void *data)
 			if (out_of_order) {
 				if (!ignore_rx_errors)
 					log_message(LOG_LEVEL_WARNING,
-						    "Udp%sRx: frame[%" PRIu64
+						    "%sRx: frame[%" PRIu64
 						    "] SequenceCounter mismatch: %" PRIu64 "!\n",
-						    udp_config->udp_suffix, rx_sequence_counter,
+						    udp_config->traffic_class, rx_sequence_counter,
 						    sequence_counter);
 				sequence_counter++;
 			}
@@ -288,9 +287,8 @@ static void *udp_rx_thread_routine(void *data)
 
 			if (payload_mismatch)
 				log_message(LOG_LEVEL_WARNING,
-					    "Udp%sRx: frame[%" PRIu64
-					    "] Payload Pattern mismatch!\n",
-					    udp_config->udp_suffix, rx_sequence_counter);
+					    "%sRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
+					    udp_config->traffic_class, rx_sequence_counter);
 
 			/* If mirror enabled, assemble and store the frame for Tx later. */
 			if (!mirror_enabled)
@@ -326,8 +324,8 @@ static void *udp_tx_generation_thread_routine(void *data)
 	ret = get_thread_start_time(0, &wakeup_time);
 	if (ret) {
 		log_message(LOG_LEVEL_ERROR,
-			    "Udp%sTxGen: Failed to calculate thread start time: %s!\n",
-			    udp_config->udp_suffix, strerror(errno));
+			    "%sTxGen: Failed to calculate thread start time: %s!\n",
+			    udp_config->traffic_class, strerror(errno));
 		return NULL;
 	}
 
@@ -341,8 +339,8 @@ static void *udp_tx_generation_thread_routine(void *data)
 		} while (ret == EINTR);
 
 		if (ret) {
-			log_message(LOG_LEVEL_ERROR, "Udp%sTxGen: clock_nanosleep() failed: %s\n",
-				    udp_config->udp_suffix, strerror(ret));
+			log_message(LOG_LEVEL_ERROR, "%sTxGen: clock_nanosleep() failed: %s\n",
+				    udp_config->traffic_class, strerror(ret));
 			return NULL;
 		}
 
@@ -361,12 +359,12 @@ static int udp_threads_create(struct thread_context *thread_context,
 	char thread_name[128];
 	int ret;
 
-	if (!strcmp(udp_thread_config->udp_suffix, "High") &&
+	if (udp_thread_config->frame_type == UDP_HIGH_FRAME_TYPE &&
 	    !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_high)) {
 		ret = 0;
 		goto out;
 	}
-	if (!strcmp(udp_thread_config->udp_suffix, "Low") &&
+	if (udp_thread_config->frame_type == UDP_LOW_FRAME_TYPE &&
 	    !CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_low)) {
 		ret = 0;
 		goto out;
@@ -404,7 +402,7 @@ static int udp_threads_create(struct thread_context *thread_context,
 		}
 	}
 
-	snprintf(thread_name, sizeof(thread_name), "Udp%sTxThread", udp_thread_config->udp_suffix);
+	snprintf(thread_name, sizeof(thread_name), "%sTxThread", udp_thread_config->traffic_class);
 
 	ret = create_rt_thread(
 		&thread_context->tx_task_id, thread_name, udp_thread_config->udp_tx_thread_priority,
@@ -414,8 +412,8 @@ static int udp_threads_create(struct thread_context *thread_context,
 		goto err_thread;
 	}
 
-	snprintf(thread_name, sizeof(thread_name), "Udp%sTxGenThread",
-		 udp_thread_config->udp_suffix);
+	snprintf(thread_name, sizeof(thread_name), "%sTxGenThread",
+		 udp_thread_config->traffic_class);
 
 	ret = create_rt_thread(&thread_context->tx_gen_task_id, "UdpLowTxGenThread",
 			       udp_thread_config->udp_tx_thread_priority,
@@ -426,7 +424,7 @@ static int udp_threads_create(struct thread_context *thread_context,
 		goto err_thread_txgen;
 	}
 
-	snprintf(thread_name, sizeof(thread_name), "Udp%sRxThread", udp_thread_config->udp_suffix);
+	snprintf(thread_name, sizeof(thread_name), "%sRxThread", udp_thread_config->traffic_class);
 
 	ret = create_rt_thread(
 		&thread_context->rx_task_id, thread_name, udp_thread_config->udp_rx_thread_priority,
@@ -502,7 +500,7 @@ int udp_low_threads_create(struct thread_context *udp_thread_context)
 		return -ENOMEM;
 
 	udp_config->frame_type = UDP_LOW_FRAME_TYPE;
-	udp_config->udp_suffix = "Low";
+	udp_config->traffic_class = stat_frame_type_to_string(UDP_LOW_FRAME_TYPE);
 	udp_config->udp_rx_mirror_enabled = app_config.udp_low_rx_mirror_enabled;
 	udp_config->udp_ignore_rx_errors = app_config.udp_low_ignore_rx_errors;
 	udp_config->udp_burst_period_ns = app_config.udp_low_burst_period_ns;
@@ -546,7 +544,7 @@ int udp_high_threads_create(struct thread_context *udp_thread_context)
 		return -ENOMEM;
 
 	udp_config->frame_type = UDP_HIGH_FRAME_TYPE;
-	udp_config->udp_suffix = "High";
+	udp_config->traffic_class = stat_frame_type_to_string(UDP_HIGH_FRAME_TYPE);
 	udp_config->udp_rx_mirror_enabled = app_config.udp_high_rx_mirror_enabled;
 	udp_config->udp_ignore_rx_errors = app_config.udp_high_ignore_rx_errors;
 	udp_config->udp_burst_period_ns = app_config.udp_high_burst_period_ns;
