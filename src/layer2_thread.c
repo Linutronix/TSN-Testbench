@@ -253,7 +253,7 @@ static void *generic_l2_tx_thread_routine(void *data)
 
 	ret = get_interface_mac_address(app_config.generic_l2_interface, source, ETH_ALEN);
 	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "GenericL2: Failed to get Source MAC address!\n");
+		log_message(LOG_LEVEL_ERROR, "GenericL2Tx: Failed to get Source MAC address!\n");
 		return NULL;
 	}
 

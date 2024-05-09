@@ -317,7 +317,7 @@ void xdp_complete_tx(struct xdp_socket *xsk)
 	ret = xsk_ring_prod__reserve(&xsk->umem.fq, received, &idx_fq);
 	while (ret != received) {
 		if (ret < 0)
-			log_message(LOG_LEVEL_ERROR, "xsk_ring_prod__reserve() failed\n");
+			log_message(LOG_LEVEL_ERROR, "XdpTx: xsk_ring_prod__reserve() failed\n");
 
 		if (xsk->busy_poll_mode || xsk_ring_prod__needs_wakeup(&xsk->umem.fq))
 			recvfrom(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL, NULL);
@@ -437,7 +437,8 @@ unsigned int xdp_receive_frames(struct xdp_socket *xsk, size_t frame_length, boo
 		ret = xsk_ring_prod__reserve(&xsk->tx, received, &idx_tx);
 		while (ret != received) {
 			if (ret < 0)
-				log_message(LOG_LEVEL_ERROR, "xsk_ring_prod__reserve() failed\n");
+				log_message(LOG_LEVEL_ERROR,
+					    "XdpRx: xsk_ring_prod__reserve() failed\n");
 
 			if (xsk->busy_poll_mode || xsk_ring_prod__needs_wakeup(&xsk->tx))
 				recvfrom(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL,
@@ -449,7 +450,8 @@ unsigned int xdp_receive_frames(struct xdp_socket *xsk, size_t frame_length, boo
 		ret = xsk_ring_prod__reserve(&xsk->umem.fq, received, &idx_fq);
 		while (ret != received) {
 			if (ret < 0)
-				log_message(LOG_LEVEL_ERROR, "xsk_ring_prod__reserve() failed\n");
+				log_message(LOG_LEVEL_ERROR,
+					    "XdpRx: xsk_ring_prod__reserve() failed\n");
 
 			if (xsk->busy_poll_mode || xsk_ring_prod__needs_wakeup(&xsk->umem.fq))
 				recvfrom(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL,
