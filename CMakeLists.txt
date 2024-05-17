@@ -75,11 +75,11 @@ add_executable(mirror
 
 option(WITH_MQTT, "Enable/Disable logging via MQTT" OFF)
 if (WITH_MQTT)
-	pkg_search_module(MOSQUITTO libmosquitto REQUIRED)
-	target_link_libraries(reference ${MOSQUITTO_LIBRARIES})
-	target_link_libraries(mirror ${MOSQUITTO_LIBRARIES})
-	target_include_directories(reference PUBLIC ${MOSQUITTO_INCLUDE_DIRS})
-	target_include_directories(mirror PUBLIC ${MOSQUITTO_INCLUDE_DIRS})
+  pkg_search_module(MOSQUITTO libmosquitto REQUIRED)
+  target_link_libraries(reference ${MOSQUITTO_LIBRARIES})
+  target_link_libraries(mirror ${MOSQUITTO_LIBRARIES})
+  target_include_directories(reference PUBLIC ${MOSQUITTO_INCLUDE_DIRS})
+  target_include_directories(mirror PUBLIC ${MOSQUITTO_INCLUDE_DIRS})
 endif()
 
 target_link_libraries(reference Threads::Threads)
