@@ -131,10 +131,10 @@ static void tsn_send_frame(const struct tsn_thread_configuration *tsn_config,
 }
 
 static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_config,
-				   struct security_context *security_context,
-				   unsigned char *frame_data, int socket_fd,
-				   struct sockaddr_ll *destination, uint64_t wakeup_time,
-				   uint64_t sequence_counter, uint64_t duration)
+				   struct thread_context *thread_context, unsigned char *frame_data,
+				   int socket_fd, struct sockaddr_ll *destination,
+				   uint64_t wakeup_time, uint64_t sequence_counter,
+				   uint64_t duration)
 {
 	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
 				    offsetof(struct profinet_rt_header, meta_data);
@@ -143,14 +143,10 @@ static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_co
 	int err;
 
 	frame_config.mode = tsn_config->tsn_security_mode;
-	frame_config.security_context = security_context;
+	frame_config.security_context = thread_context->tx_security_context;
 	frame_config.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
-	frame_config.payload_pattern = frame_idx(frame_data, 1) +
-				       sizeof(struct vlan_ethernet_header) +
-				       sizeof(struct profinet_secure_header);
-	frame_config.payload_pattern_length =
-		tsn_config->tsn_frame_length - sizeof(struct vlan_ethernet_header) -
-		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
+	frame_config.payload_pattern = thread_context->payload_pattern;
+	frame_config.payload_pattern_length = thread_context->payload_pattern_length;
 	frame_config.frame_data = frame_data;
 	frame_config.frame_length = tsn_config->tsn_frame_length;
 	frame_config.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle;
@@ -173,22 +169,19 @@ static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_co
 }
 
 static void tsn_gen_and_send_xdp_frames(const struct tsn_thread_configuration *tsn_config,
-					struct security_context *security_context,
-					struct xdp_socket *xsk, unsigned char *tx_frame_data,
-					uint64_t sequence_counter, uint32_t *frame_number)
+					struct thread_context *thread_context,
+					struct xdp_socket *xsk, uint64_t sequence_counter,
+					uint32_t *frame_number)
 {
 	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
 				    offsetof(struct profinet_rt_header, meta_data);
 	struct xdp_gen_config xdp;
 
 	xdp.mode = tsn_config->tsn_security_mode;
-	xdp.security_context = security_context;
+	xdp.security_context = thread_context->tx_security_context;
 	xdp.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
-	xdp.payload_pattern = frame_idx(tx_frame_data, 1) + sizeof(struct vlan_ethernet_header) +
-			      sizeof(struct profinet_secure_header);
-	xdp.payload_pattern_length =
-		tsn_config->tsn_frame_length - sizeof(struct vlan_ethernet_header) -
-		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
+	xdp.payload_pattern = thread_context->payload_pattern;
+	xdp.payload_pattern_length = thread_context->payload_pattern_length;
 	xdp.frame_length = tsn_config->tsn_frame_length;
 	xdp.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle;
 	xdp.frame_number = frame_number;
@@ -247,10 +240,17 @@ static void *tsn_tx_thread_routine(void *data)
 
 	duration = tx_time_get_frame_duration(link_speed, tsn_config->tsn_frame_length);
 
-	tsn_initialize_frames(tsn_config, thread_context->tx_frame_data, 2, source,
+	tsn_initialize_frames(tsn_config, thread_context->tx_frame_data, 1, source,
 			      tsn_config->tsn_destination);
 
 	prepare_openssl(security_context);
+	tsn_initialize_frames(tsn_config, thread_context->payload_pattern, 1, source,
+			      tsn_config->tsn_destination);
+	thread_context->payload_pattern +=
+		sizeof(struct vlan_ethernet_header) + sizeof(struct profinet_secure_header);
+	thread_context->payload_pattern_length =
+		tsn_config->tsn_frame_length - sizeof(struct vlan_ethernet_header) -
+		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
 
 	ret = get_thread_start_time(app_config.application_tx_base_offset_ns, &wakeup_time);
 	if (ret) {
@@ -290,7 +290,7 @@ static void *tsn_tx_thread_routine(void *data)
 		 */
 		if (!mirror_enabled) {
 			for (i = 0; i < tsn_config->tsn_num_frames_per_cycle; ++i)
-				tsn_gen_and_send_frame(tsn_config, security_context,
+				tsn_gen_and_send_frame(tsn_config, thread_context,
 						       thread_context->tx_frame_data, socket_fd,
 						       &destination, ts_to_ns(&wakeup_time),
 						       sequence_counter++, duration);
@@ -355,10 +355,15 @@ static void *tsn_xdp_tx_thread_routine(void *data)
 	/* Initialize all Tx frames */
 	tsn_initialize_frames(tsn_config, frame_data, XSK_RING_CONS__DEFAULT_NUM_DESCS, source,
 			      tsn_config->tsn_destination);
-	tsn_initialize_frames(tsn_config, thread_context->tx_frame_data, 2, source,
-			      tsn_config->tsn_destination);
 
 	prepare_openssl(security_context);
+	tsn_initialize_frames(tsn_config, thread_context->payload_pattern, 1, source,
+			      tsn_config->tsn_destination);
+	thread_context->payload_pattern +=
+		sizeof(struct vlan_ethernet_header) + sizeof(struct profinet_secure_header);
+	thread_context->payload_pattern_length =
+		tsn_config->tsn_frame_length - sizeof(struct vlan_ethernet_header) -
+		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
 
 	ret = get_thread_start_time(app_config.application_tx_base_offset_ns, &wakeup_time);
 	if (ret) {
@@ -395,9 +400,8 @@ static void *tsn_xdp_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			tsn_gen_and_send_xdp_frames(tsn_config, security_context, xsk,
-						    thread_context->tx_frame_data, sequence_counter,
-						    &frame_number);
+			tsn_gen_and_send_xdp_frames(tsn_config, thread_context, xsk,
+						    sequence_counter, &frame_number);
 			sequence_counter += num_frames;
 		} else {
 			unsigned int received;
@@ -766,12 +770,20 @@ int tsn_threads_create(struct thread_context *thread_context,
 
 	thread_context->private_data = tsn_config;
 
-	thread_context->tx_frame_data = calloc(2, MAX_FRAME_SIZE);
+	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate TsnTxFrameData\n");
 		ret = -ENOMEM;
 		goto err_tx;
 	}
+
+	thread_context->payload_pattern = calloc(1, MAX_FRAME_SIZE);
+	if (!thread_context->payload_pattern) {
+		fprintf(stderr, "Failed to allocate TsnPayloadPattern!\n");
+		ret = -ENOMEM;
+		goto err_payload;
+	}
+	thread_context->payload_pattern_length = MAX_FRAME_SIZE;
 
 	/* For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is used. */
 	if (tsn_config->tsn_xdp_enabled) {
@@ -877,6 +889,8 @@ err_buffer:
 		xdp_close_socket(thread_context->xsk, tsn_config->tsn_interface,
 				 tsn_config->tsn_xdp_skb_mode);
 err_socket:
+	free(thread_context->payload_pattern);
+err_payload:
 	free(thread_context->tx_frame_data);
 err_tx:
 out:

@@ -61,6 +61,8 @@ struct thread_context {
 	/* Security related */
 	struct security_context *tx_security_context; /* Tx context for Auth and Crypt */
 	struct security_context *rx_security_context; /* Rx context for Auth and Crypt */
+	unsigned char *payload_pattern;               /* Frame payload pattern used for AE */
+	size_t payload_pattern_length;                /* Length of payload pattern */
 
 	/* Thread private data */
 	void *private_data; /* Pointer to private data e.g, a structure */

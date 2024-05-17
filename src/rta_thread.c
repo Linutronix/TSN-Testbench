@@ -72,9 +72,8 @@ static void rta_send_frame(const unsigned char *frame_data, size_t frame_length,
 	stat_frame_sent(RTA_FRAME_TYPE, sequence_counter);
 }
 
-static void rta_gen_and_send_frame(struct security_context *security_context,
-				   unsigned char *frame_data, size_t frame_length,
-				   size_t num_frames_per_cycle, int socket_fd,
+static void rta_gen_and_send_frame(struct thread_context *thread_context, unsigned char *frame_data,
+				   size_t frame_length, size_t num_frames_per_cycle, int socket_fd,
 				   uint64_t sequence_counter)
 {
 	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
@@ -84,14 +83,10 @@ static void rta_gen_and_send_frame(struct security_context *security_context,
 	int err;
 
 	frame_config.mode = app_config.rta_security_mode;
-	frame_config.security_context = security_context;
+	frame_config.security_context = thread_context->tx_security_context;
 	frame_config.iv_prefix = (const unsigned char *)app_config.rta_security_iv_prefix;
-	frame_config.payload_pattern = frame_idx(frame_data, 1) +
-				       sizeof(struct vlan_ethernet_header) +
-				       sizeof(struct profinet_secure_header);
-	frame_config.payload_pattern_length = frame_length - sizeof(struct vlan_ethernet_header) -
-					      sizeof(struct profinet_secure_header) -
-					      sizeof(struct security_checksum);
+	frame_config.payload_pattern = thread_context->payload_pattern;
+	frame_config.payload_pattern_length = thread_context->payload_pattern_length;
 	frame_config.frame_data = frame_data;
 	frame_config.frame_length = frame_length;
 	frame_config.num_frames_per_cycle = num_frames_per_cycle;
@@ -113,7 +108,7 @@ static void rta_gen_and_send_frame(struct security_context *security_context,
 	stat_frame_sent(RTA_FRAME_TYPE, sequence_counter);
 }
 
-static void rta_gen_and_send_xdp_frames(struct security_context *security_context,
+static void rta_gen_and_send_xdp_frames(struct thread_context *thread_context,
 					struct xdp_socket *xsk, unsigned char *tx_frame_data,
 					size_t num_frames_per_cycle, uint64_t sequence_counter,
 					uint32_t *frame_number)
@@ -123,13 +118,10 @@ static void rta_gen_and_send_xdp_frames(struct security_context *security_contex
 	struct xdp_gen_config xdp;
 
 	xdp.mode = app_config.rta_security_mode;
-	xdp.security_context = security_context;
+	xdp.security_context = thread_context->tx_security_context;
 	xdp.iv_prefix = (const unsigned char *)app_config.rta_security_iv_prefix;
-	xdp.payload_pattern = frame_idx(tx_frame_data, 1) + sizeof(struct vlan_ethernet_header) +
-			      sizeof(struct profinet_secure_header);
-	xdp.payload_pattern_length =
-		app_config.rta_frame_length - sizeof(struct vlan_ethernet_header) -
-		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
+	xdp.payload_pattern = thread_context->payload_pattern;
+	xdp.payload_pattern_length = thread_context->payload_pattern_length;
 	xdp.frame_length = app_config.rta_frame_length;
 	xdp.num_frames_per_cycle = num_frames_per_cycle;
 	xdp.frame_number = frame_number;
@@ -160,9 +152,16 @@ static void *rta_tx_thread_routine(void *data)
 		return NULL;
 	}
 
-	rta_initialize_frames(thread_context->tx_frame_data, 2, source, app_config.rta_destination);
+	rta_initialize_frames(thread_context->tx_frame_data, 1, source, app_config.rta_destination);
 
 	prepare_openssl(security_context);
+	rta_initialize_frames(thread_context->payload_pattern, 1, source,
+			      app_config.rta_destination);
+	thread_context->payload_pattern +=
+		sizeof(struct vlan_ethernet_header) + sizeof(struct profinet_secure_header);
+	thread_context->payload_pattern_length =
+		app_config.rta_frame_length - sizeof(struct vlan_ethernet_header) -
+		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
 
 	while (!thread_context->stop) {
 		size_t num_frames, i;
@@ -185,7 +184,7 @@ static void *rta_tx_thread_routine(void *data)
 		if (!mirror_enabled) {
 			/* Send RtaFrames */
 			for (i = 0; i < num_frames; ++i)
-				rta_gen_and_send_frame(security_context,
+				rta_gen_and_send_frame(thread_context,
 						       thread_context->tx_frame_data,
 						       app_config.rta_frame_length,
 						       app_config.rta_num_frames_per_cycle,
@@ -253,9 +252,15 @@ static void *rta_xdp_tx_thread_routine(void *data)
 	/* Initialize all Tx frames */
 	rta_initialize_frames(frame_data, XSK_RING_CONS__DEFAULT_NUM_DESCS, source,
 			      app_config.rta_destination);
-	rta_initialize_frames(thread_context->tx_frame_data, 2, source, app_config.rta_destination);
 
 	prepare_openssl(security_context);
+	rta_initialize_frames(thread_context->payload_pattern, 1, source,
+			      app_config.rta_destination);
+	thread_context->payload_pattern +=
+		sizeof(struct vlan_ethernet_header) + sizeof(struct profinet_secure_header);
+	thread_context->payload_pattern_length =
+		app_config.rta_frame_length - sizeof(struct vlan_ethernet_header) -
+		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
 
 	while (!thread_context->stop) {
 		/*
@@ -274,7 +279,7 @@ static void *rta_xdp_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			rta_gen_and_send_xdp_frames(security_context, xsk,
+			rta_gen_and_send_xdp_frames(thread_context, xsk,
 						    thread_context->tx_frame_data, num_frames,
 						    sequence_counter, &frame_number);
 			sequence_counter += num_frames;
@@ -679,12 +684,20 @@ int rta_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->xdp_data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(2, MAX_FRAME_SIZE);
+	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate RtaTxFrameData\n");
 		ret = -ENOMEM;
 		goto err_tx;
 	}
+
+	thread_context->payload_pattern = calloc(1, MAX_FRAME_SIZE);
+	if (!thread_context->payload_pattern) {
+		fprintf(stderr, "Failed to allocate RtaPayloadPattern!\n");
+		ret = -ENOMEM;
+		goto err_payload;
+	}
+	thread_context->payload_pattern_length = MAX_FRAME_SIZE;
 
 	/* For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is used. */
 	if (app_config.rta_xdp_enabled) {
@@ -794,6 +807,8 @@ err_buffer:
 		xdp_close_socket(thread_context->xsk, app_config.rta_interface,
 				 app_config.rta_xdp_skb_mode);
 err_socket:
+	free(thread_context->payload_pattern);
+err_payload:
 	free(thread_context->tx_frame_data);
 err_tx:
 	return ret;
