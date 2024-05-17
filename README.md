@@ -86,11 +86,20 @@ The following list contains ideas for further development:
 
 - Add interface for workload emulation
 - Add support for XDP and Tx Launch Time
-- Add configurations for other hardware platforms and NIC(s)
+- Add configurations for other hardware platforms (hybrid!) and NIC(s)
+- Add debugging capabilities on ``mirror`` side
+- Add clean shutdown e.g., remove eBPF programs
+- Add Wireshark dissector for MetaData
+- Add analyzer scripts for Profishark captures
+- Add integration with ``ClockManager``
+- Extend statistics with hardware timestamps
 - Make it more user friendly
 - Improve the AF_PACKET code
-- Test ``chrony`` instead of ``phc2sys``
+- Improve documentation
+- Test (virtual) container networking
+- Test short cycle times (<= 250us)
 - Test 10G+ NIC(s) especially wrt to IPG
+- Package for Debian
 
 ## Documentation ##
 
