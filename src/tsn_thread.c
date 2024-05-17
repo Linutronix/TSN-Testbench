@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,7 @@
 #include "log.h"
 #include "net.h"
 #include "net_def.h"
+#include "packet.h"
 #include "security.h"
 #include "stat.h"
 #include "thread.h"
@@ -47,125 +49,126 @@ static void tsn_initialize_frames(const struct tsn_thread_configuration *tsn_con
 			tsn_config->frame_id_range_start);
 }
 
-static int tsn_send_message(const struct tsn_thread_configuration *tsn_config, int socket_fd,
-			    struct sockaddr_ll *destination, unsigned char *frame_data,
-			    size_t frame_length, uint64_t wakeup_time, uint64_t sequence_counter,
-			    uint64_t duration)
-{
-	int ret;
-
-	if (tsn_config->tsn_tx_time_enabled) {
-		/* Send message but with specified transmission time. */
-		char control[CMSG_SPACE(sizeof(uint64_t))] = {0};
-		struct cmsghdr *cmsg;
-		struct msghdr msg;
-		struct iovec iov;
-		uint64_t tx_time;
-
-		tx_time = tx_time_get_frame_tx_time(wakeup_time, sequence_counter, duration,
-						    tsn_config->tsn_num_frames_per_cycle,
-						    tsn_config->tsn_tx_time_offset_ns,
-						    tsn_config->traffic_class);
-
-		iov.iov_base = frame_data;
-		iov.iov_len = frame_length;
-
-		memset(&msg, 0, sizeof(msg));
-		msg.msg_name = destination;
-		msg.msg_namelen = sizeof(*destination);
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
-		msg.msg_control = control;
-		msg.msg_controllen = sizeof(control);
-
-		cmsg = CMSG_FIRSTHDR(&msg);
-		cmsg->cmsg_level = SOL_SOCKET;
-		cmsg->cmsg_type = SO_TXTIME;
-		cmsg->cmsg_len = CMSG_LEN(sizeof(int64_t));
-		*((uint64_t *)CMSG_DATA(cmsg)) = tx_time;
-
-		ret = sendmsg(socket_fd, &msg, 0);
-	} else {
-		/* Regular send case. */
-		ret = send(socket_fd, frame_data, frame_length, 0);
-	}
-
-	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "%sTx: send() for %" PRIu64 " failed: %s\n",
-			    tsn_config->traffic_class, sequence_counter, strerror(errno));
-		return -errno;
-	}
-
-	return 0;
-}
-
-static void tsn_send_frame(const struct tsn_thread_configuration *tsn_config,
-			   unsigned char *frame_data, size_t frame_length, int socket_fd,
-			   struct sockaddr_ll *destination, uint64_t wakeup_time, uint64_t duration)
+static uint64_t tsn_get_sequence_counter(const struct tsn_thread_configuration *tsn_config,
+					 unsigned char *frame_data)
 {
 	struct profinet_secure_header *srt;
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
-	ssize_t ret;
 
-	if (tsn_config->tsn_security_mode == SECURITY_MODE_NONE) {
+	switch (tsn_config->tsn_security_mode) {
+	case SECURITY_MODE_NONE:
 		/* Fetch meta data */
 		rt = (struct profinet_rt_header *)(frame_data + sizeof(*eth));
 		sequence_counter = meta_data_to_sequence_counter(
 			&rt->meta_data, tsn_config->tsn_num_frames_per_cycle);
-	} else {
+		break;
+	default:
 		/* Fetch meta data */
 		srt = (struct profinet_secure_header *)(frame_data + sizeof(*eth));
 		sequence_counter = meta_data_to_sequence_counter(
 			&srt->meta_data, tsn_config->tsn_num_frames_per_cycle);
 	}
 
-	/* Send it */
-	ret = tsn_send_message(tsn_config, socket_fd, destination, frame_data, frame_length,
-			       wakeup_time, sequence_counter, duration);
-	if (ret)
-		return;
-
-	stat_frame_sent(tsn_config->frame_type, sequence_counter);
+	return sequence_counter;
 }
 
-static void tsn_gen_and_send_frame(const struct tsn_thread_configuration *tsn_config,
-				   struct thread_context *thread_context, unsigned char *frame_data,
-				   int socket_fd, struct sockaddr_ll *destination,
-				   uint64_t wakeup_time, uint64_t sequence_counter,
-				   uint64_t duration)
+static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config, int socket_fd,
+			     struct sockaddr_ll *destination, unsigned char *frame_data,
+			     size_t num_frames, uint64_t wakeup_time, uint64_t duration)
 {
-	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				    offsetof(struct profinet_rt_header, meta_data);
-	struct prepare_frame_config frame_config;
-	ssize_t ret;
-	int err;
+	uint32_t meta_data_offset;
 
-	frame_config.mode = tsn_config->tsn_security_mode;
-	frame_config.security_context = thread_context->tx_security_context;
-	frame_config.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
-	frame_config.payload_pattern = thread_context->payload_pattern;
-	frame_config.payload_pattern_length = thread_context->payload_pattern_length;
-	frame_config.frame_data = frame_data;
-	frame_config.frame_length = tsn_config->tsn_frame_length;
-	frame_config.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle;
-	frame_config.sequence_counter = sequence_counter;
-	frame_config.meta_data_offset = meta_data_offset;
+	switch (tsn_config->tsn_security_mode) {
+	case SECURITY_MODE_NONE:
+		meta_data_offset = sizeof(struct vlan_ethernet_header) +
+				   offsetof(struct profinet_rt_header, meta_data);
+		break;
+	default:
+		meta_data_offset = sizeof(struct vlan_ethernet_header) +
+				   offsetof(struct profinet_secure_header, meta_data);
+	}
 
-	err = prepare_frame_for_tx(&frame_config);
-	if (err)
-		log_message(LOG_LEVEL_ERROR, "%sTx: Failed to prepare frame for Tx!\n",
-			    tsn_config->traffic_class);
+	struct packet_send_request send_req = {
+		.traffic_class = tsn_config->traffic_class,
+		.socket_fd = socket_fd,
+		.destination = destination,
+		.frame_data = frame_data,
+		.num_frames = num_frames,
+		.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle,
+		.frame_length = tsn_config->tsn_frame_length,
+		.wakeup_time = wakeup_time,
+		.duration = duration,
+		.tx_time_offset = tsn_config->tsn_tx_time_offset_ns,
+		.meta_data_offset = meta_data_offset,
+		.mirror_enabled = tsn_config->tsn_rx_mirror_enabled,
+		.tx_time_enabled = tsn_config->tsn_tx_time_enabled,
+	};
+
+	return packet_send_messages(&send_req);
+}
+
+static int tsn_send_frames(const struct tsn_thread_configuration *tsn_config,
+			   unsigned char *frame_data, size_t num_frames, int socket_fd,
+			   struct sockaddr_ll *destination, uint64_t wakeup_time, uint64_t duration)
+{
+	int len, i;
 
 	/* Send it */
-	ret = tsn_send_message(tsn_config, socket_fd, destination, frame_data,
-			       tsn_config->tsn_frame_length, wakeup_time, sequence_counter,
-			       duration);
-	if (ret)
-		return;
+	len = tsn_send_messages(tsn_config, socket_fd, destination, frame_data, num_frames,
+				wakeup_time, duration);
 
-	stat_frame_sent(tsn_config->frame_type, sequence_counter);
+	for (i = 0; i < len; i++) {
+		uint64_t sequence_counter;
+
+		sequence_counter = tsn_get_sequence_counter(
+			tsn_config, frame_data + i * tsn_config->tsn_frame_length);
+
+		stat_frame_sent(tsn_config->frame_type, sequence_counter);
+	}
+
+	return len;
+}
+
+static int tsn_gen_and_send_frames(const struct tsn_thread_configuration *tsn_config,
+				   struct thread_context *thread_context, int socket_fd,
+				   struct sockaddr_ll *destination, uint64_t wakeup_time,
+				   uint64_t sequence_counter_begin, uint64_t duration)
+{
+	int len, i;
+
+	for (i = 0; i < tsn_config->tsn_num_frames_per_cycle; i++) {
+		uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
+					    offsetof(struct profinet_rt_header, meta_data);
+		struct prepare_frame_config frame_config;
+		int err;
+
+		frame_config.mode = tsn_config->tsn_security_mode;
+		frame_config.security_context = thread_context->tx_security_context;
+		frame_config.iv_prefix = (const unsigned char *)tsn_config->tsn_security_iv_prefix;
+		frame_config.payload_pattern = thread_context->payload_pattern;
+		frame_config.payload_pattern_length = thread_context->payload_pattern_length;
+		frame_config.frame_data = frame_idx(thread_context->tx_frame_data, i);
+		frame_config.frame_length = tsn_config->tsn_frame_length;
+		frame_config.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle;
+		frame_config.sequence_counter = sequence_counter_begin + i;
+		frame_config.meta_data_offset = meta_data_offset;
+
+		err = prepare_frame_for_tx(&frame_config);
+		if (err)
+			log_message(LOG_LEVEL_ERROR, "%sTx: Failed to prepare frame for Tx!\n",
+				    tsn_config->traffic_class);
+	}
+
+	/* Send them */
+	len = tsn_send_messages(tsn_config, socket_fd, destination, thread_context->tx_frame_data,
+				tsn_config->tsn_num_frames_per_cycle, wakeup_time, duration);
+
+	for (i = 0; i < len; i++)
+		stat_frame_sent(tsn_config->frame_type, sequence_counter_begin + i);
+
+	return len;
 }
 
 static void tsn_gen_and_send_xdp_frames(const struct tsn_thread_configuration *tsn_config,
@@ -240,7 +243,8 @@ static void *tsn_tx_thread_routine(void *data)
 
 	duration = tx_time_get_frame_duration(link_speed, tsn_config->tsn_frame_length);
 
-	tsn_initialize_frames(tsn_config, thread_context->tx_frame_data, 1, source,
+	tsn_initialize_frames(tsn_config, thread_context->tx_frame_data,
+			      tsn_config->tsn_num_frames_per_cycle, source,
 			      tsn_config->tsn_destination);
 
 	prepare_openssl(security_context);
@@ -260,8 +264,6 @@ static void *tsn_tx_thread_routine(void *data)
 	}
 
 	while (!thread_context->stop) {
-		size_t i;
-
 		if (!thread_context->is_first) {
 			pthread_mutex_lock(&thread_context->data_mutex);
 			pthread_cond_wait(&thread_context->data_cond_var,
@@ -289,23 +291,20 @@ static void *tsn_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			for (i = 0; i < tsn_config->tsn_num_frames_per_cycle; ++i)
-				tsn_gen_and_send_frame(tsn_config, thread_context,
-						       thread_context->tx_frame_data, socket_fd,
-						       &destination, ts_to_ns(&wakeup_time),
-						       sequence_counter++, duration);
+			tsn_gen_and_send_frames(tsn_config, thread_context, socket_fd, &destination,
+						ts_to_ns(&wakeup_time), sequence_counter, duration);
+
+			sequence_counter += tsn_config->tsn_num_frames_per_cycle;
 		} else {
-			size_t len;
+			size_t len, num_frames;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
 					  sizeof(received_frames), &len);
 
 			/* Len should be a multiple of frame size */
-			for (i = 0; i < len / tsn_config->tsn_frame_length; ++i)
-				tsn_send_frame(tsn_config,
-					       received_frames + i * tsn_config->tsn_frame_length,
-					       tsn_config->tsn_frame_length, socket_fd,
-					       &destination, ts_to_ns(&wakeup_time), duration);
+			num_frames = len / tsn_config->tsn_frame_length;
+			tsn_send_frames(tsn_config, received_frames, num_frames, socket_fd,
+					&destination, ts_to_ns(&wakeup_time), duration);
 		}
 
 		/* Signal next Tx thread */
@@ -649,7 +648,6 @@ static void *tsn_rx_thread_routine(void *data)
 	struct thread_context *thread_context = data;
 	const struct tsn_thread_configuration *tsn_config = thread_context->private_data;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[MAX_FRAME_SIZE];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -665,6 +663,14 @@ static void *tsn_rx_thread_routine(void *data)
 	}
 
 	while (!thread_context->stop) {
+		struct packet_receive_request recv_req = {
+			.traffic_class = stat_frame_type_to_string(tsn_config->frame_type),
+			.socket_fd = socket_fd,
+			.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle,
+			.receive_function = tsn_rx_frame,
+			.data = thread_context,
+		};
+
 		/* Wait until next period. */
 		increment_period(&wakeup_time, cycle_time_ns);
 
@@ -680,25 +686,7 @@ static void *tsn_rx_thread_routine(void *data)
 		}
 
 		/* Receive Tsn frames. */
-		while (true) {
-			ssize_t len;
-
-			len = recv(socket_fd, frame, sizeof(frame), 0);
-			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-				log_message(LOG_LEVEL_ERROR, "%sRx: recv() failed: %s\n",
-					    tsn_config->traffic_class, strerror(errno));
-				continue;
-			}
-			if (len == 0)
-				continue;
-
-			/* No more frames. Comeback within next period. */
-			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-				break;
-
-			/* Process received frame. */
-			tsn_rx_frame(thread_context, frame, len);
-		}
+		packet_receive_messages(&recv_req);
 	}
 
 	return NULL;
@@ -770,11 +758,15 @@ int tsn_threads_create(struct thread_context *thread_context,
 
 	thread_context->private_data = tsn_config;
 
-	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
-	if (!thread_context->tx_frame_data) {
-		fprintf(stderr, "Failed to allocate TsnTxFrameData\n");
-		ret = -ENOMEM;
-		goto err_tx;
+	/* For XDP the frames are stored in a umem area. That memory is part of the socket. */
+	if (!tsn_config->tsn_xdp_enabled) {
+		thread_context->tx_frame_data =
+			calloc(tsn_config->tsn_num_frames_per_cycle, MAX_FRAME_SIZE);
+		if (!thread_context->tx_frame_data) {
+			fprintf(stderr, "Failed to allocate TsnTxFrameData!\n");
+			ret = -ENOMEM;
+			goto err_tx;
+		}
 	}
 
 	thread_context->payload_pattern = calloc(1, MAX_FRAME_SIZE);
