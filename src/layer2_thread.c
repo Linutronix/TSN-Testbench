@@ -489,7 +489,6 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 static void *generic_l2_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	unsigned char frames[MAX_FRAME_SIZE * app_config.generic_l2_num_frames_per_cycle];
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
 	struct timespec wakeup_time;
 	int socket_fd, ret;
@@ -505,6 +504,14 @@ static void *generic_l2_rx_thread_routine(void *data)
 	}
 
 	while (!thread_context->stop) {
+		struct packet_receive_request recv_req = {
+			.traffic_class = stat_frame_type_to_string(GENERICL2_FRAME_TYPE),
+			.socket_fd = socket_fd,
+			.num_frames_per_cycle = app_config.generic_l2_num_frames_per_cycle,
+			.receive_function = generic_l2_rx_frame,
+			.data = thread_context,
+		};
+
 		/* Wait until next period. */
 		increment_period(&wakeup_time, cycle_time_ns);
 
@@ -520,41 +527,7 @@ static void *generic_l2_rx_thread_routine(void *data)
 		}
 
 		/* Receive Layer 2 frames. */
-		while (true) {
-			struct iovec iovecs[app_config.generic_l2_num_frames_per_cycle];
-			struct mmsghdr msgs[app_config.generic_l2_num_frames_per_cycle];
-			int i, len;
-
-			memset(iovecs, '\0',
-			       app_config.generic_l2_num_frames_per_cycle * sizeof(struct iovec));
-			memset(msgs, '\0',
-			       app_config.generic_l2_num_frames_per_cycle * sizeof(struct mmsghdr));
-			for (i = 0; i < app_config.generic_l2_num_frames_per_cycle; i++) {
-				iovecs[i].iov_base = frame_idx(frames, i);
-				iovecs[i].iov_len = MAX_FRAME_SIZE;
-				msgs[i].msg_hdr.msg_iov = &iovecs[i];
-				msgs[i].msg_hdr.msg_iovlen = 1;
-			}
-
-			len = recvmmsg(socket_fd, msgs, app_config.generic_l2_num_frames_per_cycle,
-				       0, NULL);
-			if (len == -1) {
-				if (errno != EAGAIN && errno != EWOULDBLOCK) {
-					log_message(LOG_LEVEL_ERROR,
-						    "GenericL2Rx: recvmmsg() failed: %s\n",
-						    strerror(errno));
-					continue;
-				} else {
-					/* No more frames. Comeback within next period. */
-					break;
-				}
-			}
-
-			/* Process received frames. */
-			for (i = 0; i < len; i++)
-				generic_l2_rx_frame(thread_context, frame_idx(frames, i),
-						    msgs[i].msg_len);
-		}
+		packet_receive_messages(&recv_req);
 	}
 
 	return NULL;

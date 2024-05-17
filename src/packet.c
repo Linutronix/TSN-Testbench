@@ -89,3 +89,45 @@ int packet_send_messages(struct packet_send_request *send_req)
 
 	return sent;
 }
+
+int packet_receive_messages(struct packet_receive_request *recv_req)
+{
+	unsigned char frames[MAX_FRAME_SIZE * recv_req->num_frames_per_cycle];
+	int received = 0;
+
+	while (true) {
+		struct iovec iovecs[recv_req->num_frames_per_cycle];
+		struct mmsghdr msgs[recv_req->num_frames_per_cycle];
+		int i, len;
+
+		memset(iovecs, '\0', recv_req->num_frames_per_cycle * sizeof(struct iovec));
+		memset(msgs, '\0', recv_req->num_frames_per_cycle * sizeof(struct mmsghdr));
+		for (i = 0; i < recv_req->num_frames_per_cycle; i++) {
+			iovecs[i].iov_base = frame_idx(frames, i);
+			iovecs[i].iov_len = MAX_FRAME_SIZE;
+			msgs[i].msg_hdr.msg_iov = &iovecs[i];
+			msgs[i].msg_hdr.msg_iovlen = 1;
+		}
+
+		len = recvmmsg(recv_req->socket_fd, msgs, recv_req->num_frames_per_cycle, 0, NULL);
+		if (len == -1) {
+			if (errno != EAGAIN && errno != EWOULDBLOCK) {
+				log_message(LOG_LEVEL_ERROR, "%sRx: recvmmsg() failed: %s\n",
+					    recv_req->traffic_class, strerror(errno));
+				continue;
+			} else {
+				/* No more frames. Comeback within next period. */
+				break;
+			}
+		}
+
+		/* Process received frames. */
+		for (i = 0; i < len; i++)
+			recv_req->receive_function(recv_req->data, frame_idx(frames, i),
+						   msgs[i].msg_len);
+
+		received += len;
+	}
+
+	return received;
+}

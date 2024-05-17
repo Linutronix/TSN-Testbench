@@ -28,6 +28,15 @@ struct packet_send_request {
 };
 
 int packet_send_messages(struct packet_send_request *send_req);
-int packet_receive_messages();
+
+struct packet_receive_request {
+	const char *traffic_class;
+	int socket_fd;
+	size_t num_frames_per_cycle;
+	int (*receive_function)(void *data, unsigned char *, size_t);
+	void *data;
+};
+
+int packet_receive_messages(struct packet_receive_request *recv_req);
 
 #endif /* PACKET_H */
