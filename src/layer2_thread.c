@@ -25,6 +25,7 @@
 #include "layer2_thread.h"
 #include "log.h"
 #include "net.h"
+#include "packet.h"
 #include "stat.h"
 #include "thread.h"
 #include "tx_time.h"
@@ -99,64 +100,24 @@ static int generic_l2_send_messages(int socket_fd, struct sockaddr_ll *destinati
 				    size_t num_frames_per_cycle, size_t frame_length,
 				    uint64_t wakeup_time, uint64_t duration)
 {
-	const bool mirror_enabled = app_config.generic_l2_rx_mirror_enabled;
-	struct iovec iovecs[num_frames];
-	struct mmsghdr msgs[num_frames];
-	int i, sent = 0;
+	struct packet_send_request send_req = {
+		.traffic_class = stat_frame_type_to_string(GENERICL2_FRAME_TYPE),
+		.socket_fd = socket_fd,
+		.destination = destination,
+		.frame_data = frame_data,
+		.num_frames = num_frames,
+		.num_frames_per_cycle = num_frames_per_cycle,
+		.frame_length = frame_length,
+		.wakeup_time = wakeup_time,
+		.duration = duration,
+		.tx_time_offset = app_config.generic_l2_tx_time_offset_ns,
+		.meta_data_offset = sizeof(struct vlan_ethernet_header) +
+				    offsetof(struct generic_l2_header, meta_data),
+		.mirror_enabled = app_config.generic_l2_rx_mirror_enabled,
+		.tx_time_enabled = app_config.generic_l2_tx_time_enabled,
+	};
 
-	/* Prepare all messages to be sent. */
-	memset(iovecs, '\0', num_frames * sizeof(struct iovec));
-	memset(msgs, '\0', num_frames * sizeof(struct mmsghdr));
-	for (i = 0; i < num_frames; i++) {
-		unsigned char *frame;
-
-		frame = mirror_enabled ? frame_data + i * frame_length : frame_idx(frame_data, i);
-		iovecs[i].iov_base = frame;
-		iovecs[i].iov_len = frame_length;
-		msgs[i].msg_hdr.msg_iov = &iovecs[i];
-		msgs[i].msg_hdr.msg_iovlen = 1;
-		msgs[i].msg_hdr.msg_name = destination;
-		msgs[i].msg_hdr.msg_namelen = sizeof(*destination);
-
-		/* In case the user configured Tx Time also add it. */
-		if (app_config.generic_l2_tx_time_enabled) {
-			char control[CMSG_SPACE(sizeof(uint64_t))] = {0};
-			uint64_t tx_time, sequence_counter;
-			struct cmsghdr *cmsg;
-
-			sequence_counter =
-				generic_l2_get_sequence_counter(frame, num_frames_per_cycle);
-			tx_time = tx_time_get_frame_tx_time(
-				wakeup_time, sequence_counter, duration,
-				app_config.generic_l2_num_frames_per_cycle,
-				app_config.generic_l2_tx_time_offset_ns, "GenericL2");
-
-			cmsg = CMSG_FIRSTHDR(&msgs[i].msg_hdr);
-			cmsg->cmsg_level = SOL_SOCKET;
-			cmsg->cmsg_type = SO_TXTIME;
-			cmsg->cmsg_len = CMSG_LEN(sizeof(int64_t));
-			*((uint64_t *)CMSG_DATA(cmsg)) = tx_time;
-
-			msgs[i].msg_hdr.msg_control = control;
-			msgs[i].msg_hdr.msg_controllen = sizeof(control);
-		}
-	}
-
-	/* Send them. */
-	while (sent < num_frames) {
-		int len;
-
-		len = sendmmsg(socket_fd, &msgs[sent], num_frames - sent, 0);
-		if (len == -1) {
-			log_message(LOG_LEVEL_ERROR, "GenericL2Tx: sendmmsg() failed: %s\n",
-				    strerror(errno));
-			return -errno;
-		}
-
-		sent += len;
-	}
-
-	return sent;
+	return packet_send_messages(&send_req);
 }
 
 static int generic_l2_send_frames(unsigned char *frame_data, size_t num_frames,
