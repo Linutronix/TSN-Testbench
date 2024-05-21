@@ -16,12 +16,14 @@
 
 #include <linux/if_ether.h>
 #include <linux/if_link.h>
+#include <linux/if_packet.h>
 #include <linux/if_vlan.h>
 
 #include "config.h"
 #include "log.h"
 #include "net.h"
 #include "net_def.h"
+#include "packet.h"
 #include "rta_thread.h"
 #include "security.h"
 #include "stat.h"
@@ -40,72 +42,119 @@ static void rta_initialize_frames(unsigned char *frame_data, size_t num_frames,
 			app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT, 0xfc01);
 }
 
-static void rta_send_frame(const unsigned char *frame_data, size_t frame_length,
-			   size_t num_frames_per_cycle, int socket_fd)
+static uint64_t rta_get_sequence_counter(unsigned char *frame_data)
 {
 	struct profinet_secure_header *srt;
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
-	ssize_t ret;
 
-	if (app_config.rta_security_mode == SECURITY_MODE_NONE) {
+	switch (app_config.rta_security_mode) {
+	case SECURITY_MODE_NONE:
 		/* Fetch meta data */
 		rt = (struct profinet_rt_header *)(frame_data + sizeof(*eth));
-		sequence_counter =
-			meta_data_to_sequence_counter(&rt->meta_data, num_frames_per_cycle);
-	} else {
+		sequence_counter = meta_data_to_sequence_counter(
+			&rt->meta_data, app_config.rta_num_frames_per_cycle);
+		break;
+	default:
 		/* Fetch meta data */
 		srt = (struct profinet_secure_header *)(frame_data + sizeof(*eth));
-		sequence_counter =
-			meta_data_to_sequence_counter(&srt->meta_data, num_frames_per_cycle);
+		sequence_counter = meta_data_to_sequence_counter(
+			&srt->meta_data, app_config.rta_num_frames_per_cycle);
 	}
 
-	/* Send it */
-	ret = send(socket_fd, frame_data, frame_length, 0);
-	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "RtaTx: send() for %" PRIu64 " failed: %s\n",
-			    sequence_counter, strerror(errno));
-		return;
-	}
-
-	stat_frame_sent(RTA_FRAME_TYPE, sequence_counter);
+	return sequence_counter;
 }
 
-static void rta_gen_and_send_frame(struct thread_context *thread_context, unsigned char *frame_data,
-				   size_t frame_length, size_t num_frames_per_cycle, int socket_fd,
-				   uint64_t sequence_counter)
+static int rta_send_messages(int socket_fd, struct sockaddr_ll *destination,
+			     unsigned char *frame_data, size_t num_frames)
 {
-	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				    offsetof(struct profinet_rt_header, meta_data);
-	struct prepare_frame_config frame_config;
-	ssize_t ret;
-	int err;
+	uint32_t meta_data_offset;
 
-	frame_config.mode = app_config.rta_security_mode;
-	frame_config.security_context = thread_context->tx_security_context;
-	frame_config.iv_prefix = (const unsigned char *)app_config.rta_security_iv_prefix;
-	frame_config.payload_pattern = thread_context->payload_pattern;
-	frame_config.payload_pattern_length = thread_context->payload_pattern_length;
-	frame_config.frame_data = frame_data;
-	frame_config.frame_length = frame_length;
-	frame_config.num_frames_per_cycle = num_frames_per_cycle;
-	frame_config.sequence_counter = sequence_counter;
-	frame_config.meta_data_offset = meta_data_offset;
-
-	err = prepare_frame_for_tx(&frame_config);
-	if (err)
-		log_message(LOG_LEVEL_ERROR, "RtaTx: Failed to prepare frame for Tx!\n");
-
-	/* Send it */
-	ret = send(socket_fd, frame_data, frame_length, 0);
-	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "RtaTx: send() for %" PRIu64 " failed: %s\n",
-			    sequence_counter, strerror(errno));
-		return;
+	switch (app_config.rta_security_mode) {
+	case SECURITY_MODE_NONE:
+		meta_data_offset = sizeof(struct vlan_ethernet_header) +
+				   offsetof(struct profinet_rt_header, meta_data);
+		break;
+	default:
+		meta_data_offset = sizeof(struct vlan_ethernet_header) +
+				   offsetof(struct profinet_secure_header, meta_data);
 	}
 
-	stat_frame_sent(RTA_FRAME_TYPE, sequence_counter);
+	struct packet_send_request send_req = {
+		.traffic_class = stat_frame_type_to_string(RTA_FRAME_TYPE),
+		.socket_fd = socket_fd,
+		.destination = destination,
+		.frame_data = frame_data,
+		.num_frames = num_frames,
+		.num_frames_per_cycle = app_config.rta_num_frames_per_cycle,
+		.frame_length = app_config.rta_frame_length,
+		.wakeup_time = 0,
+		.duration = 0,
+		.tx_time_offset = 0,
+		.meta_data_offset = meta_data_offset,
+		.mirror_enabled = app_config.rta_rx_mirror_enabled,
+		.tx_time_enabled = false,
+	};
+
+	return packet_send_messages(&send_req);
+}
+
+static int rta_send_frames(unsigned char *frame_data, size_t num_frames, int socket_fd,
+			   struct sockaddr_ll *destination)
+{
+	int len, i;
+
+	/* Send it */
+	len = rta_send_messages(socket_fd, destination, frame_data, num_frames);
+
+	for (i = 0; i < len; i++) {
+		uint64_t sequence_counter;
+
+		sequence_counter =
+			rta_get_sequence_counter(frame_data + i * app_config.rta_frame_length);
+
+		stat_frame_sent(RTA_FRAME_TYPE, sequence_counter);
+	}
+
+	return len;
+}
+
+static int rta_gen_and_send_frames(struct thread_context *thread_context, int socket_fd,
+				   struct sockaddr_ll *destination, uint64_t sequence_counter_begin)
+{
+	int len, i;
+
+	for (i = 0; i < app_config.rta_num_frames_per_cycle; i++) {
+		uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
+					    offsetof(struct profinet_rt_header, meta_data);
+		struct prepare_frame_config frame_config;
+		int err;
+
+		frame_config.mode = app_config.rta_security_mode;
+		frame_config.security_context = thread_context->tx_security_context;
+		frame_config.iv_prefix = (const unsigned char *)app_config.rta_security_iv_prefix;
+		frame_config.payload_pattern = thread_context->payload_pattern;
+		frame_config.payload_pattern_length = thread_context->payload_pattern_length;
+		frame_config.frame_data = frame_idx(thread_context->tx_frame_data, i);
+		frame_config.frame_length = app_config.rta_frame_length;
+		frame_config.num_frames_per_cycle = app_config.rta_num_frames_per_cycle;
+		frame_config.sequence_counter = sequence_counter_begin + i;
+		frame_config.meta_data_offset = meta_data_offset;
+
+		err = prepare_frame_for_tx(&frame_config);
+		if (err)
+			log_message(LOG_LEVEL_ERROR, "RtaTx: Failed to prepare frame for Tx!\n");
+	}
+
+	/* Send it */
+	len = rta_send_messages(socket_fd, destination, thread_context->tx_frame_data,
+				app_config.rta_num_frames_per_cycle);
+
+	for (i = 0; i < len; i++)
+		stat_frame_sent(RTA_FRAME_TYPE, sequence_counter_begin + i);
+
+	return len;
 }
 
 static void rta_gen_and_send_xdp_frames(struct thread_context *thread_context,
@@ -140,8 +189,10 @@ static void *rta_tx_thread_routine(void *data)
 	const bool mirror_enabled = app_config.rta_rx_mirror_enabled;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
+	struct sockaddr_ll destination;
 	unsigned char source[ETH_ALEN];
 	uint64_t sequence_counter = 0;
+	unsigned int if_index;
 	int ret, socket_fd;
 
 	socket_fd = thread_context->socket_fd;
@@ -152,7 +203,20 @@ static void *rta_tx_thread_routine(void *data)
 		return NULL;
 	}
 
-	rta_initialize_frames(thread_context->tx_frame_data, 1, source, app_config.rta_destination);
+	if_index = if_nametoindex(app_config.rta_interface);
+	if (!if_index) {
+		log_message(LOG_LEVEL_ERROR, "RtaTx: if_nametoindex() failed!\n");
+		return NULL;
+	}
+
+	memset(&destination, '\0', sizeof(destination));
+	destination.sll_family = PF_PACKET;
+	destination.sll_ifindex = if_index;
+	destination.sll_halen = ETH_ALEN;
+	memcpy(destination.sll_addr, app_config.rta_destination, ETH_ALEN);
+
+	rta_initialize_frames(thread_context->tx_frame_data, app_config.rta_num_frames_per_cycle,
+			      source, app_config.rta_destination);
 
 	prepare_openssl(security_context);
 	rta_initialize_frames(thread_context->payload_pattern, 1, source,
@@ -164,7 +228,7 @@ static void *rta_tx_thread_routine(void *data)
 		sizeof(struct profinet_secure_header) - sizeof(struct security_checksum);
 
 	while (!thread_context->stop) {
-		size_t num_frames, i;
+		size_t num_frames;
 
 		/*
 		 * Wait until signalled. These RTA frames have to be sent after the RTC
@@ -182,13 +246,10 @@ static void *rta_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			/* Send RtaFrames */
-			for (i = 0; i < num_frames; ++i)
-				rta_gen_and_send_frame(thread_context,
-						       thread_context->tx_frame_data,
-						       app_config.rta_frame_length,
-						       app_config.rta_num_frames_per_cycle,
-						       socket_fd, sequence_counter++);
+			rta_gen_and_send_frames(thread_context, socket_fd, &destination,
+						sequence_counter);
+
+			sequence_counter += num_frames;
 		} else {
 			size_t len;
 
@@ -196,10 +257,8 @@ static void *rta_tx_thread_routine(void *data)
 					  sizeof(received_frames), &len);
 
 			/* Len should be a multiple of frame size */
-			for (i = 0; i < len / app_config.rta_frame_length; ++i)
-				rta_send_frame(received_frames + i * app_config.rta_frame_length,
-					       app_config.rta_frame_length,
-					       app_config.rta_num_frames_per_cycle, socket_fd);
+			num_frames = len / app_config.rta_frame_length;
+			rta_send_frames(received_frames, num_frames, socket_fd, &destination);
 
 			pthread_mutex_lock(&thread_context->data_mutex);
 			thread_context->num_frames_available = 0;
@@ -526,7 +585,6 @@ static void *rta_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[MAX_FRAME_SIZE];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -542,6 +600,14 @@ static void *rta_rx_thread_routine(void *data)
 	}
 
 	while (!thread_context->stop) {
+		struct packet_receive_request recv_req = {
+			.traffic_class = stat_frame_type_to_string(RTA_FRAME_TYPE),
+			.socket_fd = socket_fd,
+			.num_frames_per_cycle = app_config.rta_num_frames_per_cycle,
+			.receive_function = rta_rx_frame,
+			.data = thread_context,
+		};
+
 		/* Wait until next period. */
 		increment_period(&wakeup_time, cycle_time_ns);
 
@@ -557,25 +623,7 @@ static void *rta_rx_thread_routine(void *data)
 		}
 
 		/* Receive Rta frames. */
-		while (true) {
-			ssize_t len;
-
-			len = recv(socket_fd, frame, sizeof(frame), 0);
-			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-				log_message(LOG_LEVEL_ERROR, "RtaRx: recv() failed: %s\n",
-					    strerror(errno));
-				continue;
-			}
-			if (len == 0)
-				continue;
-
-			/* No more frames. Comeback within next period. */
-			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-				break;
-
-			/* Process received frame. */
-			rta_rx_frame(thread_context, frame, len);
-		}
+		packet_receive_messages(&recv_req);
 	}
 
 	return NULL;
@@ -684,11 +732,15 @@ int rta_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->xdp_data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
-	if (!thread_context->tx_frame_data) {
-		fprintf(stderr, "Failed to allocate RtaTxFrameData\n");
-		ret = -ENOMEM;
-		goto err_tx;
+	/* For XDP a AF_XDP socket is allocated. Otherwise a Linux raw socket is used. */
+	if (!app_config.rta_xdp_enabled) {
+		thread_context->tx_frame_data =
+			calloc(app_config.rta_num_frames_per_cycle, MAX_FRAME_SIZE);
+		if (!thread_context->tx_frame_data) {
+			fprintf(stderr, "Failed to allocate RtaTxFrameData!\n");
+			ret = -ENOMEM;
+			goto err_tx;
+		}
 	}
 
 	thread_context->payload_pattern = calloc(1, MAX_FRAME_SIZE);
