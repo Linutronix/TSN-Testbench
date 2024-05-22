@@ -94,7 +94,6 @@ The following list contains ideas for further development:
 - Add integration with ``ClockManager``
 - Extend statistics with hardware timestamps
 - Make it more user friendly
-- Improve the AF_PACKET code
 - Improve documentation
 - Test (virtual) container networking
 - Test short cycle times (<= 250us)
