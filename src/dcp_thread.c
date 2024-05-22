@@ -16,15 +16,30 @@
 
 #include <linux/if_ether.h>
 #include <linux/if_link.h>
+#include <linux/if_packet.h>
 #include <linux/if_vlan.h>
 
 #include "config.h"
 #include "dcp_thread.h"
 #include "log.h"
 #include "net.h"
+#include "packet.h"
 #include "security.h"
 #include "stat.h"
 #include "utils.h"
+
+static void dcp_initialize_frames(unsigned char *frame_data, size_t num_frames,
+				  const unsigned char *source)
+{
+	size_t i;
+
+	for (i = 0; i < num_frames; ++i)
+		initialize_profinet_frame(
+			SECURITY_MODE_NONE, frame_idx(frame_data, i), MAX_FRAME_SIZE, source,
+			app_config.dcp_destination, app_config.dcp_payload_pattern,
+			app_config.dcp_payload_pattern_length,
+			app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT, 0xfefe);
+}
 
 static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_frame_len,
 				    unsigned char *new_frame, size_t new_frame_len,
@@ -58,50 +73,82 @@ static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_f
 	eth_new->vlan_encapsulated_proto = htons(ETH_P_PROFINET_RT);
 }
 
-static void dcp_send_frame(const unsigned char *frame_data, size_t frame_length,
-			   size_t num_frames_per_cycle, int socket_fd)
+static uint64_t dcp_get_sequence_counter(unsigned char *frame_data)
 {
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
-	uint64_t sequence_counter;
-	ssize_t ret;
 
 	/* Fetch meta data */
 	rt = (struct profinet_rt_header *)(frame_data + sizeof(*eth));
-	sequence_counter = meta_data_to_sequence_counter(&rt->meta_data, num_frames_per_cycle);
-
-	/* Send it */
-	ret = send(socket_fd, frame_data, frame_length, 0);
-	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "DcpTx: send() for %" PRIu64 " failed: %s\n",
-			    sequence_counter, strerror(errno));
-		return;
-	}
-
-	stat_frame_sent(DCP_FRAME_TYPE, sequence_counter);
+	return meta_data_to_sequence_counter(&rt->meta_data, app_config.dcp_num_frames_per_cycle);
 }
 
-static void dcp_gen_and_send_frame(unsigned char *frame_data, size_t frame_length,
-				   size_t num_frames_per_cycle, int socket_fd,
-				   uint64_t sequence_counter)
+static int dcp_send_messages(int socket_fd, struct sockaddr_ll *destination,
+			     unsigned char *frame_data, size_t num_frames)
+{
+	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
+				    offsetof(struct profinet_rt_header, meta_data);
+
+	struct packet_send_request send_req = {
+		.traffic_class = stat_frame_type_to_string(DCP_FRAME_TYPE),
+		.socket_fd = socket_fd,
+		.destination = destination,
+		.frame_data = frame_data,
+		.num_frames = num_frames,
+		.num_frames_per_cycle = app_config.dcp_num_frames_per_cycle,
+		.frame_length = app_config.dcp_frame_length,
+		.wakeup_time = 0,
+		.duration = 0,
+		.tx_time_offset = 0,
+		.meta_data_offset = meta_data_offset,
+		.mirror_enabled = app_config.dcp_rx_mirror_enabled,
+		.tx_time_enabled = false,
+	};
+
+	return packet_send_messages(&send_req);
+}
+
+static int dcp_send_frames(unsigned char *frame_data, size_t num_frames, int socket_fd,
+			   struct sockaddr_ll *destination)
+{
+	int len, i;
+
+	/* Send them */
+	len = dcp_send_messages(socket_fd, destination, frame_data, num_frames);
+
+	for (i = 0; i < len; i++) {
+		uint64_t sequence_counter;
+
+		sequence_counter =
+			dcp_get_sequence_counter(frame_data + i * app_config.dcp_frame_length);
+
+		stat_frame_sent(DCP_FRAME_TYPE, sequence_counter);
+	}
+
+	return len;
+}
+
+static void dcp_gen_and_send_frames(unsigned char *frame_data, int socket_fd,
+				    struct sockaddr_ll *destination,
+				    uint64_t sequence_counter_begin)
 {
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
-	ssize_t ret;
+	int len, i;
 
 	/* Adjust meta data */
-	rt = (struct profinet_rt_header *)(frame_data + sizeof(*eth));
-	sequence_counter_to_meta_data(&rt->meta_data, sequence_counter, num_frames_per_cycle);
-
-	/* Send it */
-	ret = send(socket_fd, frame_data, frame_length, 0);
-	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "DcpTx: send() for %" PRIu64 " failed: %s\n",
-			    sequence_counter, strerror(errno));
-		return;
+	for (i = 0; i < app_config.dcp_num_frames_per_cycle; i++) {
+		rt = (struct profinet_rt_header *)(frame_idx(frame_data, i) + sizeof(*eth));
+		sequence_counter_to_meta_data(&rt->meta_data, sequence_counter_begin + i,
+					      app_config.dcp_num_frames_per_cycle);
 	}
 
-	stat_frame_sent(DCP_FRAME_TYPE, sequence_counter);
+	/* Send them */
+	len = dcp_send_messages(socket_fd, destination, frame_data,
+				app_config.dcp_num_frames_per_cycle);
+
+	for (i = 0; i < len; i++)
+		stat_frame_sent(DCP_FRAME_TYPE, sequence_counter_begin + i);
 }
 
 static void *dcp_tx_thread_routine(void *data)
@@ -111,27 +158,31 @@ static void *dcp_tx_thread_routine(void *data)
 	const bool mirror_enabled = app_config.dcp_rx_mirror_enabled;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
+	struct sockaddr_ll destination;
 	unsigned char source[ETH_ALEN];
 	uint64_t sequence_counter = 0;
-	unsigned char *frame;
-	int ret, socket_fd;
+	unsigned int if_index;
+	int socket_fd;
 
 	socket_fd = thread_context->socket_fd;
 
-	ret = get_interface_mac_address(app_config.dcp_interface, source, ETH_ALEN);
-	if (ret < 0) {
-		log_message(LOG_LEVEL_ERROR, "DcpTx: Failed to get Source MAC address!\n");
+	if_index = if_nametoindex(app_config.dcp_interface);
+	if (!if_index) {
+		log_message(LOG_LEVEL_ERROR, "DcpTx: if_nametoindex() failed!\n");
 		return NULL;
 	}
 
-	frame = thread_context->tx_frame_data;
-	initialize_profinet_frame(SECURITY_MODE_NONE, frame, MAX_FRAME_SIZE, source,
-				  app_config.dcp_destination, app_config.dcp_payload_pattern,
-				  app_config.dcp_payload_pattern_length,
-				  app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT, 0xfefe);
+	memset(&destination, '\0', sizeof(destination));
+	destination.sll_family = PF_PACKET;
+	destination.sll_ifindex = if_index;
+	destination.sll_halen = ETH_ALEN;
+	memcpy(destination.sll_addr, app_config.dcp_destination, ETH_ALEN);
+
+	dcp_initialize_frames(thread_context->tx_frame_data, app_config.dcp_num_frames_per_cycle,
+			      source);
 
 	while (!thread_context->stop) {
-		size_t num_frames, i;
+		size_t num_frames;
 
 		/*
 		 * Wait until signalled. These DCP frames have to be sent after the RTA
@@ -149,11 +200,10 @@ static void *dcp_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			/* Send DcpFrames */
-			for (i = 0; i < num_frames; ++i)
-				dcp_gen_and_send_frame(frame, app_config.dcp_frame_length,
-						       app_config.dcp_num_frames_per_cycle,
-						       socket_fd, sequence_counter++);
+			dcp_gen_and_send_frames(thread_context->tx_frame_data, socket_fd,
+						&destination, sequence_counter);
+
+			sequence_counter += num_frames;
 		} else {
 			size_t len;
 
@@ -161,10 +211,8 @@ static void *dcp_tx_thread_routine(void *data)
 					  sizeof(received_frames), &len);
 
 			/* Len should be a multiple of frame size */
-			for (i = 0; i < len / app_config.dcp_frame_length; ++i)
-				dcp_send_frame(received_frames + i * app_config.dcp_frame_length,
-					       app_config.dcp_frame_length,
-					       app_config.dcp_num_frames_per_cycle, socket_fd);
+			num_frames = len / app_config.dcp_frame_length;
+			dcp_send_frames(received_frames, num_frames, socket_fd, &destination);
 
 			pthread_mutex_lock(&thread_context->data_mutex);
 			thread_context->num_frames_available = 0;
@@ -183,9 +231,9 @@ static void *dcp_tx_thread_routine(void *data)
 	return NULL;
 }
 
-static int dcp_rx_frame(struct thread_context *thread_context, unsigned char *frame_data,
-			size_t len)
+static int dcp_rx_frame(void *data, unsigned char *frame_data, size_t len)
 {
+	struct thread_context *thread_context = data;
 	const unsigned char *expected_pattern =
 		(const unsigned char *)app_config.dcp_payload_pattern;
 	const size_t expected_pattern_length = app_config.dcp_payload_pattern_length;
@@ -256,7 +304,6 @@ static void *dcp_rx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
-	unsigned char frame[MAX_FRAME_SIZE];
 	struct timespec wakeup_time;
 	int socket_fd, ret;
 
@@ -270,6 +317,14 @@ static void *dcp_rx_thread_routine(void *data)
 	}
 
 	while (!thread_context->stop) {
+		struct packet_receive_request recv_req = {
+			.traffic_class = stat_frame_type_to_string(DCP_FRAME_TYPE),
+			.socket_fd = socket_fd,
+			.num_frames_per_cycle = app_config.dcp_num_frames_per_cycle,
+			.receive_function = dcp_rx_frame,
+			.data = thread_context,
+		};
+
 		/* Wait until next period. */
 		increment_period(&wakeup_time, cycle_time_ns);
 
@@ -285,25 +340,7 @@ static void *dcp_rx_thread_routine(void *data)
 		}
 
 		/* Receive Dcp frames. */
-		while (true) {
-			ssize_t len;
-
-			len = recv(socket_fd, frame, sizeof(frame), 0);
-			if (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-				log_message(LOG_LEVEL_ERROR, "DcpRx: recv() failed: %s\n",
-					    strerror(errno));
-				continue;
-			}
-			if (len == 0)
-				continue;
-
-			/* No more frames. Comeback within next period. */
-			if (len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-				break;
-
-			/* Process received frame. */
-			dcp_rx_frame(thread_context, frame, len);
-		}
+		packet_receive_messages(&recv_req);
 	}
 
 	return NULL;
@@ -372,7 +409,7 @@ int dcp_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
+	thread_context->tx_frame_data = calloc(app_config.dcp_num_frames_per_cycle, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate Dcp TxFrameData!\n");
 		ret = -ENOMEM;
