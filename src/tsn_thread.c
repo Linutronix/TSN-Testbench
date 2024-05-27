@@ -199,9 +199,10 @@ static void *tsn_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const struct tsn_thread_configuration *tsn_config = thread_context->private_data;
-	unsigned char received_frames[MAX_FRAME_SIZE * tsn_config->tsn_num_frames_per_cycle];
+	size_t received_frames_length = MAX_FRAME_SIZE * tsn_config->tsn_num_frames_per_cycle;
 	struct security_context *security_context = thread_context->tx_security_context;
 	const long long cycle_time_ns = app_config.application_base_cycle_time_ns;
+	unsigned char *received_frames = thread_context->rx_frame_data;
 	const bool mirror_enabled = tsn_config->tsn_rx_mirror_enabled;
 	struct sockaddr_ll destination;
 	unsigned char source[ETH_ALEN];
@@ -299,7 +300,7 @@ static void *tsn_tx_thread_routine(void *data)
 			size_t len, num_frames;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
-					  sizeof(received_frames), &len);
+					  received_frames_length, &len);
 
 			/* Len should be a multiple of frame size */
 			num_frames = len / tsn_config->tsn_frame_length;
@@ -767,6 +768,14 @@ int tsn_threads_create(struct thread_context *thread_context,
 			ret = -ENOMEM;
 			goto err_tx;
 		}
+
+		thread_context->rx_frame_data =
+			calloc(tsn_config->tsn_num_frames_per_cycle, MAX_FRAME_SIZE);
+		if (!thread_context->rx_frame_data) {
+			fprintf(stderr, "Failed to allocate TsnRxFrameData!\n");
+			ret = -ENOMEM;
+			goto err_rx;
+		}
 	}
 
 	thread_context->payload_pattern = calloc(1, MAX_FRAME_SIZE);
@@ -883,6 +892,8 @@ err_buffer:
 err_socket:
 	free(thread_context->payload_pattern);
 err_payload:
+	free(thread_context->rx_frame_data);
+err_rx:
 	free(thread_context->tx_frame_data);
 err_tx:
 out:
@@ -905,6 +916,7 @@ static void tsn_threads_free(struct thread_context *thread_context)
 	ring_buffer_free(thread_context->mirror_buffer);
 
 	free(thread_context->tx_frame_data);
+	free(thread_context->rx_frame_data);
 
 	if (thread_context->socket_fd > 0)
 		close(thread_context->socket_fd);

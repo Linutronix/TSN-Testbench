@@ -185,9 +185,10 @@ static void rtc_gen_and_send_xdp_frames(struct thread_context *thread_context,
 static void *rtc_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	unsigned char received_frames[MAX_FRAME_SIZE * app_config.rtc_num_frames_per_cycle];
+	size_t received_frames_length = MAX_FRAME_SIZE * app_config.rtc_num_frames_per_cycle;
 	struct security_context *security_context = thread_context->tx_security_context;
 	const uint64_t cycle_time_ns = app_config.application_base_cycle_time_ns;
+	unsigned char *received_frames = thread_context->rx_frame_data;
 	const bool mirror_enabled = app_config.rtc_rx_mirror_enabled;
 	struct sockaddr_ll destination;
 	unsigned char source[ETH_ALEN];
@@ -275,7 +276,7 @@ static void *rtc_tx_thread_routine(void *data)
 			size_t len, num_frames;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
-					  sizeof(received_frames), &len);
+					  received_frames_length, &len);
 
 			/* Len should be a multiple of frame size */
 			num_frames = len / app_config.rtc_frame_length;
@@ -729,6 +730,14 @@ int rtc_threads_create(struct thread_context *thread_context)
 			ret = -ENOMEM;
 			goto err_tx;
 		}
+
+		thread_context->rx_frame_data =
+			calloc(app_config.rtc_num_frames_per_cycle, MAX_FRAME_SIZE);
+		if (!thread_context->rx_frame_data) {
+			fprintf(stderr, "Failed to allocate RtcRxFrameData!\n");
+			ret = -ENOMEM;
+			goto err_rx;
+		}
 	}
 
 	thread_context->payload_pattern = calloc(1, MAX_FRAME_SIZE);
@@ -838,6 +847,8 @@ err_thread:
 err_socket:
 	free(thread_context->payload_pattern);
 err_payload:
+	free(thread_context->rx_frame_data);
+err_rx:
 	free(thread_context->tx_frame_data);
 err_tx:
 	return ret;
@@ -854,6 +865,7 @@ void rtc_threads_free(struct thread_context *thread_context)
 	ring_buffer_free(thread_context->mirror_buffer);
 
 	free(thread_context->tx_frame_data);
+	free(thread_context->rx_frame_data);
 
 	if (thread_context->socket_fd > 0)
 		close(thread_context->socket_fd);

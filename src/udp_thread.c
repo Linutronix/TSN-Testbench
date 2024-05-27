@@ -119,7 +119,8 @@ static void *udp_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
 	const struct udp_thread_configuration *udp_config = thread_context->private_data;
-	unsigned char received_frames[MAX_FRAME_SIZE * udp_config->udp_num_frames_per_cycle];
+	size_t received_frames_length = MAX_FRAME_SIZE * udp_config->udp_num_frames_per_cycle;
+	unsigned char *received_frames = thread_context->rx_frame_data;
 	const bool mirror_enabled = udp_config->udp_rx_mirror_enabled;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
@@ -161,7 +162,7 @@ static void *udp_tx_thread_routine(void *data)
 			size_t len;
 
 			ring_buffer_fetch(thread_context->mirror_buffer, received_frames,
-					  sizeof(received_frames), &len);
+					  received_frames_length, &len);
 
 			/* Len should be a multiple of frame size */
 			for (i = 0; i < len / udp_config->udp_frame_length; ++i)
@@ -386,9 +387,17 @@ static int udp_threads_create(struct thread_context *thread_context,
 
 	thread_context->tx_frame_data = calloc(1, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
-		fprintf(stderr, "Failed to allocate Udp TxFrameData!\n");
+		fprintf(stderr, "Failed to allocate UdpTxFrameData!\n");
 		ret = -ENOMEM;
 		goto err_tx;
+	}
+
+	thread_context->rx_frame_data =
+		calloc(udp_thread_config->udp_num_frames_per_cycle, MAX_FRAME_SIZE);
+	if (!thread_context->rx_frame_data) {
+		fprintf(stderr, "Failed to allocate UdpRxFrameData!\n");
+		ret = -ENOMEM;
+		goto err_rx;
 	}
 
 	if (udp_thread_config->udp_rx_mirror_enabled) {
@@ -445,6 +454,8 @@ err_thread_txgen:
 err_thread:
 	ring_buffer_free(thread_context->mirror_buffer);
 err_buffer:
+	free(thread_context->rx_frame_data);
+err_rx:
 	free(thread_context->tx_frame_data);
 err_tx:
 	close(thread_context->socket_fd);
@@ -460,6 +471,9 @@ static void udp_threads_free(struct thread_context *thread_context)
 		return;
 
 	ring_buffer_free(thread_context->mirror_buffer);
+
+	free(thread_context->tx_frame_data);
+	free(thread_context->rx_frame_data);
 
 	if (thread_context->socket_fd > 0)
 		close(thread_context->socket_fd);
