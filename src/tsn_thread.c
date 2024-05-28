@@ -74,7 +74,8 @@ static uint64_t tsn_get_sequence_counter(const struct tsn_thread_configuration *
 	return sequence_counter;
 }
 
-static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config, int socket_fd,
+static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config,
+			     struct thread_context *thread_context, int socket_fd,
 			     struct sockaddr_ll *destination, unsigned char *frame_data,
 			     size_t num_frames, uint64_t wakeup_time, uint64_t duration)
 {
@@ -96,7 +97,6 @@ static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config, 
 		.destination = destination,
 		.frame_data = frame_data,
 		.num_frames = num_frames,
-		.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle,
 		.frame_length = tsn_config->tsn_frame_length,
 		.wakeup_time = wakeup_time,
 		.duration = duration,
@@ -106,18 +106,19 @@ static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config, 
 		.tx_time_enabled = tsn_config->tsn_tx_time_enabled,
 	};
 
-	return packet_send_messages(&send_req);
+	return packet_send_messages(thread_context->packet_context, &send_req);
 }
 
 static int tsn_send_frames(const struct tsn_thread_configuration *tsn_config,
-			   unsigned char *frame_data, size_t num_frames, int socket_fd,
-			   struct sockaddr_ll *destination, uint64_t wakeup_time, uint64_t duration)
+			   struct thread_context *thread_context, unsigned char *frame_data,
+			   size_t num_frames, int socket_fd, struct sockaddr_ll *destination,
+			   uint64_t wakeup_time, uint64_t duration)
 {
 	int len, i;
 
 	/* Send it */
-	len = tsn_send_messages(tsn_config, socket_fd, destination, frame_data, num_frames,
-				wakeup_time, duration);
+	len = tsn_send_messages(tsn_config, thread_context, socket_fd, destination, frame_data,
+				num_frames, wakeup_time, duration);
 
 	for (i = 0; i < len; i++) {
 		uint64_t sequence_counter;
@@ -162,8 +163,9 @@ static int tsn_gen_and_send_frames(const struct tsn_thread_configuration *tsn_co
 	}
 
 	/* Send them */
-	len = tsn_send_messages(tsn_config, socket_fd, destination, thread_context->tx_frame_data,
-				tsn_config->tsn_num_frames_per_cycle, wakeup_time, duration);
+	len = tsn_send_messages(tsn_config, thread_context, socket_fd, destination,
+				thread_context->tx_frame_data, tsn_config->tsn_num_frames_per_cycle,
+				wakeup_time, duration);
 
 	for (i = 0; i < len; i++)
 		stat_frame_sent(tsn_config->frame_type, sequence_counter_begin + i);
@@ -304,8 +306,8 @@ static void *tsn_tx_thread_routine(void *data)
 
 			/* Len should be a multiple of frame size */
 			num_frames = len / tsn_config->tsn_frame_length;
-			tsn_send_frames(tsn_config, received_frames, num_frames, socket_fd,
-					&destination, ts_to_ns(&wakeup_time), duration);
+			tsn_send_frames(tsn_config, thread_context, received_frames, num_frames,
+					socket_fd, &destination, ts_to_ns(&wakeup_time), duration);
 		}
 
 		/* Signal next Tx thread */
@@ -667,7 +669,6 @@ static void *tsn_rx_thread_routine(void *data)
 		struct packet_receive_request recv_req = {
 			.traffic_class = stat_frame_type_to_string(tsn_config->frame_type),
 			.socket_fd = socket_fd,
-			.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle,
 			.receive_function = tsn_rx_frame,
 			.data = thread_context,
 		};
@@ -687,7 +688,7 @@ static void *tsn_rx_thread_routine(void *data)
 		}
 
 		/* Receive Tsn frames. */
-		packet_receive_messages(&recv_req);
+		packet_receive_messages(thread_context->packet_context, &recv_req);
 	}
 
 	return NULL;
@@ -761,6 +762,13 @@ int tsn_threads_create(struct thread_context *thread_context,
 
 	/* For XDP the frames are stored in a umem area. That memory is part of the socket. */
 	if (!tsn_config->tsn_xdp_enabled) {
+		thread_context->packet_context = packet_init(tsn_config->tsn_num_frames_per_cycle);
+		if (!thread_context->packet_context) {
+			fprintf(stderr, "Failed to allocate Tsn packet context!\n");
+			ret = -ENOMEM;
+			goto err_packet;
+		}
+
 		thread_context->tx_frame_data =
 			calloc(tsn_config->tsn_num_frames_per_cycle, MAX_FRAME_SIZE);
 		if (!thread_context->tx_frame_data) {
@@ -896,6 +904,8 @@ err_payload:
 err_rx:
 	free(thread_context->tx_frame_data);
 err_tx:
+	packet_free(thread_context->packet_context);
+err_packet:
 out:
 	free(tsn_config);
 	return ret;
@@ -915,6 +925,7 @@ static void tsn_threads_free(struct thread_context *thread_context)
 
 	ring_buffer_free(thread_context->mirror_buffer);
 
+	packet_free(thread_context->packet_context);
 	free(thread_context->tx_frame_data);
 	free(thread_context->rx_frame_data);
 

@@ -11,13 +11,22 @@
 #include <stddef.h>
 #include <stdint.h>
 
+struct packet_context {
+	unsigned char *frames;
+	struct iovec *iovecs;
+	struct mmsghdr *msgs;
+	size_t num_frames_per_cycle;
+};
+
+struct packet_context *packet_init(size_t num_frames_per_cycle);
+void packet_free(struct packet_context *context);
+
 struct packet_send_request {
 	const char *traffic_class;
 	int socket_fd;
 	struct sockaddr_ll *destination;
 	unsigned char *frame_data;
 	size_t num_frames;
-	size_t num_frames_per_cycle;
 	size_t frame_length;
 	uint64_t wakeup_time;
 	uint64_t duration;
@@ -27,16 +36,16 @@ struct packet_send_request {
 	bool tx_time_enabled;
 };
 
-int packet_send_messages(struct packet_send_request *send_req);
+int packet_send_messages(struct packet_context *context, struct packet_send_request *send_req);
 
 struct packet_receive_request {
 	const char *traffic_class;
 	int socket_fd;
-	size_t num_frames_per_cycle;
 	int (*receive_function)(void *data, unsigned char *, size_t);
 	void *data;
 };
 
-int packet_receive_messages(struct packet_receive_request *recv_req);
+int packet_receive_messages(struct packet_context *context,
+			    struct packet_receive_request *recv_req);
 
 #endif /* PACKET_H */

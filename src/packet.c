@@ -4,6 +4,7 @@
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -17,6 +18,59 @@
 #include "tx_time.h"
 #include "utils.h"
 
+struct packet_context *packet_init(size_t num_frames_per_cycle)
+{
+	struct packet_context *context;
+
+	context = calloc(1, sizeof(*context));
+	if (!context) {
+		fprintf(stderr, "Failed to allocate packet context!\n");
+		return NULL;
+	}
+
+	context->frames = calloc(MAX_FRAME_SIZE * num_frames_per_cycle, sizeof(unsigned char));
+	if (!context->frames) {
+		fprintf(stderr, "Failed to allocate receive frame buffers!\n");
+		goto err_frames;
+	}
+
+	context->iovecs = calloc(num_frames_per_cycle, sizeof(*context->iovecs));
+	if (!context->iovecs) {
+		fprintf(stderr, "Failed to allocate receive io vectors!\n");
+		goto err_iovecs;
+	}
+
+	context->msgs = calloc(num_frames_per_cycle, sizeof(*context->msgs));
+	if (!context->msgs) {
+		fprintf(stderr, "Failed to allocate receive messages!\n");
+		goto err_msgs;
+	}
+
+	context->num_frames_per_cycle = num_frames_per_cycle;
+
+	return context;
+
+err_msgs:
+	free(context->iovecs);
+err_iovecs:
+	free(context->frames);
+err_frames:
+	free(context);
+
+	return NULL;
+}
+
+void packet_free(struct packet_context *context)
+{
+	if (!context)
+		return;
+
+	free(context->frames);
+	free(context->iovecs);
+	free(context->msgs);
+	free(context);
+}
+
 static inline uint64_t packet_get_sequence_counter(unsigned char *frame_data,
 						   uint32_t meta_data_offset,
 						   size_t num_frames_per_cycle)
@@ -28,7 +82,7 @@ static inline uint64_t packet_get_sequence_counter(unsigned char *frame_data,
 	return meta_data_to_sequence_counter(meta_data, num_frames_per_cycle);
 }
 
-int packet_send_messages(struct packet_send_request *send_req)
+int packet_send_messages(struct packet_context *context, struct packet_send_request *send_req)
 {
 	struct iovec iovecs[send_req->num_frames];
 	struct mmsghdr msgs[send_req->num_frames];
@@ -56,10 +110,10 @@ int packet_send_messages(struct packet_send_request *send_req)
 			struct cmsghdr *cmsg;
 
 			sequence_counter = packet_get_sequence_counter(
-				frame, send_req->meta_data_offset, send_req->num_frames_per_cycle);
+				frame, send_req->meta_data_offset, context->num_frames_per_cycle);
 			tx_time = tx_time_get_frame_tx_time(
 				send_req->wakeup_time, sequence_counter, send_req->duration,
-				send_req->num_frames_per_cycle, send_req->tx_time_offset,
+				context->num_frames_per_cycle, send_req->tx_time_offset,
 				send_req->traffic_class);
 
 			cmsg = CMSG_FIRSTHDR(&msgs[i].msg_hdr);
@@ -90,26 +144,23 @@ int packet_send_messages(struct packet_send_request *send_req)
 	return sent;
 }
 
-int packet_receive_messages(struct packet_receive_request *recv_req)
+int packet_receive_messages(struct packet_context *context, struct packet_receive_request *recv_req)
 {
-	unsigned char frames[MAX_FRAME_SIZE * recv_req->num_frames_per_cycle];
 	int received = 0;
 
 	while (true) {
-		struct iovec iovecs[recv_req->num_frames_per_cycle];
-		struct mmsghdr msgs[recv_req->num_frames_per_cycle];
+		struct iovec *iovecs = context->iovecs;
+		struct mmsghdr *msgs = context->msgs;
 		int i, len;
 
-		memset(iovecs, '\0', recv_req->num_frames_per_cycle * sizeof(struct iovec));
-		memset(msgs, '\0', recv_req->num_frames_per_cycle * sizeof(struct mmsghdr));
-		for (i = 0; i < recv_req->num_frames_per_cycle; i++) {
-			iovecs[i].iov_base = frame_idx(frames, i);
+		for (i = 0; i < context->num_frames_per_cycle; i++) {
+			iovecs[i].iov_base = frame_idx(context->frames, i);
 			iovecs[i].iov_len = MAX_FRAME_SIZE;
 			msgs[i].msg_hdr.msg_iov = &iovecs[i];
 			msgs[i].msg_hdr.msg_iovlen = 1;
 		}
 
-		len = recvmmsg(recv_req->socket_fd, msgs, recv_req->num_frames_per_cycle, 0, NULL);
+		len = recvmmsg(recv_req->socket_fd, msgs, context->num_frames_per_cycle, 0, NULL);
 		if (len == -1) {
 			if (errno != EAGAIN && errno != EWOULDBLOCK) {
 				log_message(LOG_LEVEL_ERROR, "%sRx: recvmmsg() failed: %s\n",
@@ -123,7 +174,7 @@ int packet_receive_messages(struct packet_receive_request *recv_req)
 
 		/* Process received frames. */
 		for (i = 0; i < len; i++)
-			recv_req->receive_function(recv_req->data, frame_idx(frames, i),
+			recv_req->receive_function(recv_req->data, frame_idx(context->frames, i),
 						   msgs[i].msg_len);
 
 		received += len;

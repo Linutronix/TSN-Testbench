@@ -89,8 +89,9 @@ static uint64_t lldp_get_sequence_counter(unsigned char *frame_data)
 	return meta_data_to_sequence_counter(meta, app_config.lldp_num_frames_per_cycle);
 }
 
-static int lldp_send_messages(int socket_fd, struct sockaddr_ll *destination,
-			      unsigned char *frame_data, size_t num_frames)
+static int lldp_send_messages(struct thread_context *thread_context, int socket_fd,
+			      struct sockaddr_ll *destination, unsigned char *frame_data,
+			      size_t num_frames)
 {
 	uint32_t meta_data_offset = sizeof(struct ethhdr);
 
@@ -100,7 +101,6 @@ static int lldp_send_messages(int socket_fd, struct sockaddr_ll *destination,
 		.destination = destination,
 		.frame_data = frame_data,
 		.num_frames = num_frames,
-		.num_frames_per_cycle = app_config.lldp_num_frames_per_cycle,
 		.frame_length = app_config.lldp_frame_length,
 		.wakeup_time = 0,
 		.duration = 0,
@@ -110,16 +110,16 @@ static int lldp_send_messages(int socket_fd, struct sockaddr_ll *destination,
 		.tx_time_enabled = false,
 	};
 
-	return packet_send_messages(&send_req);
+	return packet_send_messages(thread_context->packet_context, &send_req);
 }
 
-static int lldp_send_frames(unsigned char *frame_data, size_t num_frames, int socket_fd,
-			    struct sockaddr_ll *destination)
+static int lldp_send_frames(struct thread_context *thread_context, unsigned char *frame_data,
+			    size_t num_frames, int socket_fd, struct sockaddr_ll *destination)
 {
 	int len, i;
 
 	/* Send them */
-	len = lldp_send_messages(socket_fd, destination, frame_data, num_frames);
+	len = lldp_send_messages(thread_context, socket_fd, destination, frame_data, num_frames);
 
 	for (i = 0; i < len; i++) {
 		uint64_t sequence_counter;
@@ -133,7 +133,7 @@ static int lldp_send_frames(unsigned char *frame_data, size_t num_frames, int so
 	return len;
 }
 
-static int lldp_gen_and_send_frames(unsigned char *frame_data, int socket_fd,
+static int lldp_gen_and_send_frames(struct thread_context *thread_context, int socket_fd,
 				    struct sockaddr_ll *destination,
 				    uint64_t sequence_counter_begin)
 {
@@ -143,13 +143,15 @@ static int lldp_gen_and_send_frames(unsigned char *frame_data, int socket_fd,
 
 	/* Adjust meta data */
 	for (i = 0; i < app_config.lldp_num_frames_per_cycle; i++) {
-		meta = (struct reference_meta_data *)(frame_idx(frame_data, i) + sizeof(*eth));
+		meta = (struct reference_meta_data *)(frame_idx(thread_context->tx_frame_data, i) +
+						      sizeof(*eth));
 		sequence_counter_to_meta_data(meta, sequence_counter_begin + i,
 					      app_config.lldp_num_frames_per_cycle);
 	}
 
 	/* Send them */
-	len = lldp_send_messages(socket_fd, destination, frame_data,
+	len = lldp_send_messages(thread_context, socket_fd, destination,
+				 thread_context->tx_frame_data,
 				 app_config.lldp_num_frames_per_cycle);
 
 	for (i = 0; i < len; i++)
@@ -214,8 +216,8 @@ static void *lldp_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			lldp_gen_and_send_frames(thread_context->tx_frame_data, socket_fd,
-						 &destination, sequence_counter);
+			lldp_gen_and_send_frames(thread_context, socket_fd, &destination,
+						 sequence_counter);
 			sequence_counter += num_frames;
 		} else {
 			size_t len;
@@ -225,7 +227,8 @@ static void *lldp_tx_thread_routine(void *data)
 
 			/* Len should be a multiple of frame size */
 			num_frames = len / app_config.lldp_frame_length;
-			lldp_send_frames(received_frames, num_frames, socket_fd, &destination);
+			lldp_send_frames(thread_context, received_frames, num_frames, socket_fd,
+					 &destination);
 
 			pthread_mutex_lock(&thread_context->data_mutex);
 			thread_context->num_frames_available = 0;
@@ -339,7 +342,6 @@ static void *lldp_rx_thread_routine(void *data)
 		struct packet_receive_request recv_req = {
 			.traffic_class = stat_frame_type_to_string(LLDP_FRAME_TYPE),
 			.socket_fd = socket_fd,
-			.num_frames_per_cycle = app_config.lldp_num_frames_per_cycle,
 			.receive_function = lldp_rx_frame,
 			.data = thread_context,
 		};
@@ -359,7 +361,7 @@ static void *lldp_rx_thread_routine(void *data)
 		}
 
 		/* Receive Lldp frames. */
-		packet_receive_messages(&recv_req);
+		packet_receive_messages(thread_context->packet_context, &recv_req);
 	}
 
 	return NULL;
@@ -427,6 +429,13 @@ int lldp_threads_create(struct thread_context *thread_context)
 
 	init_mutex(&thread_context->data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
+
+	thread_context->packet_context = packet_init(app_config.lldp_num_frames_per_cycle);
+	if (!thread_context->packet_context) {
+		fprintf(stderr, "Failed to allocate Lldp packet context!\n");
+		ret = -ENOMEM;
+		goto err_packet;
+	}
 
 	thread_context->tx_frame_data =
 		calloc(app_config.lldp_num_frames_per_cycle, MAX_FRAME_SIZE);
@@ -497,6 +506,8 @@ err_buffer:
 err_rx:
 	free(thread_context->tx_frame_data);
 err_tx:
+	packet_free(thread_context->packet_context);
+err_packet:
 	close(thread_context->socket_fd);
 err:
 	return ret;
@@ -509,6 +520,7 @@ void lldp_threads_free(struct thread_context *thread_context)
 
 	ring_buffer_free(thread_context->mirror_buffer);
 
+	packet_free(thread_context->packet_context);
 	free(thread_context->tx_frame_data);
 	free(thread_context->rx_frame_data);
 

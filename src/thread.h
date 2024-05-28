@@ -29,6 +29,7 @@ static inline unsigned char *frame_idx(unsigned char *frame_data, int idx)
 struct ring_buffer;
 struct xdp_socket;
 struct security_context;
+struct packet_context;
 
 struct thread_context {
 	/* Task related */
@@ -39,12 +40,13 @@ struct thread_context {
 	volatile int stop;            /* Done? */
 
 	/* RAW socket related */
-	int socket_fd;                       /* Shared RAW socket */
-	unsigned char *tx_frame_data;        /* Tx frame data */
-	unsigned char *rx_frame_data;        /* Rx frame data */
-	unsigned char source[ETH_ALEN];      /* Source MAC Address */
-	struct sockaddr_storage destination; /* Where to send L3 frames to */
-	struct ring_buffer *mirror_buffer;   /* Rx frames to be mirrored */
+	int socket_fd;                         /* Shared RAW socket */
+	unsigned char *tx_frame_data;          /* Tx frame data */
+	unsigned char *rx_frame_data;          /* Rx frame data */
+	unsigned char source[ETH_ALEN];        /* Source MAC Address */
+	struct sockaddr_storage destination;   /* Where to send L3 frames to */
+	struct ring_buffer *mirror_buffer;     /* Rx frames to be mirrored */
+	struct packet_context *packet_context; /* Packet Tx/Rx context */
 
 	/* XDP socket related */
 	struct xdp_socket *xsk;         /* XDP socket reference */

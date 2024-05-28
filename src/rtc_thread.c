@@ -67,8 +67,9 @@ static uint64_t rtc_get_sequence_counter(unsigned char *frame_data)
 	return sequence_counter;
 }
 
-static int rtc_send_messages(int socket_fd, struct sockaddr_ll *destination,
-			     unsigned char *frame_data, size_t num_frames)
+static int rtc_send_messages(struct thread_context *thread_context, int socket_fd,
+			     struct sockaddr_ll *destination, unsigned char *frame_data,
+			     size_t num_frames)
 {
 	uint32_t meta_data_offset;
 
@@ -88,7 +89,6 @@ static int rtc_send_messages(int socket_fd, struct sockaddr_ll *destination,
 		.destination = destination,
 		.frame_data = frame_data,
 		.num_frames = num_frames,
-		.num_frames_per_cycle = app_config.rtc_num_frames_per_cycle,
 		.frame_length = app_config.rtc_frame_length,
 		.wakeup_time = 0,
 		.duration = 0,
@@ -98,16 +98,16 @@ static int rtc_send_messages(int socket_fd, struct sockaddr_ll *destination,
 		.tx_time_enabled = false,
 	};
 
-	return packet_send_messages(&send_req);
+	return packet_send_messages(thread_context->packet_context, &send_req);
 }
 
-static int rtc_send_frames(unsigned char *frame_data, size_t num_frames, int socket_fd,
-			   struct sockaddr_ll *destination)
+static int rtc_send_frames(struct thread_context *thread_context, unsigned char *frame_data,
+			   size_t num_frames, int socket_fd, struct sockaddr_ll *destination)
 {
 	int len, i;
 
 	/* Send it */
-	len = rtc_send_messages(socket_fd, destination, frame_data, num_frames);
+	len = rtc_send_messages(thread_context, socket_fd, destination, frame_data, num_frames);
 
 	for (i = 0; i < len; i++) {
 		uint64_t sequence_counter;
@@ -149,8 +149,8 @@ static int rtc_gen_and_send_frames(struct thread_context *thread_context, int so
 	}
 
 	/* Send it */
-	len = rtc_send_messages(socket_fd, destination, thread_context->tx_frame_data,
-				app_config.rtc_num_frames_per_cycle);
+	len = rtc_send_messages(thread_context, socket_fd, destination,
+				thread_context->tx_frame_data, app_config.rtc_num_frames_per_cycle);
 
 	for (i = 0; i < len; i++)
 		stat_frame_sent(RTC_FRAME_TYPE, sequence_counter_begin + i);
@@ -280,7 +280,8 @@ static void *rtc_tx_thread_routine(void *data)
 
 			/* Len should be a multiple of frame size */
 			num_frames = len / app_config.rtc_frame_length;
-			rtc_send_frames(received_frames, num_frames, socket_fd, &destination);
+			rtc_send_frames(thread_context, received_frames, num_frames, socket_fd,
+					&destination);
 		}
 
 		/* Signal next Tx thread */
@@ -639,7 +640,6 @@ static void *rtc_rx_thread_routine(void *data)
 		struct packet_receive_request recv_req = {
 			.traffic_class = stat_frame_type_to_string(RTC_FRAME_TYPE),
 			.socket_fd = socket_fd,
-			.num_frames_per_cycle = app_config.rtc_num_frames_per_cycle,
 			.receive_function = rtc_rx_frame,
 			.data = thread_context,
 		};
@@ -659,7 +659,7 @@ static void *rtc_rx_thread_routine(void *data)
 		}
 
 		/* Receive Rtc frames. */
-		packet_receive_messages(&recv_req);
+		packet_receive_messages(thread_context->packet_context, &recv_req);
 	}
 
 	return NULL;
@@ -723,6 +723,13 @@ int rtc_threads_create(struct thread_context *thread_context)
 
 	/* For XDP the frames are stored in a umem area. That memory is part of the socket. */
 	if (!app_config.rtc_xdp_enabled) {
+		thread_context->packet_context = packet_init(app_config.rtc_num_frames_per_cycle);
+		if (!thread_context->packet_context) {
+			fprintf(stderr, "Failed to allocate Rtc packet context!\n");
+			ret = -ENOMEM;
+			goto err_packet;
+		}
+
 		thread_context->tx_frame_data =
 			calloc(app_config.rtc_num_frames_per_cycle, MAX_FRAME_SIZE);
 		if (!thread_context->tx_frame_data) {
@@ -851,6 +858,8 @@ err_payload:
 err_rx:
 	free(thread_context->tx_frame_data);
 err_tx:
+	packet_free(thread_context->packet_context);
+err_packet:
 	return ret;
 }
 
@@ -864,6 +873,7 @@ void rtc_threads_free(struct thread_context *thread_context)
 
 	ring_buffer_free(thread_context->mirror_buffer);
 
+	packet_free(thread_context->packet_context);
 	free(thread_context->tx_frame_data);
 	free(thread_context->rx_frame_data);
 
