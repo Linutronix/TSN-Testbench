@@ -49,48 +49,11 @@ static void tsn_initialize_frames(const struct tsn_thread_configuration *tsn_con
 			tsn_config->frame_id_range_start);
 }
 
-static uint64_t tsn_get_sequence_counter(const struct tsn_thread_configuration *tsn_config,
-					 unsigned char *frame_data)
-{
-	struct profinet_secure_header *srt;
-	struct vlan_ethernet_header *eth;
-	struct profinet_rt_header *rt;
-	uint64_t sequence_counter;
-
-	switch (tsn_config->tsn_security_mode) {
-	case SECURITY_MODE_NONE:
-		/* Fetch meta data */
-		rt = (struct profinet_rt_header *)(frame_data + sizeof(*eth));
-		sequence_counter = meta_data_to_sequence_counter(
-			&rt->meta_data, tsn_config->tsn_num_frames_per_cycle);
-		break;
-	default:
-		/* Fetch meta data */
-		srt = (struct profinet_secure_header *)(frame_data + sizeof(*eth));
-		sequence_counter = meta_data_to_sequence_counter(
-			&srt->meta_data, tsn_config->tsn_num_frames_per_cycle);
-	}
-
-	return sequence_counter;
-}
-
 static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config,
 			     struct thread_context *thread_context, int socket_fd,
 			     struct sockaddr_ll *destination, unsigned char *frame_data,
 			     size_t num_frames, uint64_t wakeup_time, uint64_t duration)
 {
-	uint32_t meta_data_offset;
-
-	switch (tsn_config->tsn_security_mode) {
-	case SECURITY_MODE_NONE:
-		meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				   offsetof(struct profinet_rt_header, meta_data);
-		break;
-	default:
-		meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				   offsetof(struct profinet_secure_header, meta_data);
-	}
-
 	struct packet_send_request send_req = {
 		.traffic_class = tsn_config->traffic_class,
 		.socket_fd = socket_fd,
@@ -101,7 +64,7 @@ static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config,
 		.wakeup_time = wakeup_time,
 		.duration = duration,
 		.tx_time_offset = tsn_config->tsn_tx_time_offset_ns,
-		.meta_data_offset = meta_data_offset,
+		.meta_data_offset = thread_context->meta_data_offset,
 		.mirror_enabled = tsn_config->tsn_rx_mirror_enabled,
 		.tx_time_enabled = tsn_config->tsn_tx_time_enabled,
 	};
@@ -123,8 +86,9 @@ static int tsn_send_frames(const struct tsn_thread_configuration *tsn_config,
 	for (i = 0; i < len; i++) {
 		uint64_t sequence_counter;
 
-		sequence_counter = tsn_get_sequence_counter(
-			tsn_config, frame_data + i * tsn_config->tsn_frame_length);
+		sequence_counter = get_sequence_counter(
+			frame_data + i * tsn_config->tsn_frame_length,
+			thread_context->meta_data_offset, tsn_config->tsn_num_frames_per_cycle);
 
 		stat_frame_sent(tsn_config->frame_type, sequence_counter);
 	}
@@ -140,8 +104,6 @@ static int tsn_gen_and_send_frames(const struct tsn_thread_configuration *tsn_co
 	int len, i;
 
 	for (i = 0; i < tsn_config->tsn_num_frames_per_cycle; i++) {
-		uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
-					    offsetof(struct profinet_rt_header, meta_data);
 		struct prepare_frame_config frame_config;
 		int err;
 
@@ -154,7 +116,7 @@ static int tsn_gen_and_send_frames(const struct tsn_thread_configuration *tsn_co
 		frame_config.frame_length = tsn_config->tsn_frame_length;
 		frame_config.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle;
 		frame_config.sequence_counter = sequence_counter_begin + i;
-		frame_config.meta_data_offset = meta_data_offset;
+		frame_config.meta_data_offset = thread_context->meta_data_offset;
 
 		err = prepare_frame_for_tx(&frame_config);
 		if (err)
@@ -178,8 +140,6 @@ static void tsn_gen_and_send_xdp_frames(const struct tsn_thread_configuration *t
 					struct xdp_socket *xsk, uint64_t sequence_counter,
 					uint32_t *frame_number)
 {
-	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				    offsetof(struct profinet_rt_header, meta_data);
 	struct xdp_gen_config xdp;
 
 	xdp.mode = tsn_config->tsn_security_mode;
@@ -191,7 +151,7 @@ static void tsn_gen_and_send_xdp_frames(const struct tsn_thread_configuration *t
 	xdp.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle;
 	xdp.frame_number = frame_number;
 	xdp.sequence_counter_begin = sequence_counter;
-	xdp.meta_data_offset = meta_data_offset;
+	xdp.meta_data_offset = thread_context->meta_data_offset;
 	xdp.frame_type = tsn_config->frame_type;
 
 	xdp_gen_and_send_frames(xsk, &xdp);
@@ -879,6 +839,9 @@ int tsn_threads_create(struct thread_context *thread_context,
 		fprintf(stderr, "Failed to create Tsn Rx Thread!\n");
 		goto err_thread_rx;
 	}
+
+	thread_context->meta_data_offset =
+		get_meta_data_offset(tsn_config->frame_type, tsn_config->tsn_security_mode);
 
 	return 0;
 

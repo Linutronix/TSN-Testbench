@@ -26,6 +26,7 @@
 #include "log.h"
 #include "net.h"
 #include "packet.h"
+#include "security.h"
 #include "stat.h"
 #include "thread.h"
 #include "tx_time.h"
@@ -84,17 +85,6 @@ static void generic_l2_initialize_frames(unsigned char *frame_data, size_t num_f
 		generic_l2_initialize_frame(frame_idx(frame_data, i), source, destination);
 }
 
-static uint64_t generic_l2_get_sequence_counter(unsigned char *frame_data)
-{
-	struct vlan_ethernet_header *eth;
-	struct generic_l2_header *l2;
-
-	l2 = (struct generic_l2_header *)(frame_data + sizeof(*eth));
-
-	return meta_data_to_sequence_counter(&l2->meta_data,
-					     app_config.generic_l2_num_frames_per_cycle);
-}
-
 static int generic_l2_send_messages(struct thread_context *thread_context, int socket_fd,
 				    struct sockaddr_ll *destination, unsigned char *frame_data,
 				    size_t num_frames, uint64_t wakeup_time, uint64_t duration)
@@ -109,8 +99,7 @@ static int generic_l2_send_messages(struct thread_context *thread_context, int s
 		.wakeup_time = wakeup_time,
 		.duration = duration,
 		.tx_time_offset = app_config.generic_l2_tx_time_offset_ns,
-		.meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				    offsetof(struct generic_l2_header, meta_data),
+		.meta_data_offset = thread_context->meta_data_offset,
 		.mirror_enabled = app_config.generic_l2_rx_mirror_enabled,
 		.tx_time_enabled = app_config.generic_l2_tx_time_enabled,
 	};
@@ -133,7 +122,9 @@ static int generic_l2_send_frames(struct thread_context *thread_context, unsigne
 	for (i = 0; i < len; i++) {
 		uint64_t sequence_counter;
 
-		sequence_counter = generic_l2_get_sequence_counter(frame_data + i * frame_length);
+		sequence_counter = get_sequence_counter(frame_data + i * frame_length,
+							thread_context->meta_data_offset,
+							app_config.generic_l2_num_frames_per_cycle);
 		stat_frame_sent(GENERICL2_FRAME_TYPE, sequence_counter);
 	}
 
@@ -168,11 +159,10 @@ static int generic_l2_gen_and_send_frames(struct thread_context *thread_context,
 	return len;
 }
 
-static void generic_l2_gen_and_send_xdp_frames(struct xdp_socket *xsk, size_t num_frames_per_cycle,
+static void generic_l2_gen_and_send_xdp_frames(struct thread_context *thread_context,
+					       size_t num_frames_per_cycle,
 					       uint64_t sequence_counter, uint32_t *frame_number)
 {
-	uint32_t meta_data_offset =
-		sizeof(struct vlan_ethernet_header) + offsetof(struct generic_l2_header, meta_data);
 	struct xdp_gen_config xdp;
 
 	xdp.mode = SECURITY_MODE_NONE;
@@ -184,10 +174,10 @@ static void generic_l2_gen_and_send_xdp_frames(struct xdp_socket *xsk, size_t nu
 	xdp.num_frames_per_cycle = num_frames_per_cycle;
 	xdp.frame_number = frame_number;
 	xdp.sequence_counter_begin = sequence_counter;
-	xdp.meta_data_offset = meta_data_offset;
+	xdp.meta_data_offset = thread_context->meta_data_offset;
 	xdp.frame_type = GENERICL2_FRAME_TYPE;
 
-	xdp_gen_and_send_frames(xsk, &xdp);
+	xdp_gen_and_send_frames(thread_context->xsk, &xdp);
 }
 
 static void *generic_l2_tx_thread_routine(void *data)
@@ -337,8 +327,8 @@ static void *generic_l2_xdp_tx_thread_routine(void *data)
 		}
 
 		if (!mirror_enabled) {
-			generic_l2_gen_and_send_xdp_frames(xsk, num_frames, sequence_counter,
-							   &frame_number);
+			generic_l2_gen_and_send_xdp_frames(thread_context, num_frames,
+							   sequence_counter, &frame_number);
 			sequence_counter += num_frames;
 		} else {
 			unsigned int received;
@@ -669,6 +659,9 @@ struct thread_context *generic_l2_threads_create(void)
 		fprintf(stderr, "Failed to create GenericL2 Rx Thread!\n");
 		goto err_thread_rx;
 	}
+
+	thread_context->meta_data_offset =
+		get_meta_data_offset(GENERICL2_FRAME_TYPE, SECURITY_MODE_NONE);
 
 out:
 	return thread_context;

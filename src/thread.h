@@ -59,6 +59,7 @@ struct thread_context {
 	pthread_cond_t data_cond_var; /* Cond var to signal Tx thread */
 	size_t num_frames_available;  /* How many frames are ready to be sent? */
 	bool is_first;                /* Is this the first active traffic class? */
+	uint32_t meta_data_offset;    /* Where is the MetaData in the frame? */
 
 	/* Security related */
 	struct security_context *tx_security_context; /* Tx context for Auth and Crypt */

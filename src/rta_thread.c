@@ -42,46 +42,10 @@ static void rta_initialize_frames(unsigned char *frame_data, size_t num_frames,
 			app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT, 0xfc01);
 }
 
-static uint64_t rta_get_sequence_counter(unsigned char *frame_data)
-{
-	struct profinet_secure_header *srt;
-	struct vlan_ethernet_header *eth;
-	struct profinet_rt_header *rt;
-	uint64_t sequence_counter;
-
-	switch (app_config.rta_security_mode) {
-	case SECURITY_MODE_NONE:
-		/* Fetch meta data */
-		rt = (struct profinet_rt_header *)(frame_data + sizeof(*eth));
-		sequence_counter = meta_data_to_sequence_counter(
-			&rt->meta_data, app_config.rta_num_frames_per_cycle);
-		break;
-	default:
-		/* Fetch meta data */
-		srt = (struct profinet_secure_header *)(frame_data + sizeof(*eth));
-		sequence_counter = meta_data_to_sequence_counter(
-			&srt->meta_data, app_config.rta_num_frames_per_cycle);
-	}
-
-	return sequence_counter;
-}
-
 static int rta_send_messages(struct thread_context *thread_context, int socket_fd,
 			     struct sockaddr_ll *destination, unsigned char *frame_data,
 			     size_t num_frames)
 {
-	uint32_t meta_data_offset;
-
-	switch (app_config.rta_security_mode) {
-	case SECURITY_MODE_NONE:
-		meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				   offsetof(struct profinet_rt_header, meta_data);
-		break;
-	default:
-		meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				   offsetof(struct profinet_secure_header, meta_data);
-	}
-
 	struct packet_send_request send_req = {
 		.traffic_class = stat_frame_type_to_string(RTA_FRAME_TYPE),
 		.socket_fd = socket_fd,
@@ -92,7 +56,7 @@ static int rta_send_messages(struct thread_context *thread_context, int socket_f
 		.wakeup_time = 0,
 		.duration = 0,
 		.tx_time_offset = 0,
-		.meta_data_offset = meta_data_offset,
+		.meta_data_offset = thread_context->meta_data_offset,
 		.mirror_enabled = app_config.rta_rx_mirror_enabled,
 		.tx_time_enabled = false,
 	};
@@ -111,8 +75,9 @@ static int rta_send_frames(struct thread_context *thread_context, unsigned char 
 	for (i = 0; i < len; i++) {
 		uint64_t sequence_counter;
 
-		sequence_counter =
-			rta_get_sequence_counter(frame_data + i * app_config.rta_frame_length);
+		sequence_counter = get_sequence_counter(
+			frame_data + i * app_config.rta_frame_length,
+			thread_context->meta_data_offset, app_config.rta_num_frames_per_cycle);
 
 		stat_frame_sent(RTA_FRAME_TYPE, sequence_counter);
 	}
@@ -126,8 +91,6 @@ static int rta_gen_and_send_frames(struct thread_context *thread_context, int so
 	int len, i;
 
 	for (i = 0; i < app_config.rta_num_frames_per_cycle; i++) {
-		uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
-					    offsetof(struct profinet_rt_header, meta_data);
 		struct prepare_frame_config frame_config;
 		int err;
 
@@ -140,7 +103,7 @@ static int rta_gen_and_send_frames(struct thread_context *thread_context, int so
 		frame_config.frame_length = app_config.rta_frame_length;
 		frame_config.num_frames_per_cycle = app_config.rta_num_frames_per_cycle;
 		frame_config.sequence_counter = sequence_counter_begin + i;
-		frame_config.meta_data_offset = meta_data_offset;
+		frame_config.meta_data_offset = thread_context->meta_data_offset;
 
 		err = prepare_frame_for_tx(&frame_config);
 		if (err)
@@ -162,8 +125,6 @@ static void rta_gen_and_send_xdp_frames(struct thread_context *thread_context,
 					size_t num_frames_per_cycle, uint64_t sequence_counter,
 					uint32_t *frame_number)
 {
-	uint32_t meta_data_offset = sizeof(struct vlan_ethernet_header) +
-				    offsetof(struct profinet_rt_header, meta_data);
 	struct xdp_gen_config xdp;
 
 	xdp.mode = app_config.rta_security_mode;
@@ -175,7 +136,7 @@ static void rta_gen_and_send_xdp_frames(struct thread_context *thread_context,
 	xdp.num_frames_per_cycle = num_frames_per_cycle;
 	xdp.frame_number = frame_number;
 	xdp.sequence_counter_begin = sequence_counter;
-	xdp.meta_data_offset = meta_data_offset;
+	xdp.meta_data_offset = thread_context->meta_data_offset;
 	xdp.frame_type = RTA_FRAME_TYPE;
 
 	xdp_gen_and_send_frames(xsk, &xdp);
@@ -852,6 +813,9 @@ int rta_threads_create(struct thread_context *thread_context)
 		fprintf(stderr, "Failed to create Rta Rx Thread!\n");
 		goto err_thread_rx;
 	}
+
+	thread_context->meta_data_offset =
+		get_meta_data_offset(RTA_FRAME_TYPE, app_config.rta_security_mode);
 
 out:
 	return 0;

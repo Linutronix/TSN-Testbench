@@ -71,17 +71,6 @@ void packet_free(struct packet_context *context)
 	free(context);
 }
 
-static inline uint64_t packet_get_sequence_counter(unsigned char *frame_data,
-						   uint32_t meta_data_offset,
-						   size_t num_frames_per_cycle)
-{
-	struct reference_meta_data *meta_data;
-
-	meta_data = (struct reference_meta_data *)(frame_data + meta_data_offset);
-
-	return meta_data_to_sequence_counter(meta_data, num_frames_per_cycle);
-}
-
 int packet_send_messages(struct packet_context *context, struct packet_send_request *send_req)
 {
 	struct iovec iovecs[send_req->num_frames];
@@ -109,8 +98,9 @@ int packet_send_messages(struct packet_context *context, struct packet_send_requ
 			uint64_t tx_time, sequence_counter;
 			struct cmsghdr *cmsg;
 
-			sequence_counter = packet_get_sequence_counter(
-				frame, send_req->meta_data_offset, context->num_frames_per_cycle);
+			sequence_counter = get_sequence_counter(frame, send_req->meta_data_offset,
+								context->num_frames_per_cycle);
+
 			tx_time = tx_time_get_frame_tx_time(
 				send_req->wakeup_time, sequence_counter, send_req->duration,
 				context->num_frames_per_cycle, send_req->tx_time_offset,
