@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -23,6 +23,7 @@
 #include "net.h"
 #include "net_def.h"
 #include "security.h"
+#include "stat.h"
 #include "utils.h"
 #include "xdp.h"
 
@@ -389,4 +390,47 @@ void print_payload_pattern(const char *payload_pattern, size_t payload_pattern_l
 
 	for (i = 0; i < payload_pattern_length; ++i)
 		printf("0x%02x ", payload_pattern[i]);
+}
+
+uint32_t get_meta_data_offset(enum stat_frame_type frame_type, enum security_mode security_mode)
+{
+	uint32_t meta_data_offset = 0;
+
+	switch (frame_type) {
+	/* PROFINET Frames w/o security headers */
+	case TSN_HIGH_FRAME_TYPE:
+	case TSN_LOW_FRAME_TYPE:
+	case RTC_FRAME_TYPE:
+	case RTA_FRAME_TYPE:
+	case DCP_FRAME_TYPE:
+		switch (security_mode) {
+		case SECURITY_MODE_NONE:
+			meta_data_offset = sizeof(struct vlan_ethernet_header) +
+					   offsetof(struct profinet_rt_header, meta_data);
+			break;
+		default:
+			meta_data_offset = sizeof(struct vlan_ethernet_header) +
+					   offsetof(struct profinet_secure_header, meta_data);
+		}
+		break;
+	/* LLDP without VLAN */
+	case LLDP_FRAME_TYPE:
+		meta_data_offset = sizeof(struct ethhdr);
+		break;
+	/* UDP without any headers */
+	case UDP_HIGH_FRAME_TYPE:
+	case UDP_LOW_FRAME_TYPE:
+		meta_data_offset = 0;
+		break;
+	/* GenericL2 has its own frame layout */
+	case GENERICL2_FRAME_TYPE:
+		meta_data_offset = sizeof(struct vlan_ethernet_header) +
+				   offsetof(struct generic_l2_header, meta_data);
+		break;
+	case NUM_FRAME_TYPES:
+		meta_data_offset = 0;
+		break;
+	}
+
+	return meta_data_offset;
 }

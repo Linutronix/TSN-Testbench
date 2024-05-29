@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Copyright (C) 2020-2023 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -17,6 +17,7 @@
 
 #include "net_def.h"
 #include "security.h"
+#include "stat.h"
 
 /* timing */
 #define NSEC_PER_SEC 1000000000LL
@@ -121,5 +122,27 @@ static inline void sequence_counter_to_meta_data(struct reference_meta_data *met
 	meta->frame_counter = htobe32(sequence_counter % num_frames_per_cycle);
 	meta->cycle_counter = htobe32(sequence_counter / num_frames_per_cycle);
 }
+
+static inline uint64_t get_sequence_counter(const unsigned char *frame_data,
+					    uint32_t meta_data_offset, size_t num_frames_per_cycle)
+{
+	struct reference_meta_data *meta_data;
+
+	meta_data = (struct reference_meta_data *)(frame_data + meta_data_offset);
+
+	return meta_data_to_sequence_counter(meta_data, num_frames_per_cycle);
+}
+
+static inline void set_sequence_counter(unsigned char *frame_data, uint32_t meta_data_offset,
+					uint64_t sequence_counter, size_t num_frames_per_cycle)
+{
+	struct reference_meta_data *meta_data;
+
+	meta_data = (struct reference_meta_data *)(frame_data + meta_data_offset);
+
+	sequence_counter_to_meta_data(meta_data, sequence_counter, num_frames_per_cycle);
+}
+
+uint32_t get_meta_data_offset(enum stat_frame_type frame_type, enum security_mode security_mode);
 
 #endif /* _UTILS_H_ */
