@@ -12,9 +12,11 @@
 #include <stdint.h>
 
 struct packet_context {
-	unsigned char *frames;
-	struct iovec *iovecs;
-	struct mmsghdr *msgs;
+	unsigned char *rx_frames;
+	struct iovec *rx_iovecs;
+	struct iovec *tx_iovecs;
+	struct mmsghdr *rx_msgs;
+	struct mmsghdr *tx_msgs;
 	size_t num_frames_per_cycle;
 };
 
