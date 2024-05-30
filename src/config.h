@@ -342,6 +342,8 @@ void config_free(void);
 #define CONFIG_STORE_STRING_PARAM(name, var)                                                       \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
+			/* config_set_defaults() may have set a default value. */                  \
+			free(app_config.var);                                                      \
 			app_config.var = strdup(value);                                            \
 			if (!app_config.var) {                                                     \
 				ret = -ENOMEM;                                                     \

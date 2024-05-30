@@ -901,6 +901,12 @@ static void tsn_threads_free(struct thread_context *thread_context)
 
 	tsn_config = thread_context->private_data;
 
+	if (thread_context->payload_pattern) {
+		thread_context->payload_pattern -=
+			sizeof(struct vlan_ethernet_header) + sizeof(struct profinet_secure_header);
+		free(thread_context->payload_pattern);
+	}
+
 	security_exit(thread_context->tx_security_context);
 	security_exit(thread_context->rx_security_context);
 

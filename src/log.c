@@ -255,6 +255,7 @@ void log_thread_free(struct log_thread_context *thread_context)
 	if (!thread_context)
 		return;
 
+	free(thread_context->log_data);
 	fclose(thread_context->file_handle);
 	free(thread_context);
 }
