@@ -66,7 +66,6 @@ void tsn_high_threads_free(struct thread_context *thread_context);
 void tsn_high_threads_wait_for_finish(struct thread_context *thread_context);
 
 int tsn_low_threads_create(struct thread_context *thread_context);
-void tsn_low_threads_stop(struct thread_context *thread_context);
 void tsn_low_threads_free(struct thread_context *thread_context);
 void tsn_low_threads_wait_for_finish(struct thread_context *thread_context);
 

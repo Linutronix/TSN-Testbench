@@ -38,12 +38,10 @@ struct udp_thread_configuration {
 };
 
 int udp_low_threads_create(struct thread_context *thread_context);
-void udp_low_threads_stop(struct thread_context *thread_context);
 void udp_low_threads_free(struct thread_context *thread_context);
 void udp_low_threads_wait_for_finish(struct thread_context *thread_context);
 
 int udp_high_threads_create(struct thread_context *thread_context);
-void udp_high_threads_stop(struct thread_context *thread_context);
 void udp_high_threads_free(struct thread_context *thread_context);
 void udp_high_threads_wait_for_finish(struct thread_context *thread_context);
 

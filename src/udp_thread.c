@@ -490,21 +490,6 @@ static void udp_threads_free(struct thread_context *thread_context)
 	free((void *)thread_context->private_data);
 }
 
-static void udp_threads_stop(struct thread_context *thread_context)
-{
-	if (!thread_context)
-		return;
-
-	thread_context->stop = 1;
-
-	if (thread_context->rx_task_id)
-		pthread_join(thread_context->rx_task_id, NULL);
-	if (thread_context->tx_task_id)
-		pthread_join(thread_context->tx_task_id, NULL);
-	if (thread_context->tx_gen_task_id)
-		pthread_join(thread_context->tx_gen_task_id, NULL);
-}
-
 static void udp_threads_wait_for_finish(struct thread_context *thread_context)
 {
 	if (!thread_context)
@@ -545,11 +530,6 @@ int udp_low_threads_create(struct thread_context *udp_thread_context)
 	udp_config->udp_source = app_config.udp_low_source;
 
 	return udp_threads_create(udp_thread_context, udp_config);
-}
-
-void udp_low_threads_stop(struct thread_context *thread_context)
-{
-	udp_threads_stop(thread_context);
 }
 
 void udp_low_threads_free(struct thread_context *thread_context)
@@ -594,11 +574,6 @@ int udp_high_threads_create(struct thread_context *udp_thread_context)
 void udp_high_threads_free(struct thread_context *thread_context)
 {
 	udp_threads_free(thread_context);
-}
-
-void udp_high_threads_stop(struct thread_context *thread_context)
-{
-	udp_threads_stop(thread_context);
 }
 
 void udp_high_threads_wait_for_finish(struct thread_context *thread_context)

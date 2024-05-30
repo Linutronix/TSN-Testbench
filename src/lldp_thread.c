@@ -529,21 +529,6 @@ void lldp_threads_free(struct thread_context *thread_context)
 		close(thread_context->socket_fd);
 }
 
-void lldp_threads_stop(struct thread_context *thread_context)
-{
-	if (!thread_context)
-		return;
-
-	thread_context->stop = 1;
-
-	if (thread_context->rx_task_id)
-		pthread_join(thread_context->rx_task_id, NULL);
-	if (thread_context->tx_task_id)
-		pthread_join(thread_context->tx_task_id, NULL);
-	if (thread_context->tx_gen_task_id)
-		pthread_join(thread_context->tx_gen_task_id, NULL);
-}
-
 void lldp_threads_wait_for_finish(struct thread_context *thread_context)
 {
 	if (!thread_context)

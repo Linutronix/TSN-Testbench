@@ -15,7 +15,6 @@
 #include "thread.h"
 
 int dcp_threads_create(struct thread_context *thread_context);
-void dcp_threads_stop(struct thread_context *thread_context);
 void dcp_threads_free(struct thread_context *thread_context);
 void dcp_threads_wait_for_finish(struct thread_context *thread_context);
 

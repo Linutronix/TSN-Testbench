@@ -12,7 +12,6 @@
 #include "thread.h"
 
 int lldp_threads_create(struct thread_context *thread_context);
-void lldp_threads_stop(struct thread_context *thread_context);
 void lldp_threads_free(struct thread_context *thread_context);
 void lldp_threads_wait_for_finish(struct thread_context *thread_context);
 

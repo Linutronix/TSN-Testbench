@@ -13,7 +13,6 @@
 #include "thread.h"
 
 int rta_threads_create(struct thread_context *thread_context);
-void rta_threads_stop(struct thread_context *thread_context);
 void rta_threads_free(struct thread_context *thread_context);
 void rta_threads_wait_for_finish(struct thread_context *thread_context);
 

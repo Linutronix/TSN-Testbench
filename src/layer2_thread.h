@@ -16,7 +16,6 @@
 #include "thread.h"
 
 struct thread_context *generic_l2_threads_create(void);
-void generic_l2_threads_stop(struct thread_context *thread_context);
 void generic_l2_threads_free(struct thread_context *thread_context);
 void generic_l2_threads_wait_for_finish(struct thread_context *thread_context);
 

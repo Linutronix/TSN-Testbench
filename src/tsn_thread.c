@@ -926,19 +926,6 @@ static void tsn_threads_free(struct thread_context *thread_context)
 	free((void *)tsn_config);
 }
 
-static void tsn_threads_stop(struct thread_context *thread_context)
-{
-	if (!thread_context)
-		return;
-
-	thread_context->stop = 1;
-
-	if (thread_context->rx_task_id)
-		pthread_join(thread_context->rx_task_id, NULL);
-	if (thread_context->tx_task_id)
-		pthread_join(thread_context->tx_task_id, NULL);
-}
-
 static void tsn_threads_wait_for_finish(struct thread_context *thread_context)
 {
 	if (!thread_context)
@@ -995,11 +982,6 @@ int tsn_low_threads_create(struct thread_context *tsn_thread_context)
 	tsn_config->frame_id_range_end = 0x03ff;
 
 	return tsn_threads_create(tsn_thread_context, tsn_config);
-}
-
-void tsn_low_threads_stop(struct thread_context *thread_context)
-{
-	tsn_threads_stop(thread_context);
 }
 
 void tsn_low_threads_free(struct thread_context *thread_context)
@@ -1062,11 +1044,6 @@ int tsn_high_threads_create(struct thread_context *tsn_thread_context)
 void tsn_high_threads_free(struct thread_context *thread_context)
 {
 	tsn_threads_free(thread_context);
-}
-
-void tsn_high_threads_stop(struct thread_context *thread_context)
-{
-	tsn_threads_stop(thread_context);
 }
 
 void tsn_high_threads_wait_for_finish(struct thread_context *thread_context)
