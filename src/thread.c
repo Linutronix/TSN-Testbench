@@ -89,7 +89,11 @@ void init_mutex(pthread_mutex_t *mutex)
 
 void init_condition_variable(pthread_cond_t *cond_var)
 {
-	pthread_cond_init(cond_var, NULL);
+	pthread_condattr_t cattr;
+
+	pthread_condattr_init(&cattr);
+	pthread_condattr_setclock(&cattr, CLOCK_MONOTONIC);
+	pthread_cond_init(cond_var, &cattr);
 }
 
 static struct thread_context *find_next_pn_thread(struct thread_context *pn_threads, int start)

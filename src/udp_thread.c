@@ -134,17 +134,26 @@ static void *udp_tx_thread_routine(void *data)
 	udp_initialize_frame(udp_config, frame);
 
 	while (!thread_context->stop) {
+		struct timespec timeout;
 		size_t num_frames, i;
+		int ret;
 
 		/*
 		 * Wait until signalled. These UDP frames have to be sent after the LLDP
 		 * frames. Therefore, the LLDP or UDP High TxThread signals this one here.
 		 */
+		clock_gettime(CLOCK_MONOTONIC, &timeout);
+		timeout.tv_sec++;
+
 		pthread_mutex_lock(mutex);
-		pthread_cond_wait(cond, mutex);
+		ret = pthread_cond_timedwait(cond, mutex, &timeout);
 		num_frames = thread_context->num_frames_available;
 		thread_context->num_frames_available = 0;
 		pthread_mutex_unlock(mutex);
+
+		/* In case of shutdown a signal may be missing. */
+		if (ret == ETIMEDOUT)
+			continue;
 
 		/*
 		 * Send UdpFrames, two possibilites:
@@ -488,11 +497,12 @@ static void udp_threads_stop(struct thread_context *thread_context)
 
 	thread_context->stop = 1;
 
-	pthread_kill(thread_context->rx_task_id, SIGTERM);
-
-	pthread_join(thread_context->rx_task_id, NULL);
-	pthread_join(thread_context->tx_task_id, NULL);
-	pthread_join(thread_context->tx_gen_task_id, NULL);
+	if (thread_context->rx_task_id)
+		pthread_join(thread_context->rx_task_id, NULL);
+	if (thread_context->tx_task_id)
+		pthread_join(thread_context->tx_task_id, NULL);
+	if (thread_context->tx_gen_task_id)
+		pthread_join(thread_context->tx_gen_task_id, NULL);
 }
 
 static void udp_threads_wait_for_finish(struct thread_context *thread_context)
@@ -500,9 +510,12 @@ static void udp_threads_wait_for_finish(struct thread_context *thread_context)
 	if (!thread_context)
 		return;
 
-	pthread_join(thread_context->rx_task_id, NULL);
-	pthread_join(thread_context->tx_task_id, NULL);
-	pthread_join(thread_context->tx_gen_task_id, NULL);
+	if (thread_context->rx_task_id)
+		pthread_join(thread_context->rx_task_id, NULL);
+	if (thread_context->tx_task_id)
+		pthread_join(thread_context->tx_task_id, NULL);
+	if (thread_context->tx_gen_task_id)
+		pthread_join(thread_context->tx_gen_task_id, NULL);
 }
 
 int udp_low_threads_create(struct thread_context *udp_thread_context)

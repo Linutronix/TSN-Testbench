@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 /*
- * Copyright (C) 2020-2022 Linutronix GmbH
+ * Copyright (C) 2020-2024 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include <getopt.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -35,6 +36,45 @@ static struct option long_options[] = {
 	{NULL},
 };
 
+static struct log_via_mqtt_thread_context *log_via_mqtt_thread;
+static struct log_thread_context *log_thread;
+static struct thread_context *g2_threads;
+static struct thread_context *threads;
+
+static void term_handler(int sig)
+{
+	int i;
+
+	printf("Stopping all application threads...\n");
+
+	if (log_via_mqtt_thread)
+		log_via_mqtt_thread->stop = 1;
+
+	if (log_thread)
+		log_thread->stop = 1;
+
+	if (g2_threads)
+		g2_threads->stop = 1;
+
+	if (threads)
+		for (i = 0; i < NUM_PN_THREAD_TYPES; i++)
+			threads[i].stop = 1;
+}
+
+static void setup_signals(void)
+{
+	struct sigaction sa;
+
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = term_handler;
+	sa.sa_flags = 0;
+
+	if (sigaction(SIGTERM, &sa, NULL))
+		perror("sigaction() failed");
+	if (sigaction(SIGINT, &sa, NULL))
+		perror("sigaction() failed");
+}
+
 static void print_usage_and_die(void)
 {
 	fprintf(stderr, "usage: mirror [options]\n");
@@ -54,10 +94,6 @@ static void print_version_and_die(void)
 
 int main(int argc, char *argv[])
 {
-	struct log_via_mqtt_thread_context *log_via_mqtt_thread;
-	struct log_thread_context *log_thread;
-	struct thread_context *g2_threads;
-	struct thread_context *threads;
 	const char *config_file = NULL;
 	int c, ret;
 
@@ -112,6 +148,8 @@ int main(int argc, char *argv[])
 	}
 
 	configure_cpu_latency();
+
+	setup_signals();
 
 	ret = log_init();
 	if (ret) {
@@ -213,6 +251,18 @@ int main(int argc, char *argv[])
 	generic_l2_threads_wait_for_finish(g2_threads);
 	log_via_mqtt_thread_wait_for_finish(log_via_mqtt_thread);
 	log_thread_wait_for_finish(log_thread);
+
+	tsn_high_threads_free(&threads[TSN_HIGH_THREAD]);
+	tsn_low_threads_free(&threads[TSN_LOW_THREAD]);
+	rtc_threads_free(&threads[RTC_THREAD]);
+	rta_threads_free(&threads[RTA_THREAD]);
+	dcp_threads_free(&threads[DCP_THREAD]);
+	lldp_threads_free(&threads[LLDP_THREAD]);
+	udp_high_threads_free(&threads[UDP_HIGH_THREAD]);
+	udp_low_threads_free(&threads[UDP_LOW_THREAD]);
+	generic_l2_threads_free(g2_threads);
+	log_via_mqtt_thread_free(log_via_mqtt_thread);
+	log_thread_free(log_thread);
 
 	stat_free();
 	log_free();

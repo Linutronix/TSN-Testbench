@@ -36,6 +36,10 @@ void log_via_mqtt_thread_wait_for_finish(struct log_via_mqtt_thread_context *thr
 {
 }
 
+void log_via_mqtt_thread_free(struct log_via_mqtt_thread_context *thread_context)
+{
+}
+
 void log_via_mqtt_stats(enum stat_frame_type frame_type, struct statistics *stats)
 {
 }

@@ -172,17 +172,26 @@ static void *dcp_tx_thread_routine(void *data)
 			      source);
 
 	while (!thread_context->stop) {
+		struct timespec timeout;
 		size_t num_frames;
+		int ret;
 
 		/*
 		 * Wait until signalled. These DCP frames have to be sent after the RTA
 		 * frames. Therefore, the RTA TxThread signals this one here.
 		 */
+		clock_gettime(CLOCK_MONOTONIC, &timeout);
+		timeout.tv_sec++;
+
 		pthread_mutex_lock(mutex);
-		pthread_cond_wait(cond, mutex);
+		ret = pthread_cond_timedwait(cond, mutex, &timeout);
 		num_frames = thread_context->num_frames_available;
 		thread_context->num_frames_available = 0;
 		pthread_mutex_unlock(mutex);
+
+		/* In case of shutdown a signal may be missing. */
+		if (ret == ETIMEDOUT)
+			continue;
 
 		/*
 		 * Send DcpFrames, two possibilites:
@@ -509,11 +518,12 @@ void dcp_threads_stop(struct thread_context *thread_context)
 
 	thread_context->stop = 1;
 
-	pthread_kill(thread_context->rx_task_id, SIGTERM);
-
-	pthread_join(thread_context->rx_task_id, NULL);
-	pthread_join(thread_context->tx_task_id, NULL);
-	pthread_join(thread_context->tx_gen_task_id, NULL);
+	if (thread_context->rx_task_id)
+		pthread_join(thread_context->rx_task_id, NULL);
+	if (thread_context->tx_task_id)
+		pthread_join(thread_context->tx_task_id, NULL);
+	if (thread_context->tx_gen_task_id)
+		pthread_join(thread_context->tx_gen_task_id, NULL);
 }
 
 void dcp_threads_wait_for_finish(struct thread_context *thread_context)
@@ -521,7 +531,10 @@ void dcp_threads_wait_for_finish(struct thread_context *thread_context)
 	if (!thread_context)
 		return;
 
-	pthread_join(thread_context->rx_task_id, NULL);
-	pthread_join(thread_context->tx_task_id, NULL);
-	pthread_join(thread_context->tx_gen_task_id, NULL);
+	if (thread_context->rx_task_id)
+		pthread_join(thread_context->rx_task_id, NULL);
+	if (thread_context->tx_task_id)
+		pthread_join(thread_context->tx_task_id, NULL);
+	if (thread_context->tx_gen_task_id)
+		pthread_join(thread_context->tx_gen_task_id, NULL);
 }

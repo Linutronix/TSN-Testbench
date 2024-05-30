@@ -228,10 +228,19 @@ static void *tsn_tx_thread_routine(void *data)
 
 	while (!thread_context->stop) {
 		if (!thread_context->is_first) {
+			struct timespec timeout;
+
+			clock_gettime(CLOCK_MONOTONIC, &timeout);
+			timeout.tv_sec++;
+
 			pthread_mutex_lock(&thread_context->data_mutex);
-			pthread_cond_wait(&thread_context->data_cond_var,
-					  &thread_context->data_mutex);
+			ret = pthread_cond_timedwait(&thread_context->data_cond_var,
+						     &thread_context->data_mutex, &timeout);
 			pthread_mutex_unlock(&thread_context->data_mutex);
+
+			/* In case of shutdown a signal may be missing. */
+			if (ret == ETIMEDOUT)
+				continue;
 		} else {
 			/* Wait until next period */
 			increment_period(&wakeup_time, cycle_time_ns);
@@ -336,10 +345,19 @@ static void *tsn_xdp_tx_thread_routine(void *data)
 
 	while (!thread_context->stop) {
 		if (!thread_context->is_first) {
+			struct timespec timeout;
+
+			clock_gettime(CLOCK_MONOTONIC, &timeout);
+			timeout.tv_sec++;
+
 			pthread_mutex_lock(&thread_context->data_mutex);
-			pthread_cond_wait(&thread_context->data_cond_var,
-					  &thread_context->data_mutex);
+			ret = pthread_cond_timedwait(&thread_context->data_cond_var,
+						     &thread_context->data_mutex, &timeout);
 			pthread_mutex_unlock(&thread_context->data_mutex);
+
+			/* In case of shutdown a signal may be missing. */
+			if (ret == ETIMEDOUT)
+				continue;
 		} else {
 			/* Wait until next period */
 			increment_period(&wakeup_time, cycle_time_ns);
@@ -909,10 +927,10 @@ static void tsn_threads_stop(struct thread_context *thread_context)
 
 	thread_context->stop = 1;
 
-	pthread_kill(thread_context->rx_task_id, SIGTERM);
-
-	pthread_join(thread_context->rx_task_id, NULL);
-	pthread_join(thread_context->tx_task_id, NULL);
+	if (thread_context->rx_task_id)
+		pthread_join(thread_context->rx_task_id, NULL);
+	if (thread_context->tx_task_id)
+		pthread_join(thread_context->tx_task_id, NULL);
 }
 
 static void tsn_threads_wait_for_finish(struct thread_context *thread_context)
@@ -920,8 +938,10 @@ static void tsn_threads_wait_for_finish(struct thread_context *thread_context)
 	if (!thread_context)
 		return;
 
-	pthread_join(thread_context->rx_task_id, NULL);
-	pthread_join(thread_context->tx_task_id, NULL);
+	if (thread_context->rx_task_id)
+		pthread_join(thread_context->rx_task_id, NULL);
+	if (thread_context->tx_task_id)
+		pthread_join(thread_context->tx_task_id, NULL);
 }
 
 int tsn_low_threads_create(struct thread_context *tsn_thread_context)
