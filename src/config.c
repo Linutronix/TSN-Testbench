@@ -1211,73 +1211,44 @@ bool config_sanity_check(void)
 
 void config_free(void)
 {
-	if (app_config.application_xdp_program)
-		free(app_config.application_xdp_program);
+	free(app_config.application_xdp_program);
 
-	if (app_config.tsn_high_payload_pattern)
-		free(app_config.tsn_high_payload_pattern);
-	if (app_config.tsn_high_security_key)
-		free(app_config.tsn_high_security_key);
-	if (app_config.tsn_high_security_iv_prefix)
-		free(app_config.tsn_high_security_iv_prefix);
+	free(app_config.tsn_high_payload_pattern);
+	free(app_config.tsn_high_security_key);
+	free(app_config.tsn_high_security_iv_prefix);
 
-	if (app_config.tsn_low_payload_pattern)
-		free(app_config.tsn_low_payload_pattern);
-	if (app_config.tsn_low_security_key)
-		free(app_config.tsn_low_security_key);
-	if (app_config.tsn_low_security_iv_prefix)
-		free(app_config.tsn_low_security_iv_prefix);
+	free(app_config.tsn_low_payload_pattern);
+	free(app_config.tsn_low_security_key);
+	free(app_config.tsn_low_security_iv_prefix);
 
-	if (app_config.rtc_payload_pattern)
-		free(app_config.rtc_payload_pattern);
-	if (app_config.rtc_security_key)
-		free(app_config.rtc_security_key);
-	if (app_config.rtc_security_iv_prefix)
-		free(app_config.rtc_security_iv_prefix);
+	free(app_config.rtc_payload_pattern);
+	free(app_config.rtc_security_key);
+	free(app_config.rtc_security_iv_prefix);
 
-	if (app_config.rta_payload_pattern)
-		free(app_config.rta_payload_pattern);
-	if (app_config.rta_security_key)
-		free(app_config.rta_security_key);
-	if (app_config.rta_security_iv_prefix)
-		free(app_config.rta_security_iv_prefix);
+	free(app_config.rta_payload_pattern);
+	free(app_config.rta_security_key);
+	free(app_config.rta_security_iv_prefix);
 
-	if (app_config.dcp_payload_pattern)
-		free(app_config.dcp_payload_pattern);
+	free(app_config.dcp_payload_pattern);
 
-	if (app_config.lldp_payload_pattern)
-		free(app_config.lldp_payload_pattern);
+	free(app_config.lldp_payload_pattern);
 
-	if (app_config.udp_high_payload_pattern)
-		free(app_config.udp_high_payload_pattern);
-	if (app_config.udp_high_port)
-		free(app_config.udp_high_port);
-	if (app_config.udp_high_destination)
-		free(app_config.udp_high_destination);
-	if (app_config.udp_high_source)
-		free(app_config.udp_high_source);
+	free(app_config.udp_high_payload_pattern);
+	free(app_config.udp_high_port);
+	free(app_config.udp_high_destination);
+	free(app_config.udp_high_source);
 
-	if (app_config.udp_low_payload_pattern)
-		free(app_config.udp_low_payload_pattern);
-	if (app_config.udp_low_port)
-		free(app_config.udp_low_port);
-	if (app_config.udp_low_destination)
-		free(app_config.udp_low_destination);
-	if (app_config.udp_low_source)
-		free(app_config.udp_low_source);
+	free(app_config.udp_low_payload_pattern);
+	free(app_config.udp_low_port);
+	free(app_config.udp_low_destination);
+	free(app_config.udp_low_source);
 
-	if (app_config.generic_l2_name)
-		free(app_config.generic_l2_name);
-	if (app_config.generic_l2_payload_pattern)
-		free(app_config.generic_l2_payload_pattern);
+	free(app_config.generic_l2_name);
+	free(app_config.generic_l2_payload_pattern);
 
-	if (app_config.log_file)
-		free(app_config.log_file);
-	if (app_config.log_level)
-		free(app_config.log_level);
+	free(app_config.log_file);
+	free(app_config.log_level);
 
-	if (app_config.log_via_mqtt_broker_ip)
-		free(app_config.log_via_mqtt_broker_ip);
-	if (app_config.log_via_mqtt_measurement_name)
-		free(app_config.log_via_mqtt_measurement_name);
+	free(app_config.log_via_mqtt_broker_ip);
+	free(app_config.log_via_mqtt_measurement_name);
 }
