@@ -88,7 +88,6 @@ The following list contains ideas for further development:
 - Add support for XDP and Tx Launch Time
 - Add configurations for other hardware platforms (hybrid!) and NIC(s)
 - Add debugging capabilities on ``mirror`` side
-- Add clean shutdown e.g., remove eBPF programs
 - Add Wireshark dissector for MetaData
 - Add analyzer scripts for Profishark captures
 - Add integration with ``ClockManager``
