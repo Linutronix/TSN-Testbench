@@ -125,28 +125,19 @@ good indicator whether the simulation works or not.</p>
 100Mbit/s, 1Gbit/s or even higher. Before the reference and mirror application are started the network interface needs
 to configured. Furthermore, PTP has to be used.</p>
 <p>Example for Intel Comet Lake with i225:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>host1:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build_x86
-host1:<span class="w"> </span>../scripts/ptp.sh<span class="w"> </span>&lt;interface&gt;
-host1:<span class="w"> </span>../scripts/flow_cml.sh<span class="w"> </span>&lt;interface&gt;
-host1:<span class="w"> </span>./mirror<span class="w"> </span>-c<span class="w"> </span>../configurations/mirror_vid100_cml.yaml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>host1:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tests/profinet
+host1:<span class="w"> </span>./mirror.sh
 
-host2:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build_x86
-host2:<span class="w"> </span>../scripts/ptp.sh<span class="w"> </span>&lt;interface&gt;
-host2:<span class="w"> </span>../scripts/flow_cml.sh<span class="w"> </span>&lt;interface&gt;
-host2:<span class="w"> </span>./reference<span class="w"> </span>-c<span class="w"> </span>../configurations/reference_vid100_cml.yaml
+host2:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tests/profinet
+host2:<span class="w"> </span>./ref.sh
 </pre></div>
 </div>
-<p>For use of the integrated TSN NICs on Intel Elkhart Lake a different
-configuration is required:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>host1:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build_x86
-host1:<span class="w"> </span>../scripts/ptp.sh<span class="w"> </span>&lt;interface&gt;
-host1:<span class="w"> </span>../scripts/flow_ehl.sh<span class="w"> </span>&lt;interface&gt;
-host1:<span class="w"> </span>./mirror<span class="w"> </span>-c<span class="w"> </span>../configurations/mirror_vid100_ehl.yaml
+<p>For use of the integrated TSN NICs on Intel Elkhart Lake a different configuration is required:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>host1:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tests/multi_middleware/xdp
+host1:<span class="w"> </span>mirror.sh
 
-host2:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build_x86
-host2:<span class="w"> </span>../scripts/ptp.sh<span class="w"> </span>&lt;interface&gt;
-host2:<span class="w"> </span>../scripts/flow_ehl.sh<span class="w"> </span>&lt;interface&gt;
-host2:<span class="w"> </span>./reference<span class="w"> </span>-c<span class="w"> </span>../configurations/reference_vid100_ehl.yaml
+host2:<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tests/multi_middleware/xdp
+host2:<span class="w"> </span>./ref.sh
 </pre></div>
 </div>
 </section>

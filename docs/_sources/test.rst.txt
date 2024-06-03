@@ -32,30 +32,21 @@ Example for Intel Comet Lake with i225:
 
 .. code:: bash
 
-   host1: cd build_x86
-   host1: ../scripts/ptp.sh <interface>
-   host1: ../scripts/flow_cml.sh <interface>
-   host1: ./mirror -c ../configurations/mirror_vid100_cml.yaml
+   host1: cd tests/profinet
+   host1: ./mirror.sh
 
-   host2: cd build_x86
-   host2: ../scripts/ptp.sh <interface>
-   host2: ../scripts/flow_cml.sh <interface>
-   host2: ./reference -c ../configurations/reference_vid100_cml.yaml
+   host2: cd tests/profinet
+   host2: ./ref.sh
 
-For use of the integrated TSN NICs on Intel Elkhart Lake a different
-configuration is required:
+For use of the integrated TSN NICs on Intel Elkhart Lake a different configuration is required:
 
 .. code:: bash
 
-   host1: cd build_x86
-   host1: ../scripts/ptp.sh <interface>
-   host1: ../scripts/flow_ehl.sh <interface>
-   host1: ./mirror -c ../configurations/mirror_vid100_ehl.yaml
+   host1: cd tests/multi_middleware/xdp
+   host1: mirror.sh
 
-   host2: cd build_x86
-   host2: ../scripts/ptp.sh <interface>
-   host2: ../scripts/flow_ehl.sh <interface>
-   host2: ./reference -c ../configurations/reference_vid100_ehl.yaml
+   host2: cd tests/multi_middleware/xdp
+   host2: ./ref.sh
 
 Interpretation of results
 -------------------------

@@ -100,15 +100,17 @@ The possible traffic classes are:
           impact does real time frame encryption and decryption has on quantity structures? Key updates and other
           mechanisms are not covered.
 
-Sample configuration files are provided for Intel Elkhart Lake and Intel i225:
+Sample configuration files are provided for Intel i225/i226 and stmmac.
 
-- ``configurations/reference_vid100_ehl.yaml``: Sample for reference application on Intel Elkhart Lake (VLAN ID 100)
-- ``configurations/reference_vid100_cml.yaml``: Sample for reference application on Intel i225 (VLAN ID 100)
-- ``configurations/mirror_vid100_ehl.yaml``: Sample for mirror application on Intel Elkhart Lake (VLAN ID 100)
-- ``configurations/mirror_vid100_cml.yaml``: Sample for mirror application on Intel i225 (VLAN ID 100)
+Starting point for PROFINET TSN:
 
-These can be used as starting point. At minimum MAC and IP addresses as well as
-network interface names have to be adjusted.
+- https://github.com/Linutronix/TSN-Testbench/tree/main/tests/profinet
+
+Starting point for OPC/UA:
+
+- https://github.com/Linutronix/TSN-Testbench/tree/main/tests/opcua
+
+At minimum MAC and IP addresses as well as network interface names have to be adjusted.
 
 Network interface configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -121,10 +123,7 @@ and which are transmitted untagged. The configuration of all NIC settings are
 either performed by ``tc`` from ``iproute2`` package or ``ethtool``. That
 depends on the Linux driver implementation.
 
-The reference applications provides two sample scripts:
-
-- ``scripts/flow_ehl.sh``: NIC configuration for Intel TSN CPUs such as Elkhart Lake
-- ``scripts/flow_cml.sh``: NIC configuration for Intel i225
+The reference applications provides sample scripts in ``tests/`` folder.
 
 These scripts configure multiple settings:
 

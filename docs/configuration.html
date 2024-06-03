@@ -192,15 +192,16 @@ under development. This implementation is to be used only for performance measur
 impact does real time frame encryption and decryption has on quantity structures? Key updates and other
 mechanisms are not covered.</p>
 </div>
-<p>Sample configuration files are provided for Intel Elkhart Lake and Intel i225:</p>
+<p>Sample configuration files are provided for Intel i225/i226 and stmmac.</p>
+<p>Starting point for PROFINET TSN:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">configurations/reference_vid100_ehl.yaml</span></code>: Sample for reference application on Intel Elkhart Lake (VLAN ID 100)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">configurations/reference_vid100_cml.yaml</span></code>: Sample for reference application on Intel i225 (VLAN ID 100)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">configurations/mirror_vid100_ehl.yaml</span></code>: Sample for mirror application on Intel Elkhart Lake (VLAN ID 100)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">configurations/mirror_vid100_cml.yaml</span></code>: Sample for mirror application on Intel i225 (VLAN ID 100)</p></li>
+<li><p><a class="reference external" href="https://github.com/Linutronix/TSN-Testbench/tree/main/tests/profinet">https://github.com/Linutronix/TSN-Testbench/tree/main/tests/profinet</a></p></li>
 </ul>
-<p>These can be used as starting point. At minimum MAC and IP addresses as well as
-network interface names have to be adjusted.</p>
+<p>Starting point for OPC/UA:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/Linutronix/TSN-Testbench/tree/main/tests/opcua">https://github.com/Linutronix/TSN-Testbench/tree/main/tests/opcua</a></p></li>
+</ul>
+<p>At minimum MAC and IP addresses as well as network interface names have to be adjusted.</p>
 </section>
 <section id="network-interface-configuration">
 <h2>Network interface configuration<a class="headerlink" href="#network-interface-configuration" title="Permalink to this heading"></a></h2>
@@ -211,11 +212,7 @@ received on which queue. It also defines which Ethernet frames are VLAN tagged
 and which are transmitted untagged. The configuration of all NIC settings are
 either performed by <code class="docutils literal notranslate"><span class="pre">tc</span></code> from <code class="docutils literal notranslate"><span class="pre">iproute2</span></code> package or <code class="docutils literal notranslate"><span class="pre">ethtool</span></code>. That
 depends on the Linux driver implementation.</p>
-<p>The reference applications provides two sample scripts:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">scripts/flow_ehl.sh</span></code>: NIC configuration for Intel TSN CPUs such as Elkhart Lake</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">scripts/flow_cml.sh</span></code>: NIC configuration for Intel i225</p></li>
-</ul>
+<p>The reference applications provides sample scripts in <code class="docutils literal notranslate"><span class="pre">tests/</span></code> folder.</p>
 <p>These scripts configure multiple settings:</p>
 <ul class="simple">
 <li><p>Tx queue assignment</p></li>
