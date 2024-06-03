@@ -37,7 +37,7 @@ sockets in order to speed up the frame transmission and reception as well as to
 improve deterministic behavior.
 
 Both applications are configured via YAML files. Sample YAML files are provided
-for both applications in the ``configurations`` folder.
+for both applications in the ``tests`` folder.
 
 The tools are implemented in C and licensed under BSD-2-Clause. The coding style
 is the Linux kernel one.
