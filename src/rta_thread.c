@@ -121,8 +121,7 @@ static int rta_gen_and_send_frames(struct thread_context *thread_context, int so
 }
 
 static void rta_gen_and_send_xdp_frames(struct thread_context *thread_context,
-					struct xdp_socket *xsk, unsigned char *tx_frame_data,
-					size_t num_frames_per_cycle, uint64_t sequence_counter,
+					struct xdp_socket *xsk, uint64_t sequence_counter,
 					uint32_t *frame_number)
 {
 	struct xdp_gen_config xdp;
@@ -133,7 +132,7 @@ static void rta_gen_and_send_xdp_frames(struct thread_context *thread_context,
 	xdp.payload_pattern = thread_context->payload_pattern;
 	xdp.payload_pattern_length = thread_context->payload_pattern_length;
 	xdp.frame_length = app_config.rta_frame_length;
-	xdp.num_frames_per_cycle = num_frames_per_cycle;
+	xdp.num_frames_per_cycle = app_config.rta_num_frames_per_cycle;
 	xdp.frame_number = frame_number;
 	xdp.sequence_counter_begin = sequence_counter;
 	xdp.meta_data_offset = thread_context->meta_data_offset;
@@ -318,9 +317,8 @@ static void *rta_xdp_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			rta_gen_and_send_xdp_frames(thread_context, xsk,
-						    thread_context->tx_frame_data, num_frames,
-						    sequence_counter, &frame_number);
+			rta_gen_and_send_xdp_frames(thread_context, xsk, sequence_counter,
+						    &frame_number);
 			sequence_counter += num_frames;
 		} else {
 			unsigned int received;
