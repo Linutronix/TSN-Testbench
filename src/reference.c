@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (!config_file) {
-		fprintf(stderr, "Specifying an configuration file is mandatory. See "
-				"configurations/ or test/ directory for examples!\n");
+		fprintf(stderr, "Specifying an configuration file is mandatory. See tests/ "
+				"directory for examples!\n");
 		exit(EXIT_FAILURE);
 	}
 
