@@ -48,23 +48,25 @@
 >       - stats
 >     cpuset: "3"
 > 
-54c54
+50a51
+>     user: "1000"
+54c55
 <       - iot
 ---
 >       - stats
-57c57,59
+57c58,60
 <       - grafana-data:/var/lib/grafana
 ---
 >       - ./grafana-data:/var/lib/grafana
 >       - ./grafana.ini:/etc/grafana/grafana.ini
 >       
-59a62
+59a63
 >     cpuset: "3"
-62c65
+62c66
 <   iot:
 ---
 >   stats:
-67c70
+67c71
 <   influxdb-config:
 \ No newline at end of file
 ---

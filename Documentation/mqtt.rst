@@ -77,7 +77,8 @@ an indirect approach to deliver the file was taken. In the docker/mqtt-composer 
 .. code:: bash
 
    cd docker/mqtt-composer
-   create_docker_composer.sh
+   ./create_docker_composer.sh
+   ./set_permissions.sh
 
 Creating the services
 ^^^^^^^^^^^^^^^^^^^^^
@@ -109,7 +110,7 @@ This way one can investigate the data base by providing the following code when 
 
 .. code:: bash
 
-   use testebench
+   use testbench
    SELECT * from ${LogViaMQTTMeasurementName}
 
 where ${LogViaMQTTMeasurementName} is a placeholder for the real name used.
@@ -121,3 +122,27 @@ Grafana Access
 Grafana can be accessed by the IP of the machine that the docker-copose was started and port defined on
 the docker-compose.yml file.
 In Grafana a new data source for InfluxDB can be created and querries added to create dashboards.
+
+Grafana Password
+^^^^^^^^^^^^^^^^
+
+Grafana password has to be reset for the first usage.
+In some cases Grafana might also consider the password as expired refusing to allow the admin to login, e.g. extreme clock changes.
+To do so execute the "change_grafana_password.sh" script, with the containers running, providing the new password as parameter as below:
+
+.. code:: bash
+
+   cd docker/mqtt-composer
+   ./change_grafana_password.sh $NEW_PASSWORD
+
+Grafana Example
+^^^^^^^^^^^^^^^^
+
+The example provided for Grafana has the time display of the 3 Profinet real-time traffic classes, TSN-High, TSN-Low and RTC.
+Dials are provided to show the current maximun visualized within the visible time range.
+Colored bars are provided for representing the number of errors and outiliers found.
+
+.. image:: images/grafana_example.png
+  :width: 600
+  :alt: Grafana sample with a cicle time of 250us.
+
