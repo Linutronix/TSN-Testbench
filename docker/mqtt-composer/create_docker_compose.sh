@@ -9,6 +9,7 @@
 git clone https://github.com/Miceuz/docker-compose-mosquitto-influxdb-telegraf-grafana
 pushd ./docker-compose-mosquitto-influxdb-telegraf-grafana
 git checkout 1f873f2
+cp docker-compose.yml docker-compose.yml.original
 cp ../docker_composer.diff .
 patch docker-compose.yml < docker_composer.diff
 current_user_id=$(id -u)

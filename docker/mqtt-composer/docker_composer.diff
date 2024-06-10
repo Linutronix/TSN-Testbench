@@ -2,32 +2,41 @@
 < version: "3"
 ---
 > version: "3.9"
-12c12
+5a6,9
+>     logging:
+>       options:
+>         max-size: "10m"
+>         max-file: "3"
+12c16
 <       - iot
 ---
 >       - stats
-14,15c14,16
+14,15c18,20
 <       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 <   
 ---
 >       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
 >     cpuset: "3"
 > 
-17c18
+17c22,26
 <     image: influxdb
 ---
 >     image: influxdb:1.8-alpine
-23c24
+>     logging:
+>       options:
+>         max-size: "10m"
+>         max-file: "3"
+23c32
 <       - iot
 ---
 >       - stats
-25,26c26,27
+25,26c34,35
 <       - influxdb-data:/var/lib/influxdb2
 <       - influxdb-config:/etc/influxdb2
 ---
 >       - ./influxdb-storage:/var/lib/influxdb
 >       - ./influxdb.conf:/etc/influxdb/influxdb.conf:ro
-28,34c29,33
+28,34c37,41
 <       - DOCKER_INFLUXDB_INIT_MODE=setup
 <       - DOCKER_INFLUXDB_INIT_USERNAME=user
 <       - DOCKER_INFLUXDB_INIT_PASSWORD=password1234
@@ -41,32 +50,42 @@
 >       - no-new-privileges:true
 >     cpuset: "3"
 > 
-45,46c44,46
+36a44,47
+>     logging:
+>       options:
+>         max-size: "10m"
+>         max-file: "3"
+45,46c56,58
 <       - iot
 <   
 ---
 >       - stats
 >     cpuset: "3"
 > 
-50a51
+48a61,64
+>     logging:
+>       options:
+>         max-size: "10m"
+>         max-file: "3"
+50a67
 >     user: "1000"
-54c55
+54c71
 <       - iot
 ---
 >       - stats
-57c58,60
+57c74,76
 <       - grafana-data:/var/lib/grafana
 ---
 >       - ./grafana-data:/var/lib/grafana
 >       - ./grafana.ini:/etc/grafana/grafana.ini
 >       
-59a63
+59a79
 >     cpuset: "3"
-62c66
+62c82
 <   iot:
 ---
 >   stats:
-67c71
+67c87
 <   influxdb-config:
 \ No newline at end of file
 ---
