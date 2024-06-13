@@ -11,6 +11,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+enum log_stat_options {
+	LOG_REFERENCE = 0,
+	LOG_MIRROR,
+	LOG_NUM_OPTIONS
+};
+
 enum stat_frame_type {
 	TSN_HIGH_FRAME_TYPE = 0,
 	TSN_LOW_FRAME_TYPE,
@@ -70,7 +76,7 @@ struct round_trip_context {
 };
 extern struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
 
-int stat_init(bool log_rtt);
+int stat_init(unsigned int log_rtt);
 void stat_free(void);
 const char *stat_frame_type_to_string(enum stat_frame_type frame_type);
 void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number);
