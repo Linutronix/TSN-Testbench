@@ -152,5 +152,4 @@ add_xdp_prog(xdp_kern_avtp_vid400)
 
 install(TARGETS reference DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT binaries)
 install(TARGETS mirror DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT binaries)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/configurations/ DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/testbench/configurations)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/ DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/testbench/tests)
