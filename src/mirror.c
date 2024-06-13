@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	ret = stat_init(false);
+	ret = stat_init(LOG_MIRROR);
 	if (ret) {
 		fprintf(stderr, "Failed to initialize statistics!\n");
 		exit(EXIT_FAILURE);

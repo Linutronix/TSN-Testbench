@@ -22,7 +22,7 @@ struct statistics global_statistics_per_period[NUM_FRAME_TYPES];
 struct statistics global_statistics_per_period_prep[NUM_FRAME_TYPES];
 struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
 static uint64_t rtt_expected_rt_limit;
-static bool log_rtt;
+static int log_stat_user_selected;
 static FILE *file_tracing_on;
 static FILE *file_trace_marker;
 
@@ -37,68 +37,74 @@ const char *stat_frame_type_names[NUM_FRAME_TYPES] = {
  */
 #define STAT_MAX_BACKLOG 1024
 
-int stat_init(bool local_log_rtt)
+int stat_init(enum log_stat_options log_selection)
 {
-	bool allocation_error = false;
+	if (log_selection >= LOG_NUM_OPTIONS)
+		return -EINVAL;
 
-	round_trip_contexts[TSN_HIGH_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.tsn_high_num_frames_per_cycle;
-	round_trip_contexts[TSN_LOW_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.tsn_low_num_frames_per_cycle;
-	round_trip_contexts[RTC_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.rtc_num_frames_per_cycle;
-	round_trip_contexts[RTA_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.rta_num_frames_per_cycle;
-	round_trip_contexts[DCP_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.dcp_num_frames_per_cycle;
-	round_trip_contexts[LLDP_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.lldp_num_frames_per_cycle;
-	round_trip_contexts[UDP_HIGH_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.udp_high_num_frames_per_cycle;
-	round_trip_contexts[UDP_LOW_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.udp_low_num_frames_per_cycle;
-	round_trip_contexts[GENERICL2_FRAME_TYPE].backlog_len =
-		STAT_MAX_BACKLOG * app_config.generic_l2_num_frames_per_cycle;
+	if (log_selection == LOG_REFERENCE) {
+		bool allocation_error = false;
 
-	for (int i = 0; i < NUM_FRAME_TYPES; i++) {
-		struct round_trip_context *current_context = &round_trip_contexts[i];
+		round_trip_contexts[TSN_HIGH_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.tsn_high_num_frames_per_cycle;
+		round_trip_contexts[TSN_LOW_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.tsn_low_num_frames_per_cycle;
+		round_trip_contexts[RTC_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.rtc_num_frames_per_cycle;
+		round_trip_contexts[RTA_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.rta_num_frames_per_cycle;
+		round_trip_contexts[DCP_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.dcp_num_frames_per_cycle;
+		round_trip_contexts[LLDP_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.lldp_num_frames_per_cycle;
+		round_trip_contexts[UDP_HIGH_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.udp_high_num_frames_per_cycle;
+		round_trip_contexts[UDP_LOW_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.udp_low_num_frames_per_cycle;
+		round_trip_contexts[GENERICL2_FRAME_TYPE].backlog_len =
+			STAT_MAX_BACKLOG * app_config.generic_l2_num_frames_per_cycle;
 
-		current_context->backlog = calloc(current_context->backlog_len, sizeof(int64_t));
-		allocation_error |= !current_context->backlog;
-	}
+		for (int i = 0; i < NUM_FRAME_TYPES; i++) {
+			struct round_trip_context *current_context = &round_trip_contexts[i];
 
-	if (allocation_error)
-		return -ENOMEM;
-
-	for (int i = 0; i < NUM_FRAME_TYPES; i++) {
-		struct statistics *current_stats = &global_statistics[i];
-
-		current_stats->round_trip_min = UINT64_MAX;
-		current_stats->round_trip_max = 0;
-		current_stats = &global_statistics_per_period[i];
-		current_stats->round_trip_min = UINT64_MAX;
-		current_stats->round_trip_max = 0;
-	}
-
-	if (app_config.debug_stop_trace_on_rtt) {
-		file_tracing_on = fopen("/sys/kernel/debug/tracing/tracing_on", "w");
-		if (!file_tracing_on)
-			return -errno;
-		file_trace_marker = fopen("/sys/kernel/debug/tracing/trace_marker", "w");
-		if (!file_trace_marker) {
-			fclose(file_tracing_on);
-			return -errno;
+			current_context->backlog =
+				calloc(current_context->backlog_len, sizeof(int64_t));
+			allocation_error |= !current_context->backlog;
 		}
+
+		if (allocation_error)
+			return -ENOMEM;
+
+		for (int i = 0; i < NUM_FRAME_TYPES; i++) {
+			struct statistics *current_stats = &global_statistics[i];
+
+			current_stats->round_trip_min = UINT64_MAX;
+			current_stats->round_trip_max = 0;
+			current_stats = &global_statistics_per_period[i];
+			current_stats->round_trip_min = UINT64_MAX;
+			current_stats->round_trip_max = 0;
+		}
+
+		if (app_config.debug_stop_trace_on_rtt) {
+			file_tracing_on = fopen("/sys/kernel/debug/tracing/tracing_on", "w");
+			if (!file_tracing_on)
+				return -errno;
+			file_trace_marker = fopen("/sys/kernel/debug/tracing/trace_marker", "w");
+			if (!file_trace_marker) {
+				fclose(file_tracing_on);
+				return -errno;
+			}
+		}
+
+		/*
+		 * The expected round trip limit for RT traffic classes is below < 2 * cycle time.
+		 * Stored in us.
+		 */
+		rtt_expected_rt_limit = app_config.application_base_cycle_time_ns * 2;
+		rtt_expected_rt_limit /= 1000;
 	}
 
-	/*
-	 * The expected round trip limit for RT traffic classes is below < 2 * cycle time. Stored in
-	 * us.
-	 */
-	rtt_expected_rt_limit = app_config.application_base_cycle_time_ns * 2;
-	rtt_expected_rt_limit /= 1000;
-
-	log_rtt = local_log_rtt;
+	log_stat_user_selected = log_selection;
 
 	return 0;
 }
@@ -124,7 +130,7 @@ void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number)
 	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] sent\n",
 		    stat_frame_type_to_string(frame_type), cycle_number);
 
-	if (log_rtt) {
+	if (log_stat_user_selected == LOG_REFERENCE) {
 		/* Record Tx timestamp in */
 		clock_gettime(app_config.application_clock_id, &tx_time);
 		rtt->backlog[cycle_number % rtt->backlog_len] = ts_to_ns(&tx_time);
@@ -211,7 +217,7 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 		    stat_frame_type_to_string(frame_type), cycle_number);
 
 	/* Record Rx timestamp in us */
-	if (log_rtt) {
+	if (log_stat_user_selected == LOG_REFERENCE) {
 		clock_gettime(app_config.application_clock_id, &rx_time);
 		curr_time = ts_to_ns(&rx_time);
 		rt_time = curr_time - rtt->backlog[cycle_number % rtt->backlog_len];
