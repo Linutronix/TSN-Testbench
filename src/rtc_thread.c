@@ -89,7 +89,10 @@ static int rtc_send_frames(struct thread_context *thread_context, unsigned char 
 static int rtc_gen_and_send_frames(struct thread_context *thread_context, int socket_fd,
 				   struct sockaddr_ll *destination, uint64_t sequence_counter_begin)
 {
+	struct timespec tx_time = {};
 	int len, i;
+
+	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	for (i = 0; i < app_config.rtc_num_frames_per_cycle; i++) {
 		struct prepare_frame_config frame_config;
@@ -104,6 +107,7 @@ static int rtc_gen_and_send_frames(struct thread_context *thread_context, int so
 		frame_config.frame_length = app_config.rtc_frame_length;
 		frame_config.num_frames_per_cycle = app_config.rtc_num_frames_per_cycle;
 		frame_config.sequence_counter = sequence_counter_begin + i;
+		frame_config.tx_timestamp = ts_to_ns(&tx_time);
 		frame_config.meta_data_offset = thread_context->meta_data_offset;
 
 		err = prepare_frame_for_tx(&frame_config);

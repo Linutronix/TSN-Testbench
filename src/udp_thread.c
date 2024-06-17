@@ -53,12 +53,17 @@ static void udp_send_frame(const struct udp_thread_configuration *udp_config,
 			   const struct sockaddr_storage *destination)
 {
 	struct reference_meta_data *meta;
+	struct timespec tx_time = {};
 	uint64_t sequence_counter;
 	ssize_t ret = -1;
+
+	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	/* Fetch meta data */
 	meta = (struct reference_meta_data *)frame_data;
 	sequence_counter = meta_data_to_sequence_counter(meta, num_frames_per_cycle);
+
+	tx_timestamp_to_meta_data(meta, ts_to_ns(&tx_time));
 
 	/* Send it */
 	switch (destination->ss_family) {
@@ -88,10 +93,15 @@ static void udp_gen_and_send_frame(const struct udp_thread_configuration *udp_co
 {
 	struct reference_meta_data *meta;
 	ssize_t ret = -1;
+	struct timespec tx_time = {};
+
+	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	/* Adjust meta data */
 	meta = (struct reference_meta_data *)frame_data;
 	sequence_counter_to_meta_data(meta, sequence_counter, num_frames_per_cycle);
+
+	tx_timestamp_to_meta_data(meta, ts_to_ns(&tx_time));
 
 	/* Send it */
 	switch (destination->ss_family) {

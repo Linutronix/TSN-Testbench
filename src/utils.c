@@ -234,6 +234,8 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 		sequence_counter_to_meta_data(meta_data, frame_config->sequence_counter,
 					      frame_config->num_frames_per_cycle);
 
+		tx_timestamp_to_meta_data(meta_data, frame_config->tx_timestamp);
+
 		return 0;
 	}
 	/* mode == AO is PROFINET specific */
@@ -249,6 +251,8 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 		srt = (struct profinet_secure_header *)(frame_config->frame_data + sizeof(*eth));
 		sequence_counter_to_meta_data(&srt->meta_data, frame_config->sequence_counter,
 					      frame_config->num_frames_per_cycle);
+
+		tx_timestamp_to_meta_data(&srt->meta_data, frame_config->tx_timestamp);
 
 		/*
 		 * Then, calculate checksum over data and store it at the end of the frame. The
@@ -280,6 +284,8 @@ int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
 		srt = (struct profinet_secure_header *)(frame_config->frame_data + sizeof(*eth));
 		sequence_counter_to_meta_data(&srt->meta_data, frame_config->sequence_counter,
 					      frame_config->num_frames_per_cycle);
+
+		tx_timestamp_to_meta_data(&srt->meta_data, frame_config->tx_timestamp);
 
 		/*
 		 * Then, calculate checksum over data and store it at the end of the frame. The

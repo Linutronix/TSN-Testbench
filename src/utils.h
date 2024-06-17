@@ -78,6 +78,7 @@ struct prepare_frame_config {
 	size_t frame_length;
 	size_t num_frames_per_cycle;
 	uint64_t sequence_counter;
+	uint64_t tx_timestamp;
 	uint32_t meta_data_offset;
 };
 
@@ -121,6 +122,20 @@ static inline void sequence_counter_to_meta_data(struct reference_meta_data *met
 {
 	meta->frame_counter = htobe32(sequence_counter % num_frames_per_cycle);
 	meta->cycle_counter = htobe32(sequence_counter / num_frames_per_cycle);
+}
+
+static inline void tx_timestamp_to_meta_data(struct reference_meta_data *meta, uint64_t timestamp)
+{
+	meta->tx_timestamp = htobe64(timestamp);
+}
+
+static inline uint64_t meta_data_to_tx_timestamp(const struct reference_meta_data *meta)
+{
+	uint64_t tx_timestamp;
+
+	tx_timestamp = be64toh(meta->tx_timestamp);
+
+	return tx_timestamp;
 }
 
 static inline uint64_t get_sequence_counter(const unsigned char *frame_data,

@@ -138,7 +138,10 @@ static int generic_l2_gen_and_send_frames(struct thread_context *thread_context,
 {
 	struct vlan_ethernet_header *eth;
 	struct generic_l2_header *l2;
+	struct timespec tx_time = {};
 	int len, i;
+
+	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	/* Adjust meta data */
 	for (i = 0; i < num_frames_per_cycle; i++) {
@@ -146,6 +149,8 @@ static int generic_l2_gen_and_send_frames(struct thread_context *thread_context,
 						  sizeof(*eth));
 		sequence_counter_to_meta_data(&l2->meta_data, sequence_counter_begin + i,
 					      num_frames_per_cycle);
+
+		tx_timestamp_to_meta_data(&l2->meta_data, ts_to_ns(&tx_time));
 	}
 
 	/* Send them */

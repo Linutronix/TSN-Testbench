@@ -335,6 +335,7 @@ void xdp_complete_tx(struct xdp_socket *xsk)
 
 void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config *xdp)
 {
+	struct timespec tx_time = {};
 	uint32_t idx;
 	size_t i;
 
@@ -352,6 +353,8 @@ void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config
 		xdp_complete_tx_only(xsk);
 		return;
 	}
+
+	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	for (i = 0; i < xdp->num_frames_per_cycle; ++i) {
 		struct xdp_desc *tx_desc = xsk_ring_prod__tx_desc(&xsk->tx, idx + i);
@@ -379,6 +382,7 @@ void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config
 		frame_config.frame_length = xdp->frame_length;
 		frame_config.num_frames_per_cycle = xdp->num_frames_per_cycle;
 		frame_config.sequence_counter = xdp->sequence_counter_begin + i;
+		frame_config.tx_timestamp = ts_to_ns(&tx_time);
 		frame_config.meta_data_offset = xdp->meta_data_offset;
 
 		ret = prepare_frame_for_tx(&frame_config);
