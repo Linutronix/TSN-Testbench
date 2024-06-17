@@ -206,7 +206,7 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 #endif
 
 void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number, bool out_of_order,
-			 bool payload_mismatch, bool frame_id_mismatch)
+			 bool payload_mismatch, bool frame_id_mismatch, uint64_t tx_timestamp)
 {
 	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
 	struct statistics *stat = &global_statistics[frame_type];

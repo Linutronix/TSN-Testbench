@@ -294,7 +294,7 @@ static void *udp_rx_thread_routine(void *data)
 			frame_id_mismatch = false;
 
 			stat_frame_received(udp_config->frame_type, sequence_counter, out_of_order,
-					    payload_mismatch, frame_id_mismatch);
+					    payload_mismatch, frame_id_mismatch, tx_timestamp);
 
 			if (out_of_order) {
 				if (!ignore_rx_errors)

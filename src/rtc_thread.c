@@ -553,7 +553,7 @@ static int rtc_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	frame_id_mismatch = frame_id != 0x8000;
 
 	stat_frame_received(RTC_FRAME_TYPE, sequence_counter, out_of_order, payload_mismatch,
-			    frame_id_mismatch);
+			    frame_id_mismatch, tx_timestamp);
 
 	if (frame_id_mismatch)
 		log_message(LOG_LEVEL_WARNING,
