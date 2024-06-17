@@ -250,6 +250,7 @@ static int dcp_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
+	uint64_t tx_timestamp;
 
 	if (len != frame_length - 4) {
 		log_message(LOG_LEVEL_ERROR, "DcpRx: Frame with wrong length received!\n");
@@ -262,6 +263,7 @@ static int dcp_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	 */
 	rt = (struct profinet_rt_header *)(frame_data + sizeof(struct ethhdr));
 	sequence_counter = meta_data_to_sequence_counter(&rt->meta_data, num_frames_per_cycle);
+	tx_timestamp = meta_data_to_tx_timestamp(&rt->meta_data);
 
 	out_of_order = sequence_counter != thread_context->rx_sequence_counter;
 	payload_mismatch = memcmp(frame_data + sizeof(struct ethhdr) + sizeof(*rt),

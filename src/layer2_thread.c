@@ -381,6 +381,7 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct generic_l2_header *l2;
 	uint64_t sequence_counter;
+	uint64_t tx_timestamp;
 	bool vlan_tag_missing;
 	void *p = frame_data;
 	struct ethhdr *eth;
@@ -422,6 +423,7 @@ static int generic_l2_rx_frame(void *data, unsigned char *frame_data, size_t len
 	p += sizeof(*l2);
 
 	sequence_counter = meta_data_to_sequence_counter(&l2->meta_data, num_frames_per_cycle);
+	tx_timestamp = meta_data_to_tx_timestamp(&l2->meta_data);
 
 	out_of_order = sequence_counter != thread_context->rx_sequence_counter;
 	payload_mismatch = memcmp(p, expected_pattern, expected_pattern_length);
