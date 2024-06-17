@@ -579,7 +579,7 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	frame_id_mismatch = frame_id != tsn_config->frame_id_range_start;
 
 	stat_frame_received(tsn_config->frame_type, sequence_counter, out_of_order,
-			    payload_mismatch, frame_id_mismatch);
+			    payload_mismatch, frame_id_mismatch, tx_timestamp);
 
 	if (frame_id_mismatch)
 		log_message(LOG_LEVEL_WARNING,
