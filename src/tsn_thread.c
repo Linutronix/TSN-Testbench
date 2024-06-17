@@ -101,7 +101,10 @@ static int tsn_gen_and_send_frames(const struct tsn_thread_configuration *tsn_co
 				   struct sockaddr_ll *destination, uint64_t wakeup_time,
 				   uint64_t sequence_counter_begin, uint64_t duration)
 {
+	struct timespec tx_time = {};
 	int len, i;
+
+	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	for (i = 0; i < tsn_config->tsn_num_frames_per_cycle; i++) {
 		struct prepare_frame_config frame_config;
@@ -116,6 +119,7 @@ static int tsn_gen_and_send_frames(const struct tsn_thread_configuration *tsn_co
 		frame_config.frame_length = tsn_config->tsn_frame_length;
 		frame_config.num_frames_per_cycle = tsn_config->tsn_num_frames_per_cycle;
 		frame_config.sequence_counter = sequence_counter_begin + i;
+		frame_config.tx_timestamp = ts_to_ns(&tx_time);
 		frame_config.meta_data_offset = thread_context->meta_data_offset;
 
 		err = prepare_frame_for_tx(&frame_config);

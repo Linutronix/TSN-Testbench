@@ -56,6 +56,7 @@ struct vlan_header {
 struct reference_meta_data {
 	__be32 frame_counter;
 	__be32 cycle_counter;
+	__be64 tx_timestamp;
 } __attribute__((packed));
 
 /* PROFINET RT header. */

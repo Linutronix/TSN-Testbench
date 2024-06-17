@@ -122,7 +122,10 @@ static void dcp_gen_and_send_frames(struct thread_context *thread_context, int s
 {
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
+	struct timespec tx_time = {};
 	int len, i;
+
+	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	/* Adjust meta data */
 	for (i = 0; i < app_config.dcp_num_frames_per_cycle; i++) {
@@ -130,6 +133,8 @@ static void dcp_gen_and_send_frames(struct thread_context *thread_context, int s
 						   sizeof(*eth));
 		sequence_counter_to_meta_data(&rt->meta_data, sequence_counter_begin + i,
 					      app_config.dcp_num_frames_per_cycle);
+
+		tx_timestamp_to_meta_data(&rt->meta_data, ts_to_ns(&tx_time));
 	}
 
 	/* Send them */
