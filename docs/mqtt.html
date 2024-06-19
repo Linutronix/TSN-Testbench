@@ -67,6 +67,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#creating-the-services">Creating the services</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#influx-access">Influx Access</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grafana-access">Grafana Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grafana-password">Grafana Password</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grafana-example">Grafana Example</a></li>
 </ul>
 </li>
 </ul>
@@ -74,6 +76,9 @@
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="test.html">Test runs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="debug.html">Debug</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="qa.html">Quality Assurance</a></li>
@@ -167,7 +172,8 @@ The configuration for those services are provided allowing the direct start with
 <p>The first step is to create the docker-composer.yml file. As there is an uncertanty about the licensing on those docker-composer files and not much to be copyrighted on those,
 an indirect approach to deliver the file was taken. In the docker/mqtt-composer directory the file “create_docker_composer.sh” is provided. by running that file, i.e.:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docker/mqtt-composer
-create_docker_composer.sh
+./create_docker_composer.sh
+./set_permissions.sh
 </pre></div>
 </div>
 <section id="creating-the-services">
@@ -191,7 +197,7 @@ The measurement name is the “LogViaMQTTMeasurementName” provided in the conf
 The Timestamp provided is the time taken in the application side when the last frame in the recording period “StatsCollectionIntervalNS”
 is received, and the traffic class name is one of the columns of the measurment.
 This way one can investigate the data base by providing the following code when running influx:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>use<span class="w"> </span>testebench
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>use<span class="w"> </span>testbench
 SELECT<span class="w"> </span>*<span class="w"> </span>from<span class="w"> </span><span class="si">${</span><span class="nv">LogViaMQTTMeasurementName</span><span class="si">}</span>
 </pre></div>
 </div>
@@ -202,6 +208,23 @@ SELECT<span class="w"> </span>*<span class="w"> </span>from<span class="w"> </sp
 <p>Grafana can be accessed by the IP of the machine that the docker-copose was started and port defined on
 the docker-compose.yml file.
 In Grafana a new data source for InfluxDB can be created and querries added to create dashboards.</p>
+</section>
+<section id="grafana-password">
+<h3>Grafana Password<a class="headerlink" href="#grafana-password" title="Permalink to this heading"></a></h3>
+<p>Grafana password has to be reset for the first usage.
+In some cases Grafana might also consider the password as expired refusing to allow the admin to login, e.g. extreme clock changes.
+To do so execute the “change_grafana_password.sh” script, with the containers running, providing the new password as parameter as below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docker/mqtt-composer
+./change_grafana_password.sh<span class="w"> </span><span class="nv">$NEW_PASSWORD</span>
+</pre></div>
+</div>
+</section>
+<section id="grafana-example">
+<h3>Grafana Example<a class="headerlink" href="#grafana-example" title="Permalink to this heading"></a></h3>
+<p>The example provided for Grafana has the time display of the 3 Profinet real-time traffic classes, TSN-High, TSN-Low and RTC.
+Dials are provided to show the current maximum visualized within the visible time range.
+Colored bars are provided for representing the number of errors and outliers found.</p>
+<a class="reference internal image-reference" href="_images/grafana_example.png"><img alt="Grafana sample with a cicle time of 250us." src="_images/grafana_example.png" style="width: 600px;" /></a>
 </section>
 </section>
 </section>
