@@ -1,0 +1,52 @@
+#!/usr/bin/bpftrace
+//
+// Copyright (C) 2024 Linutronix GmbH
+// Author Kurt Kanzenbach <kurt@linutronix.de>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// Trace CPU run times of Rtc real time tasks.
+//
+
+BEGIN
+{
+	printf("Tracing RtcThread(s) execution times... Hit Ctrl-C to end.\n");
+}
+
+tracepoint:sched:sched_switch
+/args->next_comm == "RtcRxThread"/
+{
+	@rx[args->next_pid] = nsecs;
+}
+
+tracepoint:sched:sched_switch
+/args->next_comm == "RtcTxThread"/
+{
+	@tx[args->next_pid] = nsecs;
+}
+
+tracepoint:sched:sched_switch
+/args->prev_comm == "RtcRxThread"/
+{
+	$ns = @rx[args->prev_pid];
+	if ($ns) {
+		@rxruntime = lhist((nsecs - $ns) / 1000, 0, 1000, 1);
+	}
+	delete(@rx[args->prev_pid]);
+}
+
+tracepoint:sched:sched_switch
+/args->prev_comm == "RtcTxThread"/
+{
+	$ns = @tx[args->prev_pid];
+	if ($ns) {
+		@txruntime = lhist((nsecs - $ns) / 1000, 0, 1000, 1);
+	}
+	delete(@tx[args->prev_pid]);
+}
+
+END
+{
+	clear(@rx);
+	clear(@tx);
+}
