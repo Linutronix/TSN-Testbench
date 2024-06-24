@@ -346,7 +346,7 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_INT_PARAM(LogViaMQTTThreadCpu, log_via_mqtt_thread_cpu);
 			CONFIG_STORE_ULONG_PARAM(LogViaMQTTThreadPeriodNS,
 						 log_via_mqtt_thread_period_ns);
-			CONFIG_STORE_STRING_PARAM(LogViaMQTTBrokerIp, log_via_mqtt_broker_ip);
+			CONFIG_STORE_STRING_PARAM(LogViaMQTTBrokerIP, log_via_mqtt_broker_ip);
 			CONFIG_STORE_INT_PARAM(LogViaMQTTBrokerPort, log_via_mqtt_broker_port);
 			CONFIG_STORE_INT_PARAM(LogViaMQTTKeepAliveSecs,
 					       log_via_mqtt_keep_alive_secs);
