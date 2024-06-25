@@ -1,0 +1,49 @@
+#
+# Copyright (C) 2024 Linutronix GmbH
+# Author Kurt Kanzenbach <kurt@linutronix.de>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# Sample reference YAML configuration file for Intel Apollo Lake platforms with
+# i210 NIC(s).
+#
+Application:
+  ApplicationClockId: CLOCK_TAI
+  # ApplicationBaseStartTimeNS: 0
+  ApplicationBaseCycleTimeNS: 1000000
+  ApplicationTxBaseOffsetNS: 800000
+  ApplicationRxBaseOffsetNS: 500000
+  ApplicationXdpProgram: xdp_kern_profinet_vid100.o
+RTC:
+  RtcEnabled: True
+  RtcXdpEnabled: True
+  RtcXdpSkbMode: False
+  RtcXdpZcMode: True
+  RtcXdpWakeupMode: True
+  RtcXdpBusyPollMode: True
+  RtcVid: 100
+  RtcNumFramesPerCycle: 256
+  RtcPayloadPattern: |
+    RtcPayloadPattern
+  RtcFrameLength: 128
+  RtcRxQueue: 0
+  RtcTxQueue: 0
+  RtcSocketPriority: 7
+  RtcTxThreadPriority: 98
+  RtcRxThreadPriority: 98
+  RtcTxThreadCpu: 1
+  RtcRxThreadCpu: 1
+  RtcInterface: enp2s0
+  RtcDestination: 6c:b3:11:52:8b:d7
+Log:
+  LogThreadPeriodNS: 500000000
+  LogThreadPriority: 1
+  LogThreadCpu: 0
+  LogFile: /var/log/mirror_vid100.log
+  LogLevel: Info
+Debug:
+  DebugStopTraceOnRtt: False
+  DebugStopTraceOnError: False
+  DebugStopTraceRttLimitNS: 10000000
+  DebugMonitorMode: False
+  DebugMonitorDestination: 44:44:44:44:44:44
