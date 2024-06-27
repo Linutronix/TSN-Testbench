@@ -39,6 +39,7 @@ const char *stat_frame_type_names[NUM_FRAME_TYPES] = {
 
 int stat_init(enum log_stat_options log_selection)
 {
+
 	if (log_selection >= LOG_NUM_OPTIONS)
 		return -EINVAL;
 
@@ -74,35 +75,40 @@ int stat_init(enum log_stat_options log_selection)
 
 		if (allocation_error)
 			return -ENOMEM;
-
-		for (int i = 0; i < NUM_FRAME_TYPES; i++) {
-			struct statistics *current_stats = &global_statistics[i];
-
-			current_stats->round_trip_min = UINT64_MAX;
-			current_stats->round_trip_max = 0;
-			current_stats = &global_statistics_per_period[i];
-			current_stats->round_trip_min = UINT64_MAX;
-			current_stats->round_trip_max = 0;
-		}
-
-		if (app_config.debug_stop_trace_on_rtt) {
-			file_tracing_on = fopen("/sys/kernel/debug/tracing/tracing_on", "w");
-			if (!file_tracing_on)
-				return -errno;
-			file_trace_marker = fopen("/sys/kernel/debug/tracing/trace_marker", "w");
-			if (!file_trace_marker) {
-				fclose(file_tracing_on);
-				return -errno;
-			}
-		}
-
-		/*
-		 * The expected round trip limit for RT traffic classes is below < 2 * cycle time.
-		 * Stored in us.
-		 */
-		rtt_expected_rt_limit = app_config.application_base_cycle_time_ns * 2;
-		rtt_expected_rt_limit /= 1000;
 	}
+
+	for (int i = 0; i < NUM_FRAME_TYPES; i++) {
+		struct statistics *current_stats = &global_statistics[i];
+
+		current_stats->round_trip_min = UINT64_MAX;
+		current_stats->round_trip_max = 0;
+		current_stats->oneway_min = UINT64_MAX;
+		current_stats->oneway_max = 0;
+
+		current_stats = &global_statistics_per_period[i];
+		current_stats->round_trip_min = UINT64_MAX;
+		current_stats->round_trip_max = 0;
+		current_stats->oneway_min = UINT64_MAX;
+		current_stats->oneway_max = 0;
+	}
+
+	if (app_config.debug_stop_trace_on_rtt) {
+		file_tracing_on = fopen("/sys/kernel/debug/tracing/tracing_on", "w");
+		if (!file_tracing_on)
+			return -errno;
+		file_trace_marker = fopen("/sys/kernel/debug/tracing/trace_marker", "w");
+		if (!file_trace_marker) {
+			fclose(file_tracing_on);
+			return -errno;
+		}
+	}
+
+	/*
+	 * The expected round trip limit for RT traffic classes is below < 2 * cycle time.
+	 * Stored in us.
+	 */
+	rtt_expected_rt_limit = app_config.application_base_cycle_time_ns * 2;
+	rtt_expected_rt_limit /= 1000;
 
 	log_stat_user_selected = log_selection;
 
@@ -151,11 +157,13 @@ static void stats_reset_stats(struct statistics *stats)
 {
 	memset(stats, 0, sizeof(struct statistics));
 	stats->round_trip_min = UINT64_MAX;
+	stats->oneway_min = UINT64_MAX;
 }
 
 static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
-					   uint64_t rt_time, bool out_of_order,
-					   bool payload_mismatch, bool frame_id_mismatch)
+					   uint64_t rt_time, uint64_t oneway_time,
+					   bool out_of_order, bool payload_mismatch,
+					   bool frame_id_mismatch)
 {
 	struct statistics *stat_per_period_pre = &global_statistics_per_period_prep[frame_type];
 	uint64_t elapsed_t;
@@ -173,15 +181,27 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 		stat_per_period_pre->last_time_stamp = curr_time;
 	}
 
-	if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
-		stat_per_period_pre->round_trip_outliers++;
-	stat_update_min_max(rt_time, &stat_per_period_pre->round_trip_min,
-			    &stat_per_period_pre->round_trip_max);
+	if (log_stat_user_selected == LOG_REFERENCE) {
+		if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
+			stat_per_period_pre->round_trip_outliers++;
+		stat_update_min_max(rt_time, &stat_per_period_pre->round_trip_min,
+				    &stat_per_period_pre->round_trip_max);
 
-	stat_per_period_pre->round_trip_count++;
-	stat_per_period_pre->round_trip_sum += rt_time;
-	stat_per_period_pre->round_trip_avg =
-		stat_per_period_pre->round_trip_sum / (double)stat_per_period_pre->round_trip_count;
+		stat_per_period_pre->round_trip_count++;
+		stat_per_period_pre->round_trip_sum += rt_time;
+		stat_per_period_pre->round_trip_avg = stat_per_period_pre->round_trip_sum /
+						      (double)stat_per_period_pre->round_trip_count;
+	}
+
+	stat_update_min_max(oneway_time, &stat_per_period_pre->oneway_min,
+			    &stat_per_period_pre->oneway_max);
+
+	if (stat_frame_type_is_real_time(frame_type) && oneway_time > rtt_expected_rt_limit / 2)
+		stat_per_period_pre->oneway_outliers++;
+	stat_per_period_pre->oneway_count++;
+	stat_per_period_pre->oneway_sum += oneway_time;
+	stat_per_period_pre->oneway_avg =
+		stat_per_period_pre->oneway_sum / (double)stat_per_period_pre->oneway_count;
 
 	stat_per_period_pre->frames_received++;
 	stat_per_period_pre->out_of_order_errors += out_of_order;
@@ -200,7 +220,7 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 #else
 static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
 					   uint64_t rt_time, bool out_of_order,
-					   bool payload_mismatch, bool frame_id_mismatch)
+					   bool payload_mismatch, bool frame_id_mismatch, uint64_t tx_timestamp)
 {
 }
 #endif
@@ -210,46 +230,60 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 {
 	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
 	struct statistics *stat = &global_statistics[frame_type];
+	uint64_t rt_time, curr_time, oneway_time;
 	struct timespec rx_time = {};
-	uint64_t rt_time, curr_time;
 
 	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] received\n",
 		    stat_frame_type_to_string(frame_type), cycle_number);
 
 	/* Record Rx timestamp in us */
+	clock_gettime(app_config.application_clock_id, &rx_time);
+	curr_time = ts_to_ns(&rx_time);
+
 	if (log_stat_user_selected == LOG_REFERENCE) {
-		clock_gettime(app_config.application_clock_id, &rx_time);
-		curr_time = ts_to_ns(&rx_time);
 		rt_time = curr_time - rtt->backlog[cycle_number % rtt->backlog_len];
 		rt_time /= 1000;
 
-		stat_frame_received_per_period(frame_type, curr_time, rt_time, out_of_order,
-					       payload_mismatch, frame_id_mismatch);
-
 		stat_update_min_max(rt_time, &stat->round_trip_min, &stat->round_trip_max);
+
 		if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
 			stat->round_trip_outliers++;
 		stat->round_trip_count++;
 		stat->round_trip_sum += rt_time;
 		stat->round_trip_avg = stat->round_trip_sum / (double)stat->round_trip_count;
+	} else {
+		rt_time = 0;
+	}
 
-		/* Stop tracing after certain amount of time */
-		if (app_config.debug_stop_trace_on_rtt &&
-		    stat_frame_type_is_real_time(frame_type) &&
-		    rt_time > (app_config.debug_stop_trace_rtt_limit_ns / 1000)) {
-			fprintf(file_trace_marker,
-				"Round-Trip Limit hit: %" PRIu64
-				" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
-				rt_time, stat_frame_type_to_string(frame_type), cycle_number);
-			fprintf(file_tracing_on, "0\n");
-			fprintf(stderr,
-				"Round-Trip Limit hit: %" PRIu64
-				" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
-				rt_time, stat_frame_type_to_string(frame_type), cycle_number);
-			fclose(file_tracing_on);
-			fclose(file_trace_marker);
-			exit(EXIT_SUCCESS);
-		}
+	oneway_time = curr_time - tx_timestamp;
+	oneway_time /= 1000;
+
+	stat_update_min_max(oneway_time, &stat->oneway_min, &stat->oneway_max);
+
+	if (stat_frame_type_is_real_time(frame_type) && oneway_time > rtt_expected_rt_limit / 2)
+		stat->oneway_outliers++;
+	stat->oneway_count++;
+	stat->oneway_sum += oneway_time;
+	stat->oneway_avg = stat->oneway_sum / (double)stat->oneway_count;
+
+	stat_frame_received_per_period(frame_type, curr_time, rt_time, oneway_time, out_of_order,
+				       payload_mismatch, frame_id_mismatch);
+
+	/* Stop tracing after certain amount of time */
+	if (app_config.debug_stop_trace_on_rtt && stat_frame_type_is_real_time(frame_type) &&
+	    rt_time > (app_config.debug_stop_trace_rtt_limit_ns / 1000)) {
+		fprintf(file_trace_marker,
+			"Round-Trip Limit hit: %" PRIu64
+			" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
+			rt_time, stat_frame_type_to_string(frame_type), cycle_number);
+		fprintf(file_tracing_on, "0\n");
+		fprintf(stderr,
+			"Round-Trip Limit hit: %" PRIu64
+			" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
+			rt_time, stat_frame_type_to_string(frame_type), cycle_number);
+		fclose(file_tracing_on);
+		fclose(file_trace_marker);
+		exit(EXIT_SUCCESS);
 	}
 
 	/* Increment stats */
