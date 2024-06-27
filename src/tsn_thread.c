@@ -440,6 +440,7 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
 	unsigned char plaintext[MAX_FRAME_SIZE];
 	unsigned char new_frame[MAX_FRAME_SIZE];
+	struct timespec tx_timespec_mirror = {};
 	struct profinet_secure_header *srt;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
@@ -483,6 +484,8 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		return -EINVAL;
 	}
 
+	clock_gettime(app_config.application_clock_id, &tx_timespec_mirror);
+
 	/* Check cycle counter, frame id range and payload. */
 	if (tsn_config->tsn_security_mode == SECURITY_MODE_NONE) {
 		rt = p;
@@ -493,6 +496,11 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 			&rt->meta_data, tsn_config->tsn_num_frames_per_cycle);
 
 		tx_timestamp = meta_data_to_tx_timestamp(&rt->meta_data);
+		tx_timestamp_to_meta_data(&rt->meta_data,
+					  ts_to_ns(&tx_timespec_mirror) +
+						  (app_config.application_tx_base_offset_ns -
+						   app_config.application_rx_base_offset_ns));
+
 	} else if (tsn_config->tsn_security_mode == SECURITY_MODE_AO) {
 
 		unsigned char *begin_of_security_checksum;
@@ -529,6 +537,14 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 			log_message(LOG_LEVEL_WARNING,
 				    "%sRx: frame[%" PRIu64 "] Not authentificated\n",
 				    tsn_config->traffic_class, sequence_counter);
+
+		tx_timestamp_to_meta_data(&srt->meta_data,
+					  ts_to_ns(&tx_timespec_mirror) +
+						  (app_config.application_tx_base_offset_ns -
+						   app_config.application_rx_base_offset_ns));
+		security_encrypt(security_context, NULL, 0, begin_of_aad_data, size_of_aad_data,
+				 (unsigned char *)&iv, NULL, begin_of_security_checksum);
+
 	} else {
 		unsigned char *begin_of_security_checksum;
 		unsigned char *begin_of_ciphertext;
@@ -572,6 +588,16 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 
 		/* plaintext points to the decrypted payload */
 		p = plaintext;
+
+		tx_timestamp_to_meta_data(&srt->meta_data,
+					  ts_to_ns(&tx_timespec_mirror) +
+						  (app_config.application_tx_base_offset_ns -
+						   app_config.application_rx_base_offset_ns));
+
+		security_encrypt(security_context, thread_context->payload_pattern,
+				 thread_context->payload_pattern_length, begin_of_aad_data,
+				 size_of_aad_data, (unsigned char *)&iv, begin_of_ciphertext,
+				 begin_of_security_checksum);
 	}
 
 	out_of_order = sequence_counter != thread_context->rx_sequence_counter;

@@ -46,10 +46,13 @@ static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_f
 				    const unsigned char *source)
 {
 	struct vlan_ethernet_header *eth_new, *eth_old;
+	struct timespec tx_timespec_mirror = {};
+	struct profinet_rt_header *rt;
 
 	/*
-	 * Two tasks:
+	 * Three tasks:
 	 *  -> Keep destination and adjust source
+	 *  -> Set new Tx Timestamp
 	 *  -> Inject VLAN header
 	 */
 
@@ -71,6 +74,13 @@ static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_f
 	eth_new->vlan_proto = htons(ETH_P_8021Q);
 	eth_new->vlantci = htons(app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT);
 	eth_new->vlan_encapsulated_proto = htons(ETH_P_PROFINET_RT);
+
+	rt = (struct profinet_rt_header *)(new_frame + sizeof(*eth_new));
+	clock_gettime(app_config.application_clock_id, &tx_timespec_mirror);
+	tx_timestamp_to_meta_data(&rt->meta_data,
+				  ts_to_ns(&tx_timespec_mirror) +
+					  (app_config.application_tx_base_offset_ns -
+					   app_config.application_rx_base_offset_ns));
 }
 
 static int dcp_send_messages(struct thread_context *thread_context, int socket_fd,
@@ -263,6 +273,7 @@ static int dcp_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	 */
 	rt = (struct profinet_rt_header *)(frame_data + sizeof(struct ethhdr));
 	sequence_counter = meta_data_to_sequence_counter(&rt->meta_data, num_frames_per_cycle);
+
 	tx_timestamp = meta_data_to_tx_timestamp(&rt->meta_data);
 
 	out_of_order = sequence_counter != thread_context->rx_sequence_counter;

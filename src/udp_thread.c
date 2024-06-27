@@ -220,6 +220,7 @@ static void *udp_rx_thread_routine(void *data)
 	const bool mirror_enabled = udp_config->udp_rx_mirror_enabled;
 	const bool ignore_rx_errors = udp_config->udp_ignore_rx_errors;
 	const ssize_t frame_length = udp_config->udp_frame_length;
+	struct timespec tx_timespec_mirror = {};
 	unsigned char frame[MAX_FRAME_SIZE];
 	uint64_t sequence_counter = 0;
 	struct timespec wakeup_time;
@@ -287,6 +288,12 @@ static void *udp_rx_thread_routine(void *data)
 				meta_data_to_sequence_counter(meta, num_frames_per_cycle);
 
 			tx_timestamp = meta_data_to_tx_timestamp(meta);
+
+			clock_gettime(app_config.application_clock_id, &tx_timespec_mirror);
+			tx_timestamp_to_meta_data(
+				meta, ts_to_ns(&tx_timespec_mirror) +
+					      (app_config.application_tx_base_offset_ns -
+					       app_config.application_rx_base_offset_ns));
 
 			out_of_order = sequence_counter != rx_sequence_counter;
 			payload_mismatch = memcmp(frame + sizeof(struct reference_meta_data),
