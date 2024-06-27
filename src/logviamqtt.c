@@ -209,7 +209,7 @@ static void *log_via_mqtt_thread_routine(void *data)
 		}
 
 		ring_buffer_fetch(mqtt_context->mqtt_log_ring_buffer, (unsigned char *)&stats,
-				  sizeof(stats), &log_data_len);
+				  LOGVIAMQTT_BUFFER_SIZE, &log_data_len);
 		nof_read_elements = log_data_len / sizeof(struct log_statistics);
 
 		curr_stats = (struct log_statistics *)stats;
