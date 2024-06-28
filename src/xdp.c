@@ -336,7 +336,7 @@ void xdp_complete_tx(struct xdp_socket *xsk)
 void xdp_gen_and_send_frames(struct xdp_socket *xsk, const struct xdp_gen_config *xdp)
 {
 	struct timespec tx_time = {};
-	uint32_t idx;
+	uint32_t idx = 0;
 	size_t i;
 
 	if (xdp->num_frames_per_cycle == 0)
