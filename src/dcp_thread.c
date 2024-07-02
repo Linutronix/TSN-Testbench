@@ -167,9 +167,15 @@ static void *dcp_tx_thread_routine(void *data)
 	unsigned char source[ETH_ALEN];
 	uint64_t sequence_counter = 0;
 	unsigned int if_index;
-	int socket_fd;
+	int ret, socket_fd;
 
 	socket_fd = thread_context->socket_fd;
+
+	ret = get_interface_mac_address(app_config.dcp_interface, source, ETH_ALEN);
+	if (ret < 0) {
+		log_message(LOG_LEVEL_ERROR, "DcpTx: Failed to get Source MAC address!\n");
+		return NULL;
+	}
 
 	if_index = if_nametoindex(app_config.dcp_interface);
 	if (!if_index) {
