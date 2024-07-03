@@ -273,9 +273,8 @@ struct application_config {
 	char *log_level;
 	size_t log_level_length;
 	/* Debug */
-	bool debug_stop_trace_on_rtt;
+	bool debug_stop_trace_on_outlier;
 	bool debug_stop_trace_on_error;
-	uint64_t debug_stop_trace_rtt_limit_ns;
 	bool debug_monitor_mode;
 	unsigned char debug_monitor_destination[ETH_ALEN];
 	/* Statistics */

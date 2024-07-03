@@ -92,7 +92,7 @@ int stat_init(enum log_stat_options log_selection)
 		current_stats->oneway_max = 0;
 	}
 
-	if (app_config.debug_stop_trace_on_rtt) {
+	if (app_config.debug_stop_trace_on_outlier) {
 		file_tracing_on = fopen("/sys/kernel/debug/tracing/tracing_on", "w");
 		if (!file_tracing_on)
 			return -errno;
@@ -121,7 +121,7 @@ void stat_free(void)
 	for (int i = 0; i < NUM_FRAME_TYPES; i++)
 		free(round_trip_contexts[i].backlog);
 
-	if (app_config.debug_stop_trace_on_rtt) {
+	if (app_config.debug_stop_trace_on_outlier) {
 		fclose(file_tracing_on);
 		fclose(file_trace_marker);
 	}
@@ -233,6 +233,7 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 	struct statistics *stat = &global_statistics[frame_type];
 	uint64_t rt_time, curr_time, oneway_time;
 	struct timespec rx_time = {};
+	bool outlier = false;
 
 	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] received\n",
 		    stat_frame_type_to_string(frame_type), cycle_number);
@@ -247,8 +248,10 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 
 		stat_update_min_max(rt_time, &stat->round_trip_min, &stat->round_trip_max);
 
-		if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
+		if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit) {
 			stat->round_trip_outliers++;
+			outlier = true;
+		}
 		stat->round_trip_count++;
 		stat->round_trip_sum += rt_time;
 		stat->round_trip_avg = stat->round_trip_sum / (double)stat->round_trip_count;
@@ -261,8 +264,10 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 
 	stat_update_min_max(oneway_time, &stat->oneway_min, &stat->oneway_max);
 
-	if (stat_frame_type_is_real_time(frame_type) && oneway_time > rtt_expected_rt_limit / 2)
+	if (stat_frame_type_is_real_time(frame_type) && oneway_time > rtt_expected_rt_limit / 2) {
 		stat->oneway_outliers++;
+		outlier = true;
+	}
 	stat->oneway_count++;
 	stat->oneway_sum += oneway_time;
 	stat->oneway_avg = stat->oneway_sum / (double)stat->oneway_count;
@@ -271,17 +276,16 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 				       payload_mismatch, frame_id_mismatch);
 
 	/* Stop tracing after certain amount of time */
-	if (app_config.debug_stop_trace_on_rtt && stat_frame_type_is_real_time(frame_type) &&
-	    rt_time > (app_config.debug_stop_trace_rtt_limit_ns / 1000)) {
+	if (app_config.debug_stop_trace_on_outlier && outlier) {
 		fprintf(file_trace_marker,
-			"Round-Trip Limit hit: %" PRIu64
-			" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
-			rt_time, stat_frame_type_to_string(frame_type), cycle_number);
+			"Outlier hit: %" PRIu64 " [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
+			rt_time ? rt_time : oneway_time, stat_frame_type_to_string(frame_type),
+			cycle_number);
 		fprintf(file_tracing_on, "0\n");
 		fprintf(stderr,
-			"Round-Trip Limit hit: %" PRIu64
-			" [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
-			rt_time, stat_frame_type_to_string(frame_type), cycle_number);
+			"Outlier hit: %" PRIu64 " [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
+			rt_time ? rt_time : oneway_time, stat_frame_type_to_string(frame_type),
+			cycle_number);
 		fclose(file_tracing_on);
 		fclose(file_trace_marker);
 		exit(EXIT_SUCCESS);

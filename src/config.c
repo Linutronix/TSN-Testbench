@@ -330,10 +330,9 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_STRING_PARAM(LogFile, log_file);
 			CONFIG_STORE_STRING_PARAM(LogLevel, log_level);
 
-			CONFIG_STORE_BOOL_PARAM(DebugStopTraceOnRtt, debug_stop_trace_on_rtt);
+			CONFIG_STORE_BOOL_PARAM(DebugStopTraceOnOutlier,
+						debug_stop_trace_on_outlier);
 			CONFIG_STORE_BOOL_PARAM(DebugStopTraceOnError, debug_stop_trace_on_error);
-			CONFIG_STORE_ULONG_PARAM(DebugStopTraceRttLimitNS,
-						 debug_stop_trace_rtt_limit_ns);
 			CONFIG_STORE_BOOL_PARAM(DebugMonitorMode, debug_monitor_mode);
 			CONFIG_STORE_MAC_PARAM(DebugMonitorDestination, debug_monitor_destination);
 
@@ -677,10 +676,10 @@ void config_print_values(void)
 	printf("LogLevel=%s\n", app_config.log_level);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("DebugStopTraceOnRtt=%s\n", app_config.debug_stop_trace_on_rtt ? "True" : "False");
+	printf("DebugStopTraceOnOutlier=%s\n",
+	       app_config.debug_stop_trace_on_outlier ? "True" : "False");
 	printf("DebugStopTraceOnError=%s\n",
 	       app_config.debug_stop_trace_on_error ? "True" : "False");
-	printf("DebugStopTraceLimitNS=%" PRIu64 "\n", app_config.debug_stop_trace_rtt_limit_ns);
 	printf("DebugMonitorMode=%s\n", app_config.debug_monitor_mode ? "True" : "False");
 	printf("DebugMonitorDestination=");
 	print_mac_address(app_config.debug_monitor_destination);
@@ -1002,9 +1001,8 @@ int config_set_defaults(bool mirror_enabled)
 		goto out;
 
 	/* Debug */
-	app_config.debug_stop_trace_on_rtt = false;
+	app_config.debug_stop_trace_on_outlier = false;
 	app_config.debug_stop_trace_on_error = false;
-	app_config.debug_stop_trace_rtt_limit_ns = 10000000;
 	app_config.debug_monitor_mode = false;
 	memcpy((void *)app_config.debug_monitor_destination, default_debug_montitor_destination,
 	       ETH_ALEN);
