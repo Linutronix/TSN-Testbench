@@ -65,9 +65,9 @@ Possible parameters include:
 - LogThreadCpu (Integer): Log thread CPU affinity
 - LogFile (String): Path to log file
 - LogLevel (String): Log level, one of Debug, Info, Warning, Error
-- DebugStopTraceOnRtt (Integer): Stop Linux kernel tracing if round trip time exceeds value (DebugStopTraceRttLimitNS)
+- DebugStopTraceOnOutlier (Integer): Stop Linux kernel tracing if round trip or oneway time exceeds
+  expected value
 - DebugStopTraceOnError (Boolean): Stop Linux kernel tracing if error happened (e.g. transmission failure)
-- DebugStopTraceRttLimitNS (Integer): Round-Trip time limit in nanoseconds
 - DebugMonitorMode (Boolean): Monitor mode for Fraunhofer FPGA measurement
 - DebugMonitorDestination (MAC Address): Destination address of first frame per burst
 

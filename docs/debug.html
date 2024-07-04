@@ -107,13 +107,15 @@ can be used to find the root cause. This can be done like this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start tracing</span>
 trace-cmd<span class="w"> </span>start<span class="w"> </span>-e<span class="w"> </span>sched<span class="w"> </span>-e<span class="w"> </span>syscalls<span class="w"> </span>-e<span class="w"> </span>irq
 
-<span class="c1"># Set DebugStopTraceOnRtt to True and DebugStopTraceRttLimitNS to 2x cycle time in reference.yaml</span>
-<span class="c1"># configuration file</span>
+<span class="c1"># Set DebugStopTraceOnOutlier to True in reference.yaml or mirror.yaml configuration file</span>
 
 <span class="c1"># Start reference and mirror as usual</span>
 
-<span class="c1"># The reference application will stop after a round-trip time greater than</span>
-<span class="c1"># DebugStopTraceRttLimitNS is hit and will output an information message about it</span>
+<span class="c1"># The reference application will stop after a round-trip time outlier is hit and will output an</span>
+<span class="c1"># information message about it</span>
+
+<span class="c1"># The mirror application will stop after a oneway time outlier is hit and will output an</span>
+<span class="c1"># information message about it</span>
 
 <span class="c1"># Get the trace</span>
 trace-cmd<span class="w"> </span>extract<span class="w"> </span>-a
