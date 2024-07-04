@@ -231,7 +231,7 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 {
 	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
 	struct statistics *stat = &global_statistics[frame_type];
-	uint64_t rt_time, curr_time, oneway_time;
+	uint64_t rt_time = 0, curr_time, oneway_time;
 	struct timespec rx_time = {};
 	bool outlier = false;
 
@@ -255,8 +255,6 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 		stat->round_trip_count++;
 		stat->round_trip_sum += rt_time;
 		stat->round_trip_avg = stat->round_trip_sum / (double)stat->round_trip_count;
-	} else {
-		rt_time = 0;
 	}
 
 	oneway_time = curr_time - tx_timestamp;
