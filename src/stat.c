@@ -284,8 +284,8 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 			"Outlier hit: %" PRIu64 " [us] -- Type: %s -- Cycle Counter: %" PRIu64 "\n",
 			rt_time ? rt_time : oneway_time, stat_frame_type_to_string(frame_type),
 			cycle_number);
-		fclose(file_tracing_on);
 		fclose(file_trace_marker);
+		fclose(file_tracing_on);
 		exit(EXIT_SUCCESS);
 	}
 
