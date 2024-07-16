@@ -112,6 +112,7 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_BOOL_PARAM(TsnHighIgnoreRxErrors, tsn_high_ignore_rx_errors);
 			CONFIG_STORE_ULONG_PARAM(TsnHighTxTimeOffsetNS, tsn_high_tx_time_offset_ns);
 			CONFIG_STORE_INT_PARAM(TsnHighVid, tsn_high_vid);
+			CONFIG_STORE_INT_PARAM(TsnHighPcp, tsn_high_pcp);
 			CONFIG_STORE_ULONG_PARAM(TsnHighNumFramesPerCycle,
 						 tsn_high_num_frames_per_cycle);
 			CONFIG_STORE_STRING_PARAM(TsnHighPayloadPattern, tsn_high_payload_pattern);
@@ -145,6 +146,7 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_BOOL_PARAM(TsnLowIgnoreRxErrors, tsn_low_ignore_rx_errors);
 			CONFIG_STORE_ULONG_PARAM(TsnLowTxTimeOffsetNS, tsn_low_tx_time_offset_ns);
 			CONFIG_STORE_INT_PARAM(TsnLowVid, tsn_low_vid);
+			CONFIG_STORE_INT_PARAM(TsnLowPcp, tsn_low_pcp);
 			CONFIG_STORE_ULONG_PARAM(TsnLowNumFramesPerCycle,
 						 tsn_low_num_frames_per_cycle);
 			CONFIG_STORE_STRING_PARAM(TsnLowPayloadPattern, tsn_low_payload_pattern);
@@ -173,6 +175,7 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_BOOL_PARAM(RtcXdpBusyPollMode, rtc_xdp_busy_poll_mode);
 			CONFIG_STORE_BOOL_PARAM(RtcIgnoreRxErrors, rtc_ignore_rx_errors);
 			CONFIG_STORE_INT_PARAM(RtcVid, rtc_vid);
+			CONFIG_STORE_INT_PARAM(RtcPcp, rtc_pcp);
 			CONFIG_STORE_ULONG_PARAM(RtcNumFramesPerCycle, rtc_num_frames_per_cycle);
 			CONFIG_STORE_STRING_PARAM(RtcPayloadPattern, rtc_payload_pattern);
 			CONFIG_STORE_ULONG_PARAM(RtcFrameLength, rtc_frame_length);
@@ -199,6 +202,7 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_BOOL_PARAM(RtaXdpBusyPollMode, rta_xdp_busy_poll_mode);
 			CONFIG_STORE_BOOL_PARAM(RtaIgnoreRxErrors, rta_ignore_rx_errors);
 			CONFIG_STORE_INT_PARAM(RtaVid, rta_vid);
+			CONFIG_STORE_INT_PARAM(RtaPcp, rta_pcp);
 			CONFIG_STORE_ULONG_PARAM(RtaBurstPeriodNS, rta_burst_period_ns);
 			CONFIG_STORE_ULONG_PARAM(RtaNumFramesPerCycle, rta_num_frames_per_cycle);
 			CONFIG_STORE_STRING_PARAM(RtaPayloadPattern, rta_payload_pattern);
@@ -221,6 +225,7 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_BOOL_PARAM(DcpEnabled, dcp_enabled);
 			CONFIG_STORE_BOOL_PARAM(DcpIgnoreRxErrors, dcp_ignore_rx_errors);
 			CONFIG_STORE_INT_PARAM(DcpVid, dcp_vid);
+			CONFIG_STORE_INT_PARAM(DcpPcp, dcp_pcp);
 			CONFIG_STORE_ULONG_PARAM(DcpBurstPeriodNS, dcp_burst_period_ns);
 			CONFIG_STORE_ULONG_PARAM(DcpNumFramesPerCycle, dcp_num_frames_per_cycle);
 			CONFIG_STORE_STRING_PARAM(DcpPayloadPattern, dcp_payload_pattern);
@@ -405,6 +410,7 @@ void config_print_values(void)
 	       app_config.tsn_high_ignore_rx_errors ? "True" : "False");
 	printf("TsnHighTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_high_tx_time_offset_ns);
 	printf("TsnHighVid=%d\n", app_config.tsn_high_vid);
+	printf("TsnHighPcp=%d\n", app_config.tsn_high_pcp);
 	printf("TsnHighNumFramesPerCycle=%zu\n", app_config.tsn_high_num_frames_per_cycle);
 	printf("TsnHighPayloadPattern=");
 	print_payload_pattern(app_config.tsn_high_payload_pattern,
@@ -443,6 +449,7 @@ void config_print_values(void)
 	printf("TsnLowIgnoreRxErrors=%s\n", app_config.tsn_low_ignore_rx_errors ? "True" : "False");
 	printf("TsnLowTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_low_tx_time_offset_ns);
 	printf("TsnLowVid=%d\n", app_config.tsn_low_vid);
+	printf("TsnLowPcp=%d\n", app_config.tsn_low_pcp);
 	printf("TsnLowNumFramesPerCycle=%zu\n", app_config.tsn_low_num_frames_per_cycle);
 	printf("TsnLowPayloadPattern=");
 	print_payload_pattern(app_config.tsn_low_payload_pattern,
@@ -477,6 +484,7 @@ void config_print_values(void)
 	printf("RtcXdpBusyPollMode=%s\n", app_config.rtc_xdp_busy_poll_mode ? "True" : "False");
 	printf("RtcIgnoreRxErrors=%s\n", app_config.rtc_ignore_rx_errors ? "True" : "False");
 	printf("RtcVid=%d\n", app_config.rtc_vid);
+	printf("RtcPcp=%d\n", app_config.rtc_pcp);
 	printf("RtcNumFramesPerCycle=%zu\n", app_config.rtc_num_frames_per_cycle);
 	printf("RtcPayloadPattern=");
 	print_payload_pattern(app_config.rtc_payload_pattern,
@@ -510,6 +518,7 @@ void config_print_values(void)
 	printf("RtaXdpBusyPollMode=%s\n", app_config.rta_xdp_busy_poll_mode ? "True" : "False");
 	printf("RtaIgnoreRxErrors=%s\n", app_config.rta_ignore_rx_errors ? "True" : "False");
 	printf("RtaVid=%d\n", app_config.rta_vid);
+	printf("RtaPcp=%d\n", app_config.rta_pcp);
 	printf("RtaBurstPeriodNS=%" PRIu64 "\n", app_config.rta_burst_period_ns);
 	printf("RtaNumFramesPerCycle=%zu\n", app_config.rta_num_frames_per_cycle);
 	printf("RtaPayloadPattern=");
@@ -539,6 +548,7 @@ void config_print_values(void)
 	printf("DcpRxMirrorEnabled=%s\n", app_config.dcp_rx_mirror_enabled ? "True" : "False");
 	printf("DcpIgnoreRxErrors=%s\n", app_config.dcp_ignore_rx_errors ? "True" : "False");
 	printf("DcpVid=%d\n", app_config.dcp_vid);
+	printf("DcpPcp=%d\n", app_config.dcp_pcp);
 	printf("DcpBurstPeriodNS=%" PRIu64 "\n", app_config.dcp_burst_period_ns);
 	printf("DcpNumFramesPerCycle=%zu\n", app_config.dcp_num_frames_per_cycle);
 	printf("DcpPayloadPattern=");
@@ -740,6 +750,7 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.tsn_high_ignore_rx_errors = false;
 	app_config.tsn_high_tx_time_offset_ns = 0;
 	app_config.tsn_high_vid = TSN_HIGH_VID_VALUE;
+	app_config.tsn_high_pcp = TSN_HIGH_PCP_VALUE;
 	app_config.tsn_high_num_frames_per_cycle = 0;
 	app_config.tsn_high_payload_pattern = strdup(default_payload_pattern);
 	if (!app_config.tsn_high_payload_pattern)
@@ -772,6 +783,7 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.tsn_low_ignore_rx_errors = false;
 	app_config.tsn_low_tx_time_offset_ns = 0;
 	app_config.tsn_low_vid = TSN_LOW_VID_VALUE;
+	app_config.tsn_low_pcp = TSN_LOW_PCP_VALUE;
 	app_config.tsn_low_num_frames_per_cycle = 0;
 	app_config.tsn_low_payload_pattern = strdup(default_payload_pattern);
 	if (!app_config.tsn_low_payload_pattern)
@@ -802,6 +814,7 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.rtc_xdp_busy_poll_mode = false;
 	app_config.rtc_ignore_rx_errors = false;
 	app_config.rtc_vid = PROFINET_RT_VID_VALUE;
+	app_config.rtc_pcp = RTC_PCP_VALUE;
 	app_config.rtc_num_frames_per_cycle = 0;
 	app_config.rtc_payload_pattern = strdup(default_payload_pattern);
 	if (!app_config.rtc_payload_pattern)
@@ -832,6 +845,7 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.rta_xdp_busy_poll_mode = false;
 	app_config.rta_ignore_rx_errors = false;
 	app_config.rta_vid = PROFINET_RT_VID_VALUE;
+	app_config.rta_pcp = RTA_PCP_VALUE;
 	app_config.rta_burst_period_ns = 200000000;
 	app_config.rta_num_frames_per_cycle = 0;
 	app_config.rta_payload_pattern = strdup(default_payload_pattern);
@@ -858,6 +872,7 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.dcp_ignore_rx_errors = false;
 	app_config.dcp_rx_mirror_enabled = mirror_enabled;
 	app_config.dcp_vid = PROFINET_RT_VID_VALUE;
+	app_config.dcp_pcp = DCP_PCP_VALUE;
 	app_config.dcp_burst_period_ns = 2000000000;
 	app_config.dcp_num_frames_per_cycle = 0;
 	app_config.dcp_payload_pattern = strdup(default_payload_pattern);

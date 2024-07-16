@@ -43,6 +43,7 @@ struct application_config {
 	bool tsn_high_ignore_rx_errors;
 	uint64_t tsn_high_tx_time_offset_ns;
 	int tsn_high_vid;
+	int tsn_high_pcp;
 	size_t tsn_high_num_frames_per_cycle;
 	char *tsn_high_payload_pattern;
 	size_t tsn_high_payload_pattern_length;
@@ -74,6 +75,7 @@ struct application_config {
 	bool tsn_low_ignore_rx_errors;
 	uint64_t tsn_low_tx_time_offset_ns;
 	int tsn_low_vid;
+	int tsn_low_pcp;
 	size_t tsn_low_num_frames_per_cycle;
 	char *tsn_low_payload_pattern;
 	size_t tsn_low_payload_pattern_length;
@@ -103,6 +105,7 @@ struct application_config {
 	bool rtc_xdp_busy_poll_mode;
 	bool rtc_ignore_rx_errors;
 	int rtc_vid;
+	int rtc_pcp;
 	size_t rtc_num_frames_per_cycle;
 	char *rtc_payload_pattern;
 	size_t rtc_payload_pattern_length;
@@ -132,6 +135,7 @@ struct application_config {
 	bool rta_xdp_busy_poll_mode;
 	bool rta_ignore_rx_errors;
 	int rta_vid;
+	int rta_pcp;
 	uint64_t rta_burst_period_ns;
 	size_t rta_num_frames_per_cycle;
 	char *rta_payload_pattern;
@@ -157,6 +161,7 @@ struct application_config {
 	bool dcp_rx_mirror_enabled;
 	bool dcp_ignore_rx_errors;
 	int dcp_vid;
+	int dcp_pcp;
 	uint64_t dcp_burst_period_ns;
 	size_t dcp_num_frames_per_cycle;
 	char *dcp_payload_pattern;
