@@ -42,6 +42,7 @@ Possible parameters include:
 - <Class>IgnoreRxErrors (Boolean): By default, the applications perform consistency checks for all received frames. This
   option disables these checks. Do not enable this. This is only useful for testing e.g., overload scenarios.
 - <Class>Vid (Integer): VLAN ID used for traffic generation
+- <Class>Pcp (Integer): VLAN PCP used for traffic generation
 - <Class>NumFramesPerCycle (Integer): Number of frames transmitted per cycle
 - <Class>PayloadPattern (String): Payload pattern for frame content. The payload is
   a sequence of bytes. If the payload pattern is smaller than the frame size, zero
