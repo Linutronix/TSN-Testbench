@@ -38,7 +38,7 @@ static void dcp_initialize_frames(unsigned char *frame_data, size_t num_frames,
 			SECURITY_MODE_NONE, frame_idx(frame_data, i), MAX_FRAME_SIZE, source,
 			app_config.dcp_destination, app_config.dcp_payload_pattern,
 			app_config.dcp_payload_pattern_length,
-			app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT, 0xfefe);
+			app_config.dcp_vid | app_config.dcp_pcp << VLAN_PCP_SHIFT, 0xfefe);
 }
 
 static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_frame_len,
@@ -72,7 +72,7 @@ static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_f
 
 	/* Inject VLAN info */
 	eth_new->vlan_proto = htons(ETH_P_8021Q);
-	eth_new->vlantci = htons(app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT);
+	eth_new->vlantci = htons(app_config.dcp_vid | app_config.dcp_pcp << VLAN_PCP_SHIFT);
 	eth_new->vlan_encapsulated_proto = htons(ETH_P_PROFINET_RT);
 
 	rt = (struct profinet_rt_header *)(new_frame + sizeof(*eth_new));

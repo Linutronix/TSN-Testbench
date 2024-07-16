@@ -39,7 +39,7 @@ static void rta_initialize_frames(unsigned char *frame_data, size_t num_frames,
 			app_config.rta_security_mode, frame_idx(frame_data, i), MAX_FRAME_SIZE,
 			source, destination, app_config.rta_payload_pattern,
 			app_config.rta_payload_pattern_length,
-			app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT, 0xfc01);
+			app_config.rta_vid | app_config.rta_pcp << VLAN_PCP_SHIFT, 0xfc01);
 }
 
 static int rta_send_messages(struct thread_context *thread_context, int socket_fd,
@@ -572,7 +572,7 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		/* Re-add vlan tag */
 		if (vlan_tag_missing)
 			insert_vlan_tag(frame_data, len,
-					app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT);
+					app_config.rta_vid | app_config.rta_pcp << VLAN_PCP_SHIFT);
 
 		/* Swap mac addresses inline */
 		swap_mac_addresses(frame_data, len);
@@ -580,7 +580,7 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		/* Build new frame for Tx with VLAN info. */
 		build_vlan_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame),
 					 ETH_P_PROFINET_RT,
-					 app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT);
+					 app_config.rta_vid | app_config.rta_pcp << VLAN_PCP_SHIFT);
 
 		/* Store the new frame. */
 		ring_buffer_add(thread_context->mirror_buffer, new_frame,

@@ -1014,7 +1014,7 @@ int tsn_low_threads_create(struct thread_context *tsn_thread_context)
 	tsn_config->tsn_destination = app_config.tsn_low_destination;
 	tsn_config->create_tsn_socket = create_tsn_low_socket;
 	tsn_config->vlan_id = app_config.tsn_low_vid;
-	tsn_config->vlan_pcp = TSN_LOW_PCP_VALUE;
+	tsn_config->vlan_pcp = app_config.tsn_low_pcp;
 	tsn_config->frame_id_range_start = 0x0200;
 	tsn_config->frame_id_range_end = 0x03ff;
 
@@ -1071,7 +1071,7 @@ int tsn_high_threads_create(struct thread_context *tsn_thread_context)
 	tsn_config->tsn_destination = app_config.tsn_high_destination;
 	tsn_config->create_tsn_socket = create_tsn_high_socket;
 	tsn_config->vlan_id = app_config.tsn_high_vid;
-	tsn_config->vlan_pcp = TSN_HIGH_PCP_VALUE;
+	tsn_config->vlan_pcp = app_config.tsn_high_pcp;
 	tsn_config->frame_id_range_start = 0x0100;
 	tsn_config->frame_id_range_end = 0x01ff;
 

@@ -310,7 +310,8 @@ int create_tsn_high_socket(void)
 	}
 
 	/* Adjust filter: VLAN TCI */
-	tsn_high_frame_filter[3].k = app_config.tsn_high_vid | TSN_HIGH_PCP_VALUE << VLAN_PCP_SHIFT;
+	tsn_high_frame_filter[3].k = app_config.tsn_high_vid | app_config.tsn_high_pcp
+								       << VLAN_PCP_SHIFT;
 
 	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &tsn_high_filter_program,
 			 sizeof(tsn_high_filter_program));
@@ -361,7 +362,8 @@ int create_tsn_low_socket(void)
 	}
 
 	/* Adjust filter: VLAN TCI */
-	tsn_low_frame_filter[3].k = app_config.tsn_low_vid | TSN_LOW_PCP_VALUE << VLAN_PCP_SHIFT;
+	tsn_low_frame_filter[3].k = app_config.tsn_low_vid | app_config.tsn_low_pcp
+								     << VLAN_PCP_SHIFT;
 
 	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &tsn_low_filter_program,
 			 sizeof(tsn_low_filter_program));
@@ -410,7 +412,7 @@ int create_rtc_socket(void)
 	}
 
 	/* Adjust filter: VLAN TCI */
-	rtc_frame_filter[3].k = app_config.rtc_vid | RTC_PCP_VALUE << VLAN_PCP_SHIFT;
+	rtc_frame_filter[3].k = app_config.rtc_vid | app_config.rtc_pcp << VLAN_PCP_SHIFT;
 
 	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &rtc_filter_program,
 			 sizeof(rtc_filter_program));
@@ -446,7 +448,7 @@ int create_rta_socket(void)
 	}
 
 	/* Adjust filter: VLAN TCI */
-	rta_frame_filter[3].k = app_config.rta_vid | RTA_PCP_VALUE << VLAN_PCP_SHIFT;
+	rta_frame_filter[3].k = app_config.rta_vid | app_config.rta_pcp << VLAN_PCP_SHIFT;
 
 	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &rta_filter_program,
 			 sizeof(rta_filter_program));
@@ -482,7 +484,7 @@ int create_dcp_socket(void)
 	}
 
 	/* Adjust filter: VLAN TCI */
-	dcp_frame_filter[3].k = app_config.dcp_vid | DCP_PCP_VALUE << VLAN_PCP_SHIFT;
+	dcp_frame_filter[3].k = app_config.dcp_vid | app_config.dcp_pcp << VLAN_PCP_SHIFT;
 
 	ret = setsockopt(socket_fd, SOL_SOCKET, SO_ATTACH_FILTER, &dcp_filter_program,
 			 sizeof(dcp_filter_program));
