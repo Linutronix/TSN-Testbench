@@ -145,4 +145,3 @@ Colored bars are provided for representing the number of errors and outliers fou
 .. image:: images/grafana_example.png
   :width: 600
   :alt: Grafana sample with a cicle time of 250us.
-
