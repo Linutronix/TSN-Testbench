@@ -228,9 +228,11 @@ static void *lldp_tx_thread_routine(void *data)
 		 *  b) Use received ones if mirror enabled
 		 */
 		if (!mirror_enabled) {
-			lldp_gen_and_send_frames(thread_context, socket_fd, &destination,
-						 sequence_counter);
-			sequence_counter += num_frames;
+			if (num_frames) {
+				lldp_gen_and_send_frames(thread_context, socket_fd, &destination,
+							 sequence_counter);
+				sequence_counter += num_frames;
+			}
 		} else {
 			size_t len;
 
@@ -250,8 +252,7 @@ static void *lldp_tx_thread_routine(void *data)
 		/* Signal next Tx thread */
 		if (thread_context->next) {
 			pthread_mutex_lock(&thread_context->next->data_mutex);
-			if (thread_context->next->num_frames_available)
-				pthread_cond_signal(&thread_context->next->data_cond_var);
+			pthread_cond_signal(&thread_context->next->data_cond_var);
 			pthread_mutex_unlock(&thread_context->next->data_mutex);
 		}
 	}
