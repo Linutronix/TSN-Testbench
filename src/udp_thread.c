@@ -453,13 +453,15 @@ static int udp_threads_create(struct thread_context *thread_context,
 	snprintf(thread_name, sizeof(thread_name), "%sTxGenThread",
 		 udp_thread_config->traffic_class);
 
-	ret = create_rt_thread(&thread_context->tx_gen_task_id, "UdpLowTxGenThread",
-			       udp_thread_config->udp_tx_thread_priority,
-			       udp_thread_config->udp_tx_thread_cpu,
-			       udp_tx_generation_thread_routine, thread_context);
-	if (ret) {
-		fprintf(stderr, "Failed to create Udp TxGen Thread!\n");
-		goto err_thread_txgen;
+	if (!udp_thread_config->udp_rx_mirror_enabled) {
+		ret = create_rt_thread(&thread_context->tx_gen_task_id, "UdpLowTxGenThread",
+				       udp_thread_config->udp_tx_thread_priority,
+				       udp_thread_config->udp_tx_thread_cpu,
+				       udp_tx_generation_thread_routine, thread_context);
+		if (ret) {
+			fprintf(stderr, "Failed to create Udp TxGen Thread!\n");
+			goto err_thread_txgen;
+		}
 	}
 
 	snprintf(thread_name, sizeof(thread_name), "%sRxThread", udp_thread_config->traffic_class);
@@ -476,7 +478,8 @@ static int udp_threads_create(struct thread_context *thread_context,
 
 err_thread_rx:
 	thread_context->stop = 1;
-	pthread_join(thread_context->tx_gen_task_id, NULL);
+	if (thread_context->tx_gen_task_id)
+		pthread_join(thread_context->tx_gen_task_id, NULL);
 err_thread_txgen:
 	thread_context->stop = 1;
 	pthread_join(thread_context->tx_task_id, NULL);

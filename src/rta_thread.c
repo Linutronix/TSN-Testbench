@@ -846,12 +846,15 @@ int rta_threads_create(struct thread_context *thread_context)
 		goto err_thread;
 	}
 
-	ret = create_rt_thread(&thread_context->tx_gen_task_id, "RtaTxGenThread",
-			       app_config.rta_tx_thread_priority, app_config.rta_tx_thread_cpu,
-			       rta_tx_generation_thread_routine, thread_context);
-	if (ret) {
-		fprintf(stderr, "Failed to create Rta Tx Thread!\n");
-		goto err_thread_txgen;
+	if (!app_config.rta_rx_mirror_enabled) {
+		ret = create_rt_thread(&thread_context->tx_gen_task_id, "RtaTxGenThread",
+				       app_config.rta_tx_thread_priority,
+				       app_config.rta_tx_thread_cpu,
+				       rta_tx_generation_thread_routine, thread_context);
+		if (ret) {
+			fprintf(stderr, "Failed to create Rta TxGen Thread!\n");
+			goto err_thread_txgen;
+		}
 	}
 
 	ret = create_rt_thread(&thread_context->rx_task_id, "RtaRxThread",
@@ -872,7 +875,8 @@ out:
 
 err_thread_rx:
 	thread_context->stop = 1;
-	pthread_join(thread_context->tx_gen_task_id, NULL);
+	if (thread_context->tx_gen_task_id)
+		pthread_join(thread_context->tx_gen_task_id, NULL);
 err_thread_txgen:
 	thread_context->stop = 1;
 	pthread_join(thread_context->tx_task_id, NULL);
