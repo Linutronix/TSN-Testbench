@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Build &mdash; Linux TSN Testbench v4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=f4512df4"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="prev" title="Contribution" href="contribution.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Linux TSN Testbench
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contribution</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Build</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#additional-options">Additional Options</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mqtt.html">MQTT and Grafana Integration</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test runs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="debug.html">Debug</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qa.html">Quality Assurance</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Linux TSN Testbench</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Build</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/build.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="build">
+<h1>Build<a class="headerlink" href="#build" title="Permalink to this heading"></a></h1>
+<p>The buildsystem is cmake. The applications can be build and installed by:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>build_x86
+<span class="nb">cd</span><span class="w"> </span>build_x86
+cmake<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span>..
+make<span class="w"> </span>-j<span class="sb">`</span>nproc<span class="sb">`</span>
+sudo<span class="w"> </span>make<span class="w"> </span>install
+</pre></div>
+</div>
+<p>Setting the build type is important, as it defines the used compiler
+flags. <code class="docutils literal notranslate"><span class="pre">Release</span></code> builds the application with optimizations and without debug
+symbols. Other build types include: <code class="docutils literal notranslate"><span class="pre">Debug</span></code> or <code class="docutils literal notranslate"><span class="pre">RelWithDebInfo</span></code>.</p>
+<p>The applications have the following dependencies:</p>
+<ul class="simple">
+<li><p>Run time: libbpf, libyaml, libxdp, libssl</p></li>
+<li><p>Build time: cmake, gcc, clang, llvm, pkg-config</p></li>
+<li><p>Utilities: linuxptp, ethtool, iproute2, rt-tests, iperf3</p></li>
+</ul>
+<p>For Debian based systems do:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apt<span class="w"> </span>update
+apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>build-essential<span class="w"> </span>clang<span class="w"> </span>llvm<span class="w"> </span>cmake<span class="w"> </span>pkg-config<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>libbpf-dev<span class="w"> </span>libyaml-dev<span class="w"> </span>libc6-dev<span class="w"> </span>rt-tests<span class="w"> </span>ethtool<span class="w"> </span>iproute2<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>iperf3<span class="w"> </span>linuxptp<span class="w"> </span>libxdp-dev<span class="w"> </span>libssl-dev
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For Debian Bullseye <code class="docutils literal notranslate"><span class="pre">libxdp</span></code> is packaged in backports.</p>
+</div>
+<p>Furthermore, the Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> requires Linux kernel version &gt;= v5.12.
+PREEMPT_RT is recommended. In addition, the following configuration options have
+to be set:</p>
+<ul class="simple">
+<li><p>CONFIG_PTP_1588_CLOCK</p></li>
+<li><p>CONFIG_BPF</p></li>
+<li><p>CONFIG_BPF_SYSCALL</p></li>
+<li><p>CONFIG_DEBUG_INFO</p></li>
+<li><p>CONFIG_DEBUG_INFO_BTF</p></li>
+<li><p>CONFIG_XDP_SOCKETS</p></li>
+<li><p>CONFIG_NET_SCH_MQPRIO</p></li>
+<li><p>CONFIG_NET_SCH_TAPRIO</p></li>
+<li><p>CONFIG_NET_SCH_ETF</p></li>
+<li><p>CONFIG_NET_SCH_INGRESS</p></li>
+<li><p>CONFIG_NET_CLS_*</p></li>
+</ul>
+<section id="additional-options">
+<h2>Additional Options<a class="headerlink" href="#additional-options" title="Permalink to this heading"></a></h2>
+<p>Some features are added by using additional CMake opitions, the table bellow presents those features and options.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Features &amp; CMake options</span><a class="headerlink" href="#id1" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Feature</p></th>
+<th class="head"><p>Option</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MQTT</p></td>
+<td><p>WITH_MQTT</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="contribution.html" class="btn btn-neutral float-left" title="Contribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2024, Linutronix GmbH.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

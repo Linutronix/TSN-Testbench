@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MQTT and Grafana Integration &mdash; Linux TSN Testbench v4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=f4512df4"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Test runs" href="test.html" />
+    <link rel="prev" title="Configuration" href="configuration.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Linux TSN Testbench
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contribution</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Build</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MQTT and Grafana Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#motivation">Motivation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enabling-the-build">Enabling the build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-parameters">Configuration parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#docker-composer">Docker Composer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-the-services">Creating the services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#influx-access">Influx Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grafana-access">Grafana Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grafana-password">Grafana Password</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grafana-example">Grafana Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="test.html">Test runs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="debug.html">Debug</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qa.html">Quality Assurance</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Linux TSN Testbench</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MQTT and Grafana Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/mqtt.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mqtt-and-grafana-integration">
+<h1>MQTT and Grafana Integration<a class="headerlink" href="#mqtt-and-grafana-integration" title="Permalink to this heading"></a></h1>
+<section id="motivation">
+<h2>Motivation<a class="headerlink" href="#motivation" title="Permalink to this heading"></a></h2>
+<p>With the introduction of MQTT logging the visualization if the statistics is fostered by usage of Grafana. The full chain from MQTT log to Grafana is provided with this extension.
+This extension provides a visualization of data in grafical format, which is desired for some use cases, e.g. long term analysis, several instances of the Linux TSN testbench running, and showcases.
+The combination MQTT/Grafana is chosen as it is the most recognized and used application for data visualization, but requires additional services for the visualization. Those services are Telegraf and InfluxDB.
+Telegraf performs the transfer of the MQTT data into InfluxDB insertions. InfluxDB itself is the data provider for Grafana.
+The configuration for those services are provided allowing the direct start with data visualization with Grafana. A docker-composer file that allows that can be generated via a bash script provided.</p>
+</section>
+<section id="enabling-the-build">
+<h2>Enabling the build<a class="headerlink" href="#enabling-the-build" title="Permalink to this heading"></a></h2>
+<p>MQTT support is integrated in the build system as an option to enable it add the flag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span>-DWITH_MQTT<span class="o">=</span>True..
+</pre></div>
+</div>
+</section>
+<section id="configuration-parameters">
+<h2>Configuration parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this heading"></a></h2>
+<p>The parameters which affect the MQTT integration are presented in the table below:</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Features &amp; configure options</span><a class="headerlink" href="#id1" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 33.3%" />
+<col style="width: 66.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>StatsCollectionIntervalNS</p></td>
+<td><p>Interval in which a summary of the data is generated, typically 1s, i.e. 1000000000Ns</p></td>
+</tr>
+<tr class="row-odd"><td><p>LogViaMQTT</p></td>
+<td><p>Enable and disable MQTT logging</p></td>
+</tr>
+<tr class="row-even"><td><p>LogViaMQTTThreadPriority</p></td>
+<td><p>Thread priority for the logging thread, usually low &lt; 7</p></td>
+</tr>
+<tr class="row-odd"><td><p>LogViaMQTTThreadPeriodNS</p></td>
+<td><p>Interval in which the Logging thread will read push data into MQTT, typically same value as StatsCollectionIntervalNS.</p></td>
+</tr>
+<tr class="row-even"><td><p>LogViaMQTTBrokerIP</p></td>
+<td><p>IP address where MQTT broker is running</p></td>
+</tr>
+<tr class="row-odd"><td><p>LogViaMQTTBrokerPort</p></td>
+<td><p>Port used by the MQTT Broker, default value is</p></td>
+</tr>
+<tr class="row-even"><td><p>LogViaMQTTKeepAliveSecs</p></td>
+<td><p>Keep alive time for the connection, default value 60s</p></td>
+</tr>
+<tr class="row-odd"><td><p>LogViaMQTTMeasurementName</p></td>
+<td><p>Used to distinguish measurements coming from different machines.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="docker-composer">
+<h2>Docker Composer<a class="headerlink" href="#docker-composer" title="Permalink to this heading"></a></h2>
+<p>The first step is to create the docker-composer.yml file. As there is an uncertanty about the licensing on those docker-composer files and not much to be copyrighted on those,
+an indirect approach to deliver the file was taken. In the docker/mqtt-composer directory the file “create_docker_composer.sh” is provided. by running that file, i.e.:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docker/mqtt-composer
+./create_docker_composer.sh
+./set_permissions.sh
+</pre></div>
+</div>
+<section id="creating-the-services">
+<h3>Creating the services<a class="headerlink" href="#creating-the-services" title="Permalink to this heading"></a></h3>
+<p>The docker-composer.sh makes the integration into Grafana simple.
+A simplistic way to have the Grafana running is it can be used, is to instantiate the docker-compose in the machine where reference is running, by doing that all parameters concerning the MQTT broker are default.
+To instantiate the docker-composer you need docker and docker-compose installed.
+Start the services by issuing the commands below from the tsn-testbench directory.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docker/mqtt-composer
+docker-compose<span class="w"> </span>--compatibility<span class="w"> </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+<p>At this point all services needed to have the data available in Grafana is done.
+The most important part is now how to access the data.
+The verification of data availability can be done in two steps: first at InfluxDB and second via Grafana.</p>
+</section>
+<section id="influx-access">
+<h3>Influx Access<a class="headerlink" href="#influx-access" title="Permalink to this heading"></a></h3>
+<p>Used database for the provided configuration is “testbench” and is defined in the telegraf.conf file.
+The measurement name is the “LogViaMQTTMeasurementName” provided in the configuration.
+The Timestamp provided is the time taken in the application side when the last frame in the recording period “StatsCollectionIntervalNS”
+is received, and the traffic class name is one of the columns of the measurment.
+This way one can investigate the data base by providing the following code when running influx:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>use<span class="w"> </span>testbench
+SELECT<span class="w"> </span>*<span class="w"> </span>from<span class="w"> </span><span class="si">${</span><span class="nv">LogViaMQTTMeasurementName</span><span class="si">}</span>
+</pre></div>
+</div>
+<p>where ${LogViaMQTTMeasurementName} is a placeholder for the real name used.</p>
+</section>
+<section id="grafana-access">
+<h3>Grafana Access<a class="headerlink" href="#grafana-access" title="Permalink to this heading"></a></h3>
+<p>Grafana can be accessed by the IP of the machine that the docker-copose was started and port defined on
+the docker-compose.yml file.
+In Grafana a new data source for InfluxDB can be created and querries added to create dashboards.</p>
+</section>
+<section id="grafana-password">
+<h3>Grafana Password<a class="headerlink" href="#grafana-password" title="Permalink to this heading"></a></h3>
+<p>Grafana password has to be reset for the first usage.
+In some cases Grafana might also consider the password as expired refusing to allow the admin to login, e.g. extreme clock changes.
+To do so execute the “change_grafana_password.sh” script, with the containers running, providing the new password as parameter as below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docker/mqtt-composer
+./change_grafana_password.sh<span class="w"> </span><span class="nv">$NEW_PASSWORD</span>
+</pre></div>
+</div>
+</section>
+<section id="grafana-example">
+<h3>Grafana Example<a class="headerlink" href="#grafana-example" title="Permalink to this heading"></a></h3>
+<p>The example provided for Grafana has the time display of the 3 Profinet real-time traffic classes, TSN-High, TSN-Low and RTC.
+Dials are provided to show the current maximum visualized within the visible time range.
+Colored bars are provided for representing the number of errors and outliers found.</p>
+<a class="reference internal image-reference" href="_images/grafana_example.png"><img alt="Grafana sample with a cicle time of 250us." src="_images/grafana_example.png" style="width: 600px;" /></a>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="configuration.html" class="btn btn-neutral float-left" title="Configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="test.html" class="btn btn-neutral float-right" title="Test runs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2024, Linutronix GmbH.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
