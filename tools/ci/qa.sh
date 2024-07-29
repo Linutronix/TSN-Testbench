@@ -14,6 +14,9 @@ cd `dirname $0`
 
 pushd ../..
 
+echo "Checking licenses/copyrights..."
+reuse lint
+
 echo "Checking coding style with clang-format ..."
 clang-format --Werror --dry-run src/*.c src/*.h
 
