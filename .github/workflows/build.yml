@@ -1,0 +1,32 @@
+#
+# Copyright (C) 2024 Linutronix GmbH
+# Author Kurt Kanzenbach <kurt@linutronix.de>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+
+name: Build code
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1.4.2
+        with:
+          packages: clang llvm cmake pkg-config libbpf-dev libyaml-dev libc6-dev build-essential libxdp-dev libssl-dev libmosquitto-dev bash sphinx python3-sphinx-rtd-theme
+          version: 1.0
+
+      - name: Build code
+        run: ./tools/ci/build.sh
