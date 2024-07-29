@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: TSN-Testbench
+Upstream-Contact: Kurt Kanzenbach <kurt@linutronix.de>
+Source: https://www.github.com/Linutronix/TSN-Testbench
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
