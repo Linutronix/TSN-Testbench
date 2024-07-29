@@ -3,8 +3,22 @@ Upstream-Name: TSN-Testbench
 Upstream-Contact: Kurt Kanzenbach <kurt@linutronix.de>
 Source: https://www.github.com/Linutronix/TSN-Testbench
 
-# Sample paragraph, commented out:
-#
-# Files: src/*
-# Copyright: $YEAR $NAME <$CONTACT>
-# License: ...
+Files: .clang-format .clang-tidy .dir-locals.el CONTRIBUTING.md Documentation/Makefile Documentation/conf.py
+Copyright: 2020-2024 Linutronix GmbH
+License: BSD-2-Clause
+
+Files: Documentation/images/*.png Documentation/make.bat ISSUE_TEMPLATE.md README.md
+Copyright: 2020-2024 Linutronix GmbH
+License: BSD-2-Clause
+
+Files: .github/workflows/sphinx.yml devtools/conda-envs/docs_env.yaml requirements.txt
+Copyright: 2024 Pablo Iranzo Gómez <Pablo.Iranzo@gmail.com>
+License: BSD-2-Clause
+
+Files: debian/*
+Copyright: 2023-2024 Linutronix GmbH
+License: GPL-2.0-or-later
+
+Files: docker/mqtt-composer/*
+Copyright: 2024 Intel Corporation
+License: BSD-2-Clause
