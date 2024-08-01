@@ -42,6 +42,7 @@ Possible parameters include:
 - <Class>IgnoreRxErrors (Boolean): By default, the applications perform consistency checks for all received frames. This
   option disables these checks. Do not enable this. This is only useful for testing e.g., overload scenarios.
 - <Class>Vid (Integer): VLAN ID used for traffic generation
+- <Class>Pcp (Integer): VLAN PCP used for traffic generation
 - <Class>NumFramesPerCycle (Integer): Number of frames transmitted per cycle
 - <Class>PayloadPattern (String): Payload pattern for frame content. The payload is
   a sequence of bytes. If the payload pattern is smaller than the frame size, zero
@@ -135,3 +136,34 @@ These scripts configure multiple settings:
 - IRQ and NAPI thread priorities
 
 All of these settings are required for the PROFINET simulation to work properly.
+
+UDP communication
+^^^^^^^^^^^^^^^^^
+
+The UDP communication relies on standard sockets. It assumes that corresponding VLAN interfaces have
+been setup on the system. VLAN interfaces can be created by multiple ways: NetworkManager, Linux
+Distribution mechanisms or manually.
+
+Example for manual configuration:
+
+.. code:: bash
+
+   ip link add link eth0 name eth0.100 type vlan id 100
+   ip addr add XXX dev eth0.100
+
+Whenever a UDP packet is transmitted or received on a VLAN network interface the kernel will
+automatically add or strip the VLAN tag. The PCP value is derived from the socket priority. This
+mapping between socket priority and PCP values is configurable.
+
+Example:
+
+.. code:: bash
+
+   ip link set eth0.100 type vlan egress-qos-map 0:0 1:1
+
+The configured socket priorities have to match ``UdpHighSocketPriority`` and
+``UdpLowSocketPriority`` in the yaml files.
+
+.. Note:: In case the UDP communication does not work check the VLAN interface configurations. In
+          case it is still not working check whether the system uses a firewall which filters UDP
+          communication on the configured ports.

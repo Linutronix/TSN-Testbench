@@ -63,6 +63,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#traffic-configuration">Traffic configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#network-interface-configuration">Network interface configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#udp-communication">UDP communication</a></li>
 </ul>
 </li>
 </ul>
@@ -133,6 +134,7 @@ compatible with XDP)</p></li>
 <li><p>&lt;Class&gt;IgnoreRxErrors (Boolean): By default, the applications perform consistency checks for all received frames. This
 option disables these checks. Do not enable this. This is only useful for testing e.g., overload scenarios.</p></li>
 <li><p>&lt;Class&gt;Vid (Integer): VLAN ID used for traffic generation</p></li>
+<li><p>&lt;Class&gt;Pcp (Integer): VLAN PCP used for traffic generation</p></li>
 <li><p>&lt;Class&gt;NumFramesPerCycle (Integer): Number of frames transmitted per cycle</p></li>
 <li><p>&lt;Class&gt;PayloadPattern (String): Payload pattern for frame content. The payload is
 a sequence of bytes. If the payload pattern is smaller than the frame size, zero
@@ -230,6 +232,32 @@ depends on the Linux driver implementation.</p>
 <li><p>IRQ and NAPI thread priorities</p></li>
 </ul>
 <p>All of these settings are required for the PROFINET simulation to work properly.</p>
+</section>
+<section id="udp-communication">
+<h2>UDP communication<a class="headerlink" href="#udp-communication" title="Permalink to this heading"></a></h2>
+<p>The UDP communication relies on standard sockets. It assumes that corresponding VLAN interfaces have
+been setup on the system. VLAN interfaces can be created by multiple ways: NetworkManager, Linux
+Distribution mechanisms or manually.</p>
+<p>Example for manual configuration:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ip<span class="w"> </span>link<span class="w"> </span>add<span class="w"> </span>link<span class="w"> </span>eth0<span class="w"> </span>name<span class="w"> </span>eth0.100<span class="w"> </span><span class="nb">type</span><span class="w"> </span>vlan<span class="w"> </span>id<span class="w"> </span><span class="m">100</span>
+ip<span class="w"> </span>addr<span class="w"> </span>add<span class="w"> </span>XXX<span class="w"> </span>dev<span class="w"> </span>eth0.100
+</pre></div>
+</div>
+<p>Whenever a UDP packet is transmitted or received on a VLAN network interface the kernel will
+automatically add or strip the VLAN tag. The PCP value is derived from the socket priority. This
+mapping between socket priority and PCP values is configurable.</p>
+<p>Example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ip<span class="w"> </span>link<span class="w"> </span><span class="nb">set</span><span class="w"> </span>eth0.100<span class="w"> </span><span class="nb">type</span><span class="w"> </span>vlan<span class="w"> </span>egress-qos-map<span class="w"> </span><span class="m">0</span>:0<span class="w"> </span><span class="m">1</span>:1
+</pre></div>
+</div>
+<p>The configured socket priorities have to match <code class="docutils literal notranslate"><span class="pre">UdpHighSocketPriority</span></code> and
+<code class="docutils literal notranslate"><span class="pre">UdpLowSocketPriority</span></code> in the yaml files.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In case the UDP communication does not work check the VLAN interface configurations. In
+case it is still not working check whether the system uses a firewall which filters UDP
+communication on the configured ports.</p>
+</div>
 </section>
 </section>
 

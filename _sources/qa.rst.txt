@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: BSD-2-Clause
 ..
-.. Copyright (C) 2022 Linutronix GmbH
+.. Copyright (C) 2022-2024 Linutronix GmbH
 .. Author Kurt Kanzenbach <kurt@linutronix.de>
 ..
 .. Testbench documentation qa file.
@@ -14,26 +14,26 @@ License Checks
 
 The license for the Linux TSN ``Testbench`` is the permissive BSD-2-Clause. All
 files have a valid SPDX identifier (see https://spdx.dev/). The provided license
-information can be automatically checked for errors by using the ``spdxcheck``
-tool from the Linux kernel project. Example:
+information can be automatically checked for errors by using the ``reuse``
+tool. Example:
 
 .. code:: bash
 
-   % ~/git/linux/scripts/spdxcheck.py -v
+   % reuse lint
 
-   License files:                2
-   Exception files:              0
-   License IDs                   5
-   Exception IDs                 0
+   # SUMMARY
 
-   Files excluded:               5
-   Files checked:              102
-   Lines checked:              358
-   Files with SPDX:             94  92%
-   Files with errors:            0
+   * Bad licenses:
+   * Deprecated licenses:
+   * Licenses without file extension:
+   * Missing licenses:
+   * Unused licenses:
+   * Used licenses: BSD-2-Clause, GPL-2.0-only, GPL-2.0-or-later
+   * Read errors: 0
+   * Files with copyright information: 219 / 219
+   * Files with license information: 219 / 219
 
-   Directories accounted:       12
-   Directories complete:         7  58%
+   Congratulations! Your project is compliant with version 3.0 of the REUSE Specification :-)
 
 No errors should be printed.
 
