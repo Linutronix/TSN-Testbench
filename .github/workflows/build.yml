@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) 2024 Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -10,10 +11,10 @@ name: Build code
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
     branches:
-    - main
+      - main
 
 jobs:
   build:

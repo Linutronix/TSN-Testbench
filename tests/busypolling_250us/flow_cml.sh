@@ -17,9 +17,9 @@ INTERFACE=$1
 CYCLETIME_NS=$2
 BASETIME=$3
 
-[ -z $INTERFACE ]    && INTERFACE="enp3s0"			    # default: enp3s0
-[ -z $CYCLETIME_NS ] && CYCLETIME_NS="250000"			    # default: 125us
-[ -z $BASETIME ]     && BASETIME=`date '+%s000000000' -d '-30 sec'` # default: now - 30s
+[ -z $INTERFACE ] && INTERFACE="enp3s0"                          # default: enp3s0
+[ -z $CYCLETIME_NS ] && CYCLETIME_NS="250000"                    # default: 125us
+[ -z $BASETIME ] && BASETIME=$(date '+%s000000000' -d '-30 sec') # default: now - 30s
 
 # Load needed kernel modules
 modprobe sch_taprio || true
@@ -30,9 +30,9 @@ modprobe sch_taprio || true
 #  - gro_flush_timeout: Timeout when the kernel will take over NAPI processing.
 #    Has to be greather than the $CYCLETIME_NS
 #
-GRO_FLUSH_TIMEOUT=`echo "$CYCLETIME_NS * 2" | bc`
-echo 10 > /sys/class/net/${INTERFACE}/napi_defer_hard_irqs
-echo ${GRO_FLUSH_TIMEOUT} > /sys/class/net/${INTERFACE}/gro_flush_timeout
+GRO_FLUSH_TIMEOUT=$(echo "$CYCLETIME_NS * 2" | bc)
+echo 10 >/sys/class/net/${INTERFACE}/napi_defer_hard_irqs
+echo ${GRO_FLUSH_TIMEOUT} >/sys/class/net/${INTERFACE}/gro_flush_timeout
 
 #
 # Reduce link speed.
@@ -42,9 +42,9 @@ ethtool -s ${INTERFACE} speed 1000 autoneg on duplex full
 #
 # Split traffic between TSN streams, priority and everything else.
 #
-ENTRY1_NS="64000"		# RTC
-ENTRY2_NS="64000"		# TSN Streams / Prio
-ENTRY3_NS="122000"		# Everything else
+ENTRY1_NS="64000"  # RTC
+ENTRY2_NS="64000"  # TSN Streams / Prio
+ENTRY3_NS="122000" # Everything else
 
 #
 # Tx Assignment with Qbv and full hardware offload.
@@ -54,13 +54,13 @@ ENTRY3_NS="122000"		# Everything else
 # PCP X   - Rx Q 2 - Everything else
 #
 tc qdisc replace dev ${INTERFACE} handle 100 parent root taprio num_tc 3 \
-   map 2 2 2 2 2 2 1 0 2 2 2 2 2 2 2 2 \
-   queues 1@0 1@1 2@2 \
-   base-time ${BASETIME} \
-   sched-entry S 0x01 ${ENTRY1_NS} \
-   sched-entry S 0x02 ${ENTRY2_NS} \
-   sched-entry S 0x04 ${ENTRY3_NS} \
-   flags 0x02
+  map 2 2 2 2 2 2 1 0 2 2 2 2 2 2 2 2 \
+  queues 1@0 1@1 2@2 \
+  base-time ${BASETIME} \
+  sched-entry S 0x01 ${ENTRY1_NS} \
+  sched-entry S 0x02 ${ENTRY2_NS} \
+  sched-entry S 0x04 ${ENTRY3_NS} \
+  flags 0x02
 
 #
 # Rx Queues Assignment.
@@ -109,7 +109,7 @@ ethtool -G ${INTERFACE} rx 4096 tx 4096
 #
 # Increase IRQ thread priorities. By default, every IRQ thread has priority 50.
 #
-IRQTHREADS=`ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }'`
+IRQTHREADS=$(ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${IRQTHREADS}; do
   chrt -p -f 85 $task
 done

@@ -17,9 +17,9 @@ INTERFACE=$1
 CYCLETIME_NS=$2
 BASETIME=$3
 
-[ -z $INTERFACE ]    && INTERFACE="enp2s0"     # default: enp2s0
-[ -z $CYCLETIME_NS ] && CYCLETIME_NS="1000000" # default: 1ms
-[ -z $BASETIME ]     && BASETIME=`date '+%s000000000' -d '-30 sec'` # default: now - 30s
+[ -z $INTERFACE ] && INTERFACE="enp2s0"                          # default: enp2s0
+[ -z $CYCLETIME_NS ] && CYCLETIME_NS="1000000"                   # default: 1ms
+[ -z $BASETIME ] && BASETIME=$(date '+%s000000000' -d '-30 sec') # default: now - 30s
 
 # Load needed kernel modules
 modprobe sch_mqprio || true
@@ -30,9 +30,9 @@ modprobe sch_mqprio || true
 #  - gro_flush_timeout: Timeout when the kernel will take over NAPI processing.
 #    Has to be greather than the $CYCLETIME_NS
 #
-GRO_FLUSH_TIMEOUT=`echo "$CYCLETIME_NS * 2" | bc`
-echo 10 > /sys/class/net/${INTERFACE}/napi_defer_hard_irqs
-echo ${GRO_FLUSH_TIMEOUT} > /sys/class/net/${INTERFACE}/gro_flush_timeout
+GRO_FLUSH_TIMEOUT=$(echo "$CYCLETIME_NS * 2" | bc)
+echo 10 >/sys/class/net/${INTERFACE}/napi_defer_hard_irqs
+echo ${GRO_FLUSH_TIMEOUT} >/sys/class/net/${INTERFACE}/gro_flush_timeout
 
 #
 # Disable VLAN Rx offload.
@@ -46,9 +46,9 @@ ethtool -K ${INTERFACE} rx-vlan-offload off
 # PCP X - Rx Q 1 - Everything else
 #
 tc qdisc replace dev ${INTERFACE} handle 100 parent root mqprio num_tc 2 \
-   map 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 \
-   queues 1@0 1@1 \
-   hw 0
+  map 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 \
+  queues 1@0 1@1 \
+  hw 0
 
 #
 # Rx Queues Assignment.
@@ -96,7 +96,7 @@ ethtool -G ${INTERFACE} rx 4096 tx 4096
 #
 # Increase IRQ thread priorities. By default, every IRQ thread has priority 50.
 #
-IRQTHREADS=`ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }'`
+IRQTHREADS=$(ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${IRQTHREADS}; do
   chrt -p -f 85 $task
 done

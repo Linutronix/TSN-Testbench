@@ -8,7 +8,7 @@ How can the issue be reproduced?
 
 Please provide the following information:
 
- - [ ] Hardware and NIC(s) being used
- - [ ] Configuration files being used
- - [ ] Linux kernel version being used
- - [ ] Linux distribution being used
+- [ ] Hardware and NIC(s) being used
+- [ ] Configuration files being used
+- [ ] Linux kernel version being used
+- [ ] Linux distribution being used

@@ -20,12 +20,12 @@ sleep 10
 
 # Start four instances of mirror applications
 cp ../../../build/xdp_kern_*.o .
-../../../build/mirror -c mirror_vid100_ehl.yaml       > mirror1.log &
+../../../build/mirror -c mirror_vid100_ehl.yaml >mirror1.log &
 sleep 1
-../../../build/mirror -c mirror_opcua_vid200_ehl.yaml > mirror2.log &
+../../../build/mirror -c mirror_opcua_vid200_ehl.yaml >mirror2.log &
 sleep 1
-../../../build/mirror -c mirror_opcua_vid300_ehl.yaml > mirror3.log &
+../../../build/mirror -c mirror_opcua_vid300_ehl.yaml >mirror3.log &
 sleep 1
-../../../build/mirror -c mirror_avtp_vid400_ehl.yaml  > mirror4.log &
+../../../build/mirror -c mirror_avtp_vid400_ehl.yaml >mirror4.log &
 
 exit 0

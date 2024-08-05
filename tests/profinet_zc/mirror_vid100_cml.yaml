@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) 2023 Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -15,12 +16,12 @@ Application:
   ApplicationRxBaseOffsetNS: 300000
   ApplicationXdpProgram: xdp_kern_profinet_vid100.o
 TSNHigh:
-  TsnHighEnabled: True
-  TsnHighXdpEnabled: True
-  TsnHighXdpSkbMode: False
-  TsnHighXdpZcMode: True
-  TsnHighXdpWakeupMode: True
-  TsnHighTxTimeEnabled: False
+  TsnHighEnabled: true
+  TsnHighXdpEnabled: true
+  TsnHighXdpSkbMode: false
+  TsnHighXdpZcMode: true
+  TsnHighXdpWakeupMode: true
+  TsnHighTxTimeEnabled: false
   TsnHighTxTimeOffsetNS: 0
   TsnHighVid: 100
   TsnHighNumFramesPerCycle: 1
@@ -37,12 +38,12 @@ TSNHigh:
   TsnHighInterface: enp3s0
   TsnHighDestination: a8:74:1d:9d:36:14
 TSNLow:
-  TsnLowEnabled: True
-  TsnLowXdpEnabled: True
-  TsnLowXdpSkbMode: False
-  TsnLowXdpZcMode: True
-  TsnLowXdpWakeupMode: True
-  TsnLowTxTimeEnabled: False
+  TsnLowEnabled: true
+  TsnLowXdpEnabled: true
+  TsnLowXdpSkbMode: false
+  TsnLowXdpZcMode: true
+  TsnLowXdpWakeupMode: true
+  TsnLowTxTimeEnabled: false
   TsnLowTxTimeOffsetNS: 0
   TsnLowVid: 100
   TsnLowNumFramesPerCycle: 1
@@ -59,11 +60,11 @@ TSNLow:
   TsnLowInterface: enp3s0
   TsnLowDestination: a8:74:1d:9d:36:14
 RTC:
-  RtcEnabled: True
-  RtcXdpEnabled: True
-  RtcXdpSkbMode: False
-  RtcXdpZcMode: True
-  RtcXdpWakeupMode: True
+  RtcEnabled: true
+  RtcXdpEnabled: true
+  RtcXdpSkbMode: false
+  RtcXdpZcMode: true
+  RtcXdpWakeupMode: true
   RtcVid: 100
   RtcNumFramesPerCycle: 1
   RtcPayloadPattern: |
@@ -79,11 +80,11 @@ RTC:
   RtcInterface: enp3s0
   RtcDestination: a8:74:1d:9d:36:14
 RTA:
-  RtaEnabled: True
-  RtaXdpEnabled: True
-  RtaXdpSkbMode: False
-  RtaXdpZcMode: True
-  RtaXdpWakeupMode: True
+  RtaEnabled: true
+  RtaXdpEnabled: true
+  RtaXdpSkbMode: false
+  RtaXdpZcMode: true
+  RtaXdpWakeupMode: true
   RtaVid: 100
   RtaBurstPeriodNS: 200000000
   RtaNumFramesPerCycle: 1
@@ -100,7 +101,7 @@ RTA:
   RtaInterface: enp3s0
   RtaDestination: a8:74:1d:9d:36:14
 DCP:
-  DcpEnabled: True
+  DcpEnabled: true
   DcpVid: 100
   DcpBurstPeriodNS: 2000000000
   DcpNumFramesPerCycle: 1
@@ -117,7 +118,7 @@ DCP:
   DcpInterface: enp3s0
   DcpDestination: a8:74:1d:9d:36:14
 LLDP:
-  LldpEnabled: True
+  LldpEnabled: true
   LldpBurstPeriodNS: 5000000000
   LldpNumFramesPerCycle: 1
   LldpPayloadPattern: |
@@ -133,7 +134,7 @@ LLDP:
   LldpInterface: enp3s0
   LldpDestination: 01:80:c2:00:00:0e
 UDPHigh:
-  UdpHighEnabled: True
+  UdpHighEnabled: true
   UdpHighBurstPeriodNS: 1000000000
   UdpHighNumFramesPerCycle: 1
   UdpHighPayloadPattern: |
@@ -151,7 +152,7 @@ UDPHigh:
   UdpHighDestination: 192.168.1.1
   UdpHighSource: 192.168.1.2
 UDPLow:
-  UdpLowEnabled: True
+  UdpLowEnabled: true
   UdpLowBurstPeriodNS: 1000000000
   UdpLowNumFramesPerCycle: 1
   UdpLowPayloadPattern: |
@@ -175,7 +176,7 @@ Log:
   LogFile: /var/log/mirror_vid100.log
   LogLevel: Info
 Debug:
-  DebugStopTraceOnOutlier: False
-  DebugStopTraceOnError: False
-  DebugMonitorMode: False
+  DebugStopTraceOnOutlier: false
+  DebugStopTraceOnError: false
+  DebugMonitorMode: false
   DebugMonitorDestination: 44:44:44:44:44:44

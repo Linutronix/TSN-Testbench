@@ -15,8 +15,8 @@ set -e
 #
 INTERFACE=$1
 
-[ -z $INTERFACE ]    && INTERFACE="enp3s0"  # default: enp3s0
-BASETIME=`date '+%s000000000' -d '-30 sec'` # default: now - 30s
+[ -z $INTERFACE ] && INTERFACE="enp3s0"      # default: enp3s0
+BASETIME=$(date '+%s000000000' -d '-30 sec') # default: now - 30s
 
 # Load needed kernel modules
 modprobe sch_taprio || true
@@ -26,7 +26,7 @@ modprobe sch_taprio || true
 # dedicated kernel threads instead of using NET_RX soft irq. Using these allows
 # to prioritize the Rx processing in accordance to use case.
 #
-echo 1 > /sys/class/net/${INTERFACE}/threaded
+echo 1 >/sys/class/net/${INTERFACE}/threaded
 
 #
 # Reduce link speed.
@@ -42,14 +42,14 @@ ethtool -s ${INTERFACE} speed 1000 autoneg on duplex full
 # Tx Q 3 - Everything else
 #
 tc qdisc replace dev ${INTERFACE} handle 100 parent root taprio num_tc 4 \
-   map 3 3 3 3 3 2 1 0 3 3 3 3 3 3 3 3 \
-   queues 1@0 1@1 1@2 1@3 \
-   base-time ${BASETIME} \
-   sched-entry S 0x01 100000 \
-   sched-entry S 0x02 100000 \
-   sched-entry S 0x04 400000 \
-   sched-entry S 0x08 400000 \
-   flags 0x02
+  map 3 3 3 3 3 2 1 0 3 3 3 3 3 3 3 3 \
+  queues 1@0 1@1 1@2 1@3 \
+  base-time ${BASETIME} \
+  sched-entry S 0x01 100000 \
+  sched-entry S 0x02 100000 \
+  sched-entry S 0x04 400000 \
+  sched-entry S 0x08 400000 \
+  flags 0x02
 
 #
 # Rx Queues Assignment.
@@ -99,7 +99,7 @@ ethtool -G ${INTERFACE} rx 4096 tx 4096
 #
 # Increase IRQ thread priorities. By default, every IRQ thread has priority 50.
 #
-IRQTHREADS=`ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }'`
+IRQTHREADS=$(ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${IRQTHREADS}; do
   chrt -p -f 85 $task
 done
@@ -108,7 +108,7 @@ done
 # Increase NAPI thread priorities. By default, every NAPI thread uses
 # SCHED_OTHER.
 #
-NAPITHREADS=`ps aux | grep napi | grep ${INTERFACE} | awk '{ print $2; }'`
+NAPITHREADS=$(ps aux | grep napi | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${NAPITHREADS}; do
   chrt -p -f 85 $task
 done

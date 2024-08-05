@@ -16,6 +16,6 @@ sleep 30
 
 # Start one instance of mirror application
 cp ../../build/xdp_kern_*.o .
-../../build/mirror -c mirror_vid100.yaml > mirror1.log &
+../../build/mirror -c mirror_vid100.yaml >mirror1.log &
 
 exit 0

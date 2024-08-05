@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -14,11 +15,11 @@ Application:
   ApplicationRxBaseOffsetNS: 600000
   ApplicationXdpProgram: xdp_kern_profinet_vid100.o
 TSNHigh:
-  TsnHighEnabled: True
-  TsnHighXdpEnabled: True
-  TsnHighXdpSkbMode: False
-  TsnHighXdpZcMode: True
-  TsnHighXdpWakeupMode: False
+  TsnHighEnabled: true
+  TsnHighXdpEnabled: true
+  TsnHighXdpSkbMode: false
+  TsnHighXdpZcMode: true
+  TsnHighXdpWakeupMode: false
   TsnHighVid: 100
   TsnHighNumFramesPerCycle: 32
   TsnHighPayloadPattern: |
@@ -40,7 +41,7 @@ Log:
   LogFile: /var/log/mirror_vid100.log
   LogLevel: Info
 Debug:
-  DebugStopTraceOnOutlier: False
-  DebugStopTraceOnError: False
-  DebugMonitorMode: False
+  DebugStopTraceOnOutlier: false
+  DebugStopTraceOnError: false
+  DebugMonitorMode: false
   DebugMonitorDestination: 44:44:44:44:44:44

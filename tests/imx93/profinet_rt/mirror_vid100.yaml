@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) 2024 Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -14,12 +15,12 @@ Application:
   ApplicationRxBaseOffsetNS: 200000
   ApplicationXdpProgram: xdp_kern_profinet_vid100.o
 RTC:
-  RtcEnabled: True
-  RtcXdpEnabled: True
-  RtcXdpSkbMode: False
-  RtcXdpZcMode: True
-  RtcXdpWakeupMode: True
-  RtcXdpBusyPollMode: True
+  RtcEnabled: true
+  RtcXdpEnabled: true
+  RtcXdpSkbMode: false
+  RtcXdpZcMode: true
+  RtcXdpWakeupMode: true
+  RtcXdpBusyPollMode: true
   RtcVid: 100
   RtcNumFramesPerCycle: 64
   RtcPayloadPattern: |
@@ -35,12 +36,12 @@ RTC:
   RtcInterface: eth1
   RtcDestination: a8:74:1d:9d:36:14
 RTA:
-  RtaEnabled: True
-  RtaXdpEnabled: True
-  RtaXdpSkbMode: False
-  RtaXdpZcMode: False
-  RtaXdpWakeupMode: True
-  RtaXdpBusyPollMode: False
+  RtaEnabled: true
+  RtaXdpEnabled: true
+  RtaXdpSkbMode: false
+  RtaXdpZcMode: false
+  RtaXdpWakeupMode: true
+  RtaXdpBusyPollMode: false
   RtaVid: 100
   RtaBurstPeriodNS: 200000000
   RtaNumFramesPerCycle: 32
@@ -57,7 +58,7 @@ RTA:
   RtaInterface: eth1
   RtaDestination: a8:74:1d:9d:36:14
 DCP:
-  DcpEnabled: True
+  DcpEnabled: true
   DcpVid: 100
   DcpBurstPeriodNS: 2000000000
   DcpNumFramesPerCycle: 1
@@ -74,7 +75,7 @@ DCP:
   DcpInterface: eth1
   DcpDestination: a8:74:1d:9d:36:14
 LLDP:
-  LldpEnabled: True
+  LldpEnabled: true
   LldpBurstPeriodNS: 5000000000
   LldpNumFramesPerCycle: 1
   LldpPayloadPattern: |
@@ -90,7 +91,7 @@ LLDP:
   LldpInterface: eth1
   LldpDestination: 01:80:c2:00:00:0e
 UDPHigh:
-  UdpHighEnabled: True
+  UdpHighEnabled: true
   UdpHighBurstPeriodNS: 1000000000
   UdpHighNumFramesPerCycle: 1
   UdpHighPayloadPattern: |
@@ -108,7 +109,7 @@ UDPHigh:
   UdpHighDestination: 192.168.1.1
   UdpHighSource: 192.168.1.2
 UDPLow:
-  UdpLowEnabled: True
+  UdpLowEnabled: true
   UdpLowBurstPeriodNS: 1000000000
   UdpLowNumFramesPerCycle: 1
   UdpLowPayloadPattern: |
@@ -132,7 +133,7 @@ Log:
   LogFile: /var/log/mirror_vid100.log
   LogLevel: Info
 Debug:
-  DebugStopTraceOnOutlier: False
-  DebugStopTraceOnError: False
-  DebugMonitorMode: False
+  DebugStopTraceOnOutlier: false
+  DebugStopTraceOnError: false
+  DebugMonitorMode: false
   DebugMonitorDestination: 44:44:44:44:44:44
