@@ -20,6 +20,6 @@ sleep 30
 
 # Start one instance of reference application
 cp ../../build/xdp_kern_*.o .
-../../build/reference -c reference_vid100_apl.yaml > ref1.log &
+../../build/reference -c reference_vid100_apl.yaml >ref1.log &
 
 exit 0

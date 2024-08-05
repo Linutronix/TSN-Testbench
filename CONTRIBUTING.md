@@ -8,7 +8,7 @@ reports and/or code contributions.
 The Linux TSN Testbench follows the Github development model using pull
 request. To contribute code to the project use the following workflow:
 
-1. Fork the repo and create your branch from ``main``
+1. Fork the repo and create your branch from `main`
 2. Develop and test your changes
 3. Adhere to the coding style
 4. Update the documentation if necessary
@@ -24,7 +24,7 @@ and necessary information how to reproduce the issue. This includes:
 
 In addition, contributions are accepted via email as well:
 
-1. Clone the repo and create your branch from ``main``
+1. Clone the repo and create your branch from `main`
 2. Develop and test your changes
 3. Adhere to the coding style
 4. Update the documentation if necessary
@@ -47,7 +47,7 @@ https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your
 ## Code Style
 
 The coding style is the Linux kernel one. If unsure about it, run
-``clang-format`` on the C files.
+`clang-format` on the C files.
 
 In addition, the reverse xmas tree variable ordering is used:
 

@@ -1,3 +1,4 @@
+---
 name: Sphinx docs to pages
 
 on:
@@ -7,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 

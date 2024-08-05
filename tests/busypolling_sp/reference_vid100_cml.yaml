@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) 2023 Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -15,12 +16,12 @@ Application:
   ApplicationRxBaseOffsetNS: 500000
   ApplicationXdpProgram: xdp_kern_profinet_vid100.o
 RTC:
-  RtcEnabled: True
-  RtcXdpEnabled: True
-  RtcXdpSkbMode: False
-  RtcXdpZcMode: True
-  RtcXdpWakeupMode: True
-  RtcXdpBusyPollMode: True
+  RtcEnabled: true
+  RtcXdpEnabled: true
+  RtcXdpSkbMode: false
+  RtcXdpZcMode: true
+  RtcXdpWakeupMode: true
+  RtcXdpBusyPollMode: true
   RtcVid: 100
   RtcNumFramesPerCycle: 256
   RtcPayloadPattern: |
@@ -42,7 +43,7 @@ Log:
   LogFile: /var/log/reference_vid100.log
   LogLevel: Info
 Debug:
-  DebugStopTraceOnOutlier: False
-  DebugStopTraceOnError: False
-  DebugMonitorMode: False
+  DebugStopTraceOnOutlier: false
+  DebugStopTraceOnError: false
+  DebugMonitorMode: false
   DebugMonitorDestination: 44:44:44:44:44:44

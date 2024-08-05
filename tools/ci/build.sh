@@ -13,7 +13,7 @@ set -e
 COMPILER="gcc clang"
 OPTIONS="WITH_MQTT"
 
-cd `dirname $0`
+cd $(dirname $0)
 
 pushd ../..
 
@@ -23,10 +23,10 @@ for compiler in $COMPILER; do
     pushd build
     echo "Trying 'CC=$compiler cmake -D$option=OFF' ..."
     CC=$compiler cmake -D$option=OFF ..
-    make -j`nproc`
+    make -j$(nproc)
     echo "Trying 'CC=$compiler cmake -D$option=ON' ..."
     CC=$compiler cmake -D$option=ON ..
-    make -j`nproc`
+    make -j$(nproc)
     popd
     rm -rf build
   done

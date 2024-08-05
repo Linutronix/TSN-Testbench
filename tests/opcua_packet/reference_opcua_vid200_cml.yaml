@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) 2023-2024 Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -15,12 +16,12 @@ Application:
   ApplicationXdpProgram: xdp_kern_opcua_vid200.o
 GenericL2:
   GenericL2Name: OpcUa
-  GenericL2Enabled: True
-  GenericL2XdpEnabled: False
-  GenericL2XdpSkbMode: False
-  GenericL2XdpZcMode: True
-  GenericL2XdpWakeupMode: True
-  GenericL2TxTimeEnabled: False
+  GenericL2Enabled: true
+  GenericL2XdpEnabled: false
+  GenericL2XdpSkbMode: false
+  GenericL2XdpZcMode: true
+  GenericL2XdpWakeupMode: true
+  GenericL2TxTimeEnabled: false
   GenericL2TxTimeOffsetNS: 0
   GenericL2Vid: 200
   GenericL2Pcp: 6

@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) 2022 Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -15,12 +16,12 @@ Application:
   ApplicationXdpProgram: xdp_kern_opcua_vid300.o
 GenericL2:
   GenericL2Name: OpcUa
-  GenericL2Enabled: True
-  GenericL2XdpEnabled: True
-  GenericL2XdpSkbMode: False
-  GenericL2XdpZcMode: True
-  GenericL2XdpWakeupMode: False
-  GenericL2TxTimeEnabled: False
+  GenericL2Enabled: true
+  GenericL2XdpEnabled: true
+  GenericL2XdpSkbMode: false
+  GenericL2XdpZcMode: true
+  GenericL2XdpWakeupMode: false
+  GenericL2TxTimeEnabled: false
   GenericL2TxTimeOffsetNS: 0
   GenericL2Vid: 300
   GenericL2Pcp: 4
@@ -45,7 +46,7 @@ Log:
   LogFile: /var/log/mirror_opcua_vid300.log
   LogLevel: Info
 Debug:
-  DebugStopTraceOnOutlier: False
-  DebugStopTraceOnError: False
-  DebugMonitorMode: False
+  DebugStopTraceOnOutlier: false
+  DebugStopTraceOnError: false
+  DebugMonitorMode: false
   DebugMonitorDestination: 44:44:44:44:44:44

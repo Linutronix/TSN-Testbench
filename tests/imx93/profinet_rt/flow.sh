@@ -16,7 +16,7 @@ set -e
 INTERFACE=$1
 
 [ -z $INTERFACE ] && INTERFACE="eth1"
-BASETIME=`date '+%s000000000' -d '60 sec'`
+BASETIME=$(date '+%s000000000' -d '60 sec')
 
 # Load needed kernel modules
 modprobe sch_taprio || true
@@ -28,8 +28,8 @@ modprobe sch_taprio || true
 #    Has to be greather than the $CYCLETIME_NS
 #
 GRO_FLUSH_TIMEOUT="2000000"
-echo 10 > /sys/class/net/${INTERFACE}/napi_defer_hard_irqs
-echo ${GRO_FLUSH_TIMEOUT} > /sys/class/net/${INTERFACE}/gro_flush_timeout
+echo 10 >/sys/class/net/${INTERFACE}/napi_defer_hard_irqs
+echo ${GRO_FLUSH_TIMEOUT} >/sys/class/net/${INTERFACE}/gro_flush_timeout
 
 #
 # Disable VLAN Rx offload.
@@ -43,12 +43,12 @@ ethtool -K ${INTERFACE} rx-vlan-offload off
 # Tx Q 1 - RTC
 #
 tc qdisc replace dev ${INTERFACE} handle 100 parent root taprio num_tc 2 \
-   map 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 \
-   queues 1@0 1@1 \
-   base-time ${BASETIME} \
-   sched-entry S 0x02 200000 \
-   sched-entry S 0x01 800000 \
-   flags 0x02
+  map 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 \
+  queues 1@0 1@1 \
+  base-time ${BASETIME} \
+  sched-entry S 0x02 200000 \
+  sched-entry S 0x01 800000 \
+  flags 0x02
 
 #
 # Rx Queues Assignment.
@@ -75,7 +75,7 @@ tc filter add dev ${INTERFACE} parent ffff: protocol 0x88cc flower hw_tc 0
 #
 # Increase IRQ thread priorities. By default, every IRQ thread has priority 50.
 #
-IRQTHREADS=`ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }'`
+IRQTHREADS=$(ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${IRQTHREADS}; do
   chrt -p -f 85 $task
 done

@@ -10,7 +10,7 @@
 
 set -e
 
-cd `dirname $0`
+cd $(dirname $0)
 
 pushd ../..
 
@@ -24,7 +24,7 @@ echo "Checking naming style with clang-tidy ..."
 mkdir build
 pushd build
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-make -j`nproc`
+make -j$(nproc)
 run-clang-tidy
 popd
 rm -rf build

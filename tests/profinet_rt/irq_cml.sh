@@ -19,7 +19,7 @@ INTERFACE=$1
 #
 # Increase IRQ thread priorities. By default, every IRQ thread has priority 50.
 #
-RT_IRQTHREADS=`ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }'`
+RT_IRQTHREADS=$(ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${RT_IRQTHREADS}; do
   chrt -p -f 85 $task
 done

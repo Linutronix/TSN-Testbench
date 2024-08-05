@@ -19,12 +19,12 @@ sleep 10
 sleep 10
 
 # Start four instances of reference applications
-../../../build/reference -c reference_vid100_ehl.yaml       > ref1.log &
+../../../build/reference -c reference_vid100_ehl.yaml >ref1.log &
 sleep 1
-../../../build/reference -c reference_opcua_vid200_ehl.yaml > ref2.log &
+../../../build/reference -c reference_opcua_vid200_ehl.yaml >ref2.log &
 sleep 1
-../../../build/reference -c reference_opcua_vid300_ehl.yaml > ref3.log &
+../../../build/reference -c reference_opcua_vid300_ehl.yaml >ref3.log &
 sleep 1
-../../../build/reference -c reference_avtp_vid400_ehl.yaml  > ref4.log &
+../../../build/reference -c reference_avtp_vid400_ehl.yaml >ref4.log &
 
 exit 0

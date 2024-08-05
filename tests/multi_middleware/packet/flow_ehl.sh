@@ -20,9 +20,9 @@ INTERFACE=$1
 CYCLETIME_NS=$2
 BASETIME=$3
 
-[ -z $INTERFACE ]    && INTERFACE="enp0s29f2"       # default: enp0s29f2
-[ -z $CYCLETIME_NS ] && CYCLETIME_NS="1000000" # default: 1ms
-[ -z $BASETIME ]     && BASETIME=`date '+%s000000000' -d '60 sec'` # default: now + 60s
+[ -z $INTERFACE ] && INTERFACE="enp0s29f2"                      # default: enp0s29f2
+[ -z $CYCLETIME_NS ] && CYCLETIME_NS="1000000"                  # default: 1ms
+[ -z $BASETIME ] && BASETIME=$(date '+%s000000000' -d '60 sec') # default: now + 60s
 
 # Load needed kernel modules
 modprobe sch_taprio || true
@@ -33,7 +33,7 @@ modprobe sch_etf || true
 # dedicated kernel threads instead of using NET_RX soft irq. Using these allows
 # to prioritize the Rx processing in accordance to use case.
 #
-echo 1 > /sys/class/net/${INTERFACE}/threaded
+echo 1 >/sys/class/net/${INTERFACE}/threaded
 
 #
 # Configure the interface: Tailor IRQ settings towards lower cycle times,
@@ -49,8 +49,8 @@ ethtool -K ${INTERFACE} rx-vlan-offload off
 #
 # Qbv configuration.
 #
-ENTRY1_NS=`echo "$CYCLETIME_NS * 50 / 100" | bc` # TSN High
-ENTRY2_NS=`echo "$CYCLETIME_NS * 50 / 100" | bc` # Everything else
+ENTRY1_NS=$(echo "$CYCLETIME_NS * 50 / 100" | bc) # TSN High
+ENTRY2_NS=$(echo "$CYCLETIME_NS * 50 / 100" | bc) # Everything else
 
 #
 # Tx Assignment with Qbv and full hardware offload.
@@ -65,20 +65,20 @@ ENTRY2_NS=`echo "$CYCLETIME_NS * 50 / 100" | bc` # Everything else
 # PCP 7 - Queue 4 - PTP/LLDP
 #
 tc qdisc replace dev ${INTERFACE} handle 100 parent root taprio num_tc 8 \
-   map 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 \
-   queues 1@0 1@1 1@2 1@3 1@4 1@5 1@6 1@7 \
-   base-time ${BASETIME} \
-   sched-entry S 0x80 ${ENTRY1_NS} \
-   sched-entry S 0x7f ${ENTRY2_NS} \
-   flags 0x02
+  map 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 \
+  queues 1@0 1@1 1@2 1@3 1@4 1@5 1@6 1@7 \
+  base-time ${BASETIME} \
+  sched-entry S 0x80 ${ENTRY1_NS} \
+  sched-entry S 0x7f ${ENTRY2_NS} \
+  flags 0x02
 
 #
 # Enable Tx launch time support for PCP 6 / TC 7.
 #
 tc qdisc replace dev ${INTERFACE} parent 100:8 etf \
-   clockid CLOCK_TAI \
-   delta 500000 \
-   offload
+  clockid CLOCK_TAI \
+  delta 500000 \
+  offload
 
 #
 # Create VLAN interfaces.
@@ -124,7 +124,7 @@ tc filter add dev ${INTERFACE} parent ffff: protocol 0x88cc flower hw_tc 4
 #
 # Increase IRQ thread priorities. By default, every IRQ thread has priority 50.
 #
-IRQTHREADS=`ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }'`
+IRQTHREADS=$(ps aux | grep irq | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${IRQTHREADS}; do
   chrt -p -f 85 $task
 done
@@ -133,7 +133,7 @@ done
 # Increase NAPI thread priorities. By default, every NAPI thread uses
 # SCHED_OTHER.
 #
-NAPITHREADS=`ps aux | grep napi | grep ${INTERFACE} | awk '{ print $2; }'`
+NAPITHREADS=$(ps aux | grep napi | grep ${INTERFACE} | awk '{ print $2; }')
 for task in ${NAPITHREADS}; do
   chrt -p -f 85 $task
 done
