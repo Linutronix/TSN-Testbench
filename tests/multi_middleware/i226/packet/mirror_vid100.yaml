@@ -1,0 +1,49 @@
+---
+#
+# Copyright (C) 2022-2024 Linutronix GmbH
+# Author Kurt Kanzenbach <kurt@linutronix.de>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# Sample mirror YAML configuration file Intel i226.
+#
+Application:
+  ApplicationClockId: CLOCK_TAI
+  # ApplicationBaseStartTimeNS: 0
+  ApplicationBaseCycleTimeNS: 1000000
+  ApplicationTxBaseOffsetNS: 800000
+  ApplicationRxBaseOffsetNS: 600000
+  ApplicationXdpProgram: xdp_kern_profinet_vid100.o
+TSNHigh:
+  TsnHighEnabled: true
+  TsnHighXdpEnabled: false
+  TsnHighXdpSkbMode: false
+  TsnHighXdpZcMode: true
+  TsnHighXdpWakeupMode: false
+  TsnHighTxTimeEnabled: true
+  TsnHighTxTimeOffsetNS: 0
+  TsnHighVid: 100
+  TsnHighNumFramesPerCycle: 8
+  TsnHighPayloadPattern: |
+    TsnHighPayloadPattern
+  TsnHighFrameLength: 128
+  TsnHighRxQueue: 0
+  TsnHighTxQueue: 0
+  TsnHighSocketPriority: 7
+  TsnHighTxThreadPriority: 98
+  TsnHighRxThreadPriority: 98
+  TsnHighTxThreadCpu: 0
+  TsnHighRxThreadCpu: 0
+  TsnHighInterface: enp3s0
+  TsnHighDestination: a8:74:1d:9d:36:14
+Log:
+  LogThreadPeriodNS: 500000000
+  LogThreadPriority: 1
+  LogThreadCpu: 3
+  LogFile: /var/log/mirror_vid100.log
+  LogLevel: Info
+Debug:
+  DebugStopTraceOnOutlier: false
+  DebugStopTraceOnError: false
+  DebugMonitorMode: false
+  DebugMonitorDestination: 44:44:44:44:44:44

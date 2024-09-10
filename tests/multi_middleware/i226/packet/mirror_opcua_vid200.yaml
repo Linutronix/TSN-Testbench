@@ -1,0 +1,52 @@
+---
+#
+# Copyright (C) 2022-2024 Linutronix GmbH
+# Author Kurt Kanzenbach <kurt@linutronix.de>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# Sample OPC/UA PubSub mirror YAML configuration file for Intel i226.
+#
+Application:
+  ApplicationClockId: CLOCK_TAI
+  # ApplicationBaseStartTimeNS: 0
+  ApplicationBaseCycleTimeNS: 1000000
+  ApplicationTxBaseOffsetNS: 800000
+  ApplicationRxBaseOffsetNS: 600000
+  ApplicationXdpProgram: xdp_kern_opcua_vid200.o
+GenericL2:
+  GenericL2Name: OpcUa
+  GenericL2Enabled: true
+  GenericL2XdpEnabled: false
+  GenericL2XdpSkbMode: false
+  GenericL2XdpZcMode: true
+  GenericL2XdpWakeupMode: false
+  GenericL2TxTimeEnabled: true
+  GenericL2TxTimeOffsetNS: 100000
+  GenericL2Vid: 200
+  GenericL2Pcp: 6
+  GenericL2EtherType: 0xb62c
+  GenericL2NumFramesPerCycle: 8
+  GenericL2PayloadPattern: |
+    OpcUaPayloadPattern
+  GenericL2FrameLength: 128
+  GenericL2RxQueue: 0
+  GenericL2TxQueue: 0
+  GenericL2SocketPriority: 7
+  GenericL2TxThreadPriority: 97
+  GenericL2RxThreadPriority: 97
+  GenericL2TxThreadCpu: 1
+  GenericL2RxThreadCpu: 1
+  GenericL2Interface: enp3s0
+  GenericL2Destination: a8:74:1d:9d:36:14
+Log:
+  LogThreadPeriodNS: 500000000
+  LogThreadPriority: 1
+  LogThreadCpu: 3
+  LogFile: /var/log/mirror_opcua_vid200.log
+  LogLevel: Info
+Debug:
+  DebugStopTraceOnOutlier: false
+  DebugStopTraceOnError: false
+  DebugMonitorMode: false
+  DebugMonitorDestination: 44:44:44:44:44:44
