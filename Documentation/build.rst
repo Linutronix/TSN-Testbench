@@ -40,6 +40,16 @@ For Debian based systems do:
 
 .. Note:: For Debian Bullseye ``libxdp`` is packaged in backports.
 
+For RHEL based systems do:
+
+.. code:: bash
+
+   dnf -y upgrade
+   dnf -y install libxdp-devel libyaml-devel clang mosquitto-devel \
+            python3-sphinx python3-sphinx_rtd_theme cmake openssl-devel llvm
+
+.. Note:: For RHEL ``libxdp-devel`` is packaged in CodeReadyBuilder repos. More info at https://developers.redhat.com/blog/2018/11/15/introducing-codeready-linux-builder. Usually a matter of running ``crb enable`` on the subscription-manager registered system with the ``EPEL`` repository enabled.
+
 Furthermore, the Linux TSN ``Testbench`` requires Linux kernel version >= v5.12.
 PREEMPT_RT is recommended. In addition, the following configuration options have
 to be set:
