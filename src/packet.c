@@ -10,8 +10,6 @@
 
 #include <linux/if_packet.h>
 
-#include <sys/socket.h>
-
 #include "log.h"
 #include "packet.h"
 #include "thread.h"
@@ -58,10 +56,18 @@ struct packet_context *packet_init(size_t num_frames_per_cycle)
 		goto err_tx_msgs;
 	}
 
+	context->tx_control_msgs = calloc(num_frames_per_cycle, sizeof(*context->tx_control_msgs));
+	if (!context->tx_control_msgs) {
+		fprintf(stderr, "Failed to allocated transmit control messages!\n");
+		goto err_tx_ctrl_msgs;
+	}
+
 	context->num_frames_per_cycle = num_frames_per_cycle;
 
 	return context;
 
+err_tx_ctrl_msgs:
+	free(context->tx_msgs);
 err_tx_msgs:
 	free(context->tx_iovecs);
 err_tx_iovecs:
@@ -86,6 +92,7 @@ void packet_free(struct packet_context *context)
 	free(context->tx_iovecs);
 	free(context->rx_msgs);
 	free(context->tx_msgs);
+	free(context->tx_control_msgs);
 	free(context);
 }
 
@@ -123,7 +130,7 @@ int packet_send_messages(struct packet_context *context, struct packet_send_requ
 
 			/* In case the user configured Tx Time also add it. */
 			if (send_req->tx_time_enabled) {
-				char control[CMSG_SPACE(sizeof(uint64_t))] = {0};
+				unsigned char *control = context->tx_control_msgs[i].control;
 				uint64_t tx_time, sequence_counter;
 				struct cmsghdr *cmsg;
 
@@ -137,7 +144,7 @@ int packet_send_messages(struct packet_context *context, struct packet_send_requ
 					send_req->traffic_class);
 
 				msgs[i].msg_hdr.msg_control = control;
-				msgs[i].msg_hdr.msg_controllen = sizeof(control);
+				msgs[i].msg_hdr.msg_controllen = sizeof(*context->tx_control_msgs);
 
 				cmsg = CMSG_FIRSTHDR(&msgs[i].msg_hdr);
 				cmsg->cmsg_level = SOL_SOCKET;

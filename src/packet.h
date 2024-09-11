@@ -11,12 +11,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <sys/socket.h>
+
+struct tx_control_msg {
+	unsigned char control[CMSG_SPACE(sizeof(uint64_t))];
+} __attribute((packed));
+
 struct packet_context {
 	unsigned char *rx_frames;
 	struct iovec *rx_iovecs;
 	struct iovec *tx_iovecs;
 	struct mmsghdr *rx_msgs;
 	struct mmsghdr *tx_msgs;
+	struct tx_control_msg *tx_control_msgs;
 	size_t num_frames_per_cycle;
 };
 
