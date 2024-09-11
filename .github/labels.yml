@@ -1,0 +1,9 @@
+---
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Add 'repo' label to any root file changes
+# repo:
+#  - ./*
+
+documentation:
+  - Documentation/**/*
