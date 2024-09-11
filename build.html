@@ -132,6 +132,16 @@ apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </s
 <p class="admonition-title">Note</p>
 <p>For Debian Bullseye <code class="docutils literal notranslate"><span class="pre">libxdp</span></code> is packaged in backports.</p>
 </div>
+<p>For RHEL based systems do:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dnf<span class="w"> </span>-y<span class="w"> </span>upgrade
+dnf<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>libxdp-devel<span class="w"> </span>libyaml-devel<span class="w"> </span>clang<span class="w"> </span>mosquitto-devel<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>python3-sphinx<span class="w"> </span>python3-sphinx_rtd_theme<span class="w"> </span>cmake<span class="w"> </span>openssl-devel<span class="w"> </span>llvm
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For RHEL <code class="docutils literal notranslate"><span class="pre">libxdp-devel</span></code> is packaged in CodeReadyBuilder repos. More info at <a class="reference external" href="https://developers.redhat.com/blog/2018/11/15/introducing-codeready-linux-builder">https://developers.redhat.com/blog/2018/11/15/introducing-codeready-linux-builder</a>. Usually a matter of running <code class="docutils literal notranslate"><span class="pre">crb</span> <span class="pre">enable</span></code> on the subscription-manager registered system with the <code class="docutils literal notranslate"><span class="pre">EPEL</span></code> repository enabled.</p>
+</div>
 <p>Furthermore, the Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> requires Linux kernel version &gt;= v5.12.
 PREEMPT_RT is recommended. In addition, the following configuration options have
 to be set:</p>
