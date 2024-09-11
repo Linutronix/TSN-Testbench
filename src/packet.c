@@ -136,14 +136,14 @@ int packet_send_messages(struct packet_context *context, struct packet_send_requ
 					context->num_frames_per_cycle, send_req->tx_time_offset,
 					send_req->traffic_class);
 
+				msgs[i].msg_hdr.msg_control = control;
+				msgs[i].msg_hdr.msg_controllen = sizeof(control);
+
 				cmsg = CMSG_FIRSTHDR(&msgs[i].msg_hdr);
 				cmsg->cmsg_level = SOL_SOCKET;
 				cmsg->cmsg_type = SO_TXTIME;
 				cmsg->cmsg_len = CMSG_LEN(sizeof(int64_t));
 				*((uint64_t *)CMSG_DATA(cmsg)) = tx_time;
-
-				msgs[i].msg_hdr.msg_control = control;
-				msgs[i].msg_hdr.msg_controllen = sizeof(control);
 			}
 		}
 
