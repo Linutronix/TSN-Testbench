@@ -11,7 +11,7 @@ Files: Documentation/images/*.png Documentation/make.bat ISSUE_TEMPLATE.md READM
 Copyright: 2020-2024 Linutronix GmbH
 License: BSD-2-Clause
 
-Files: .github/workflows/sphinx.yml devtools/conda-envs/docs_env.yaml requirements.txt
+Files: .github/workflows/sphinx.yml devtools/conda-envs/docs_env.yaml requirements.txt .github/labels.yml .github/workflows/label.yml
 Copyright: 2024 Pablo Iranzo Gómez <Pablo.Iranzo@gmail.com>
 License: BSD-2-Clause
 
