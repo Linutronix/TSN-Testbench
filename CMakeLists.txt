@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(profinet-eval)
 
-set(VERSION "4.0")
+set(VERSION "5.0")
 
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
