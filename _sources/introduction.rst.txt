@@ -48,6 +48,7 @@ Version history:
 - v2.0: February 2022, PROFINET TSN simulation
 - v3.0: August 2022, Multi Middleware simulation
 - v4.0: July 2023, PROFINET Security
+- v5.0: September 2024, Grafana visualization
 
 Motivation
 ^^^^^^^^^^
