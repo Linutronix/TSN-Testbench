@@ -94,7 +94,6 @@ The following list contains ideas for further development:
 - Make it more user friendly
 - Improve documentation
 - Test (virtual) container networking
-- Test short cycle times (<= 250us)
 - Test 10G+ NIC(s) especially wrt to IPG
 - Package for Debian
 
