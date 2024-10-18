@@ -1,0 +1,46 @@
+#!/usr/bin/bpftrace
+//
+// Copyright (C) 2024 Linutronix GmbH
+// Author Kurt Kanzenbach <kurt@linutronix.de>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// Trace duration of sendto() and recvfrom() system calls for TSN High threads.
+//
+
+BEGIN
+{
+	printf("Tracing system calls execution times for TSN High... Hit Ctrl-C to end.\n");
+}
+
+tracepoint:syscalls:sys_enter_recvfrom
+/comm == "TsnHighRxThread"/
+{
+	@recvfrom_start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_recvfrom
+/comm == "TsnHighRxThread"/
+{
+	@recvfrom = lhist((nsecs - @recvfrom_start[tid]) / 1000, 0, 100, 5);
+	delete(@recvfrom_start[tid]);
+}
+
+tracepoint:syscalls:sys_enter_sendto
+/comm == "TsnHighTxThread"/
+{
+	@sendto_start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_sendto
+/comm == "TsnHighTxThread"/
+{
+	@sendto = lhist((nsecs - @sendto_start[tid]) / 1000, 0, 100, 5);
+	delete(@sendto_start[tid]);
+}
+
+END
+{
+	clear(@recvfrom_start);
+	clear(@sendto_start);
+}
