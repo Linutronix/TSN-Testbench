@@ -418,7 +418,7 @@ def print_payload(pkt):
         left += 16
         right += 16
 
-def process_pcap(file_name, end):
+def process_pcap(file_name, end, noend):
 
     TrafficClasses=dict()
 
@@ -434,19 +434,14 @@ def process_pcap(file_name, end):
     tclass_start_cycle = 0
     local_file = open(file_name, "rb")
     r = PcapReader(local_file)
-    while count < end:
+    while count < end or noend:
         try:
             pkt = r.next()
         except StopIteration:
-            print("No more samples at right =", right)
+            print("No more samples")
             break
 
         count += 1
-
-        if count > end and end != 0:
-            break
-
-
 
         if pkt.type == 0x8100:
             vlan_pkt = pkt[Dot1Q]
@@ -532,6 +527,9 @@ def main():
     parser.add_argument('--end', metavar='end', type = int, default = 2000,
                         help='Number of of points to use', required=False)
 
+    parser.add_argument('-a', '--all', default = False, action='store_true',
+                        help='Use all available data points', required=False)
+
     parser.add_argument('-c', '--cycle-time', help="Cycle time (second). Default 0.0005s (500us)", type=float, required=False, default=0.0005)
 
 
@@ -539,7 +537,7 @@ def main():
 
     tclass_cycle_time = args.cycle_time
 
-    process_pcap(args.file, args.end)
+    process_pcap(args.file, args.end, args.all)
 
 
 if __name__ == "__main__":
