@@ -31,8 +31,8 @@ import io
 
 preambleLength = 7 + 1
 crcLength = 4
-headerLenght = 18 #With Vlan
-fullOverhead = preambleLength + crcLength + headerLenght
+headerLength = 18 #With Vlan
+fullOverhead = preambleLength + crcLength + headerLength
 
 Noframes={'Hi':64, 'Low':32, 'RT':16}
 PcPValue={'Hi':6, 'Low':5, 'RT':4}
@@ -247,7 +247,7 @@ class TrafficClass:
         self.curpktTime = pkt.time
         self.deltaPktTime = self.curpktTime - self.prevPktTime
 
-        pktLen = headerLenght + len(pkt.load)
+        pktLen = headerLength + len(pkt.load)
         if pktLen not in self.lengths:
             self.lengths.append(pktLen)
 
