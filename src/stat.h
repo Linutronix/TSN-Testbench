@@ -74,7 +74,6 @@ struct statistics {
 };
 
 extern struct statistics global_statistics[NUM_FRAME_TYPES];
-extern struct statistics global_statistics_per_period[NUM_FRAME_TYPES];
 
 struct round_trip_context {
 	int64_t *backlog;
