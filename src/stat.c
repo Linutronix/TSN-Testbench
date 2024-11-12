@@ -20,7 +20,7 @@
 struct statistics global_statistics[NUM_FRAME_TYPES];
 struct statistics global_statistics_per_period[NUM_FRAME_TYPES];
 struct statistics global_statistics_per_period_prep[NUM_FRAME_TYPES];
-struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
+static struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
 static uint64_t rtt_expected_rt_limit;
 static int log_stat_user_selected;
 static FILE *file_tracing_on;

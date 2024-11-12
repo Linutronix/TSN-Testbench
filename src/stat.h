@@ -80,7 +80,6 @@ struct round_trip_context {
 	int64_t *backlog;
 	size_t backlog_len;
 };
-extern struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
 
 int stat_init(enum log_stat_options log_selection);
 void stat_free(void);
