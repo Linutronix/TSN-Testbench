@@ -126,25 +126,6 @@ void stat_free(void)
 	}
 }
 
-void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number)
-{
-	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
-	struct statistics *stat = &global_statistics[frame_type];
-	struct timespec tx_time = {};
-
-	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] sent\n",
-		    stat_frame_type_to_string(frame_type), cycle_number);
-
-	if (log_stat_user_selected == LOG_REFERENCE) {
-		/* Record Tx timestamp in */
-		clock_gettime(app_config.application_clock_id, &tx_time);
-		rtt->backlog[cycle_number % rtt->backlog_len] = ts_to_ns(&tx_time);
-	}
-
-	/* Increment stats */
-	stat->frames_sent++;
-}
-
 static inline void stat_update_min_max(uint64_t new_value, uint64_t *min, uint64_t *max)
 {
 	*max = (new_value > *max) ? new_value : *max;
@@ -216,6 +197,14 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 		stats_reset_stats(&statistics_per_period[frame_type]);
 	}
 }
+
+static void stat_frame_sent_per_period(enum stat_frame_type frame_type)
+{
+	struct statistics *stat_per_period_pre = &statistics_per_period[frame_type];
+
+	/* Just increment the Tx counter. The reset per period is done by the Rx part. */
+	stat_per_period_pre->frames_sent++;
+}
 #else
 static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
 					   uint64_t rt_time, bool out_of_order,
@@ -223,7 +212,31 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 					   uint64_t tx_timestamp)
 {
 }
+
+static void stat_frame_sent_per_period(enum stat_frame_type frame_type)
+{
+}
 #endif
+
+void stat_frame_sent(enum stat_frame_type frame_type, uint64_t cycle_number)
+{
+	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
+	struct statistics *stat = &global_statistics[frame_type];
+	struct timespec tx_time = {};
+
+	log_message(LOG_LEVEL_DEBUG, "%s: frame[%" PRIu64 "] sent\n",
+		    stat_frame_type_to_string(frame_type), cycle_number);
+
+	if (log_stat_user_selected == LOG_REFERENCE) {
+		/* Record Tx timestamp in */
+		clock_gettime(app_config.application_clock_id, &tx_time);
+		rtt->backlog[cycle_number % rtt->backlog_len] = ts_to_ns(&tx_time);
+	}
+
+	/* Increment stats */
+	stat_frame_sent_per_period(frame_type);
+	stat->frames_sent++;
+}
 
 void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number, bool out_of_order,
 			 bool payload_mismatch, bool frame_id_mismatch, uint64_t tx_timestamp)
