@@ -18,7 +18,7 @@
 #include "utils.h"
 
 struct statistics global_statistics[NUM_FRAME_TYPES];
-struct statistics global_statistics_per_period_prep[NUM_FRAME_TYPES];
+static struct statistics statistics_per_period[NUM_FRAME_TYPES];
 static struct round_trip_context round_trip_contexts[NUM_FRAME_TYPES];
 static uint64_t rtt_expected_rt_limit;
 static int log_stat_user_selected;
@@ -84,7 +84,7 @@ int stat_init(enum log_stat_options log_selection)
 		current_stats->oneway_min = UINT64_MAX;
 		current_stats->oneway_max = 0;
 
-		current_stats = &global_statistics_per_period_prep[i];
+		current_stats = &statistics_per_period[i];
 		current_stats->round_trip_min = UINT64_MAX;
 		current_stats->round_trip_max = 0;
 		current_stats->oneway_min = UINT64_MAX;
@@ -164,7 +164,7 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 					   bool out_of_order, bool payload_mismatch,
 					   bool frame_id_mismatch)
 {
-	struct statistics *stat_per_period_pre = &global_statistics_per_period_prep[frame_type];
+	struct statistics *stat_per_period_pre = &statistics_per_period[frame_type];
 	uint64_t elapsed_t;
 
 	if (stat_per_period_pre->first_time_stamp == 0)
@@ -212,8 +212,8 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 	 * preparation
 	 */
 	if (stat_per_period_pre->ready) {
-		log_via_mqtt_stats(frame_type, &global_statistics_per_period_prep[frame_type]);
-		stats_reset_stats(&global_statistics_per_period_prep[frame_type]);
+		log_via_mqtt_stats(frame_type, &statistics_per_period[frame_type]);
+		stats_reset_stats(&statistics_per_period[frame_type]);
 	}
 }
 #else
