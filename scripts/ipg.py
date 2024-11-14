@@ -294,7 +294,7 @@ class TrafficClass:
                 self.DeltaTime.append(self.deltaPktTime)
                 self.DTimeTime.append(pkt.time)
                 if self.prevSequenceCounter > sequenceCounter:
-                    sequenceErrors = sequenceErrors + 1
+                    self.sequenceErrors = self.sequenceErrors + 1
 
         if self.currentCycle != cycleCounter:
             if self.cycleCounter > self.firstCycle + 1:
