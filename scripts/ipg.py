@@ -303,7 +303,7 @@ class TrafficClass:
             if self.cycleCounter > self.firstCycle + 1:
                 self.framesWithinCycle.append(self.framesInBurst)
                 self.framesWithinCycleTime.append(pkt.time)
-                burstTime = self.burstTimeEnd - self.burstTimeStart
+                # burstTime = self.burstTimeEnd - self.burstTimeStart
                 # print(self.pcp, self.currentCycle, sequenceCounter, self.framesInBurst, burstTime)
             if self.cycleCounter > self.firstCycle + 1:
                 self.batch_Start.append(self.curpktTime - self.burstTimeStart)
@@ -478,14 +478,9 @@ def process_pcap(file_name, end, noend):
 
     print("Opening {}...".format(file_name))
 
-    initialPrio = -1
-    flipped = False
-
-    deltaPkt_threshold = tclass_cycle_time / 3.0
     firstObservedCycle = -1
     interesting_packet_count = 0
     count = 0
-    tclass_start_cycle = 0
     local_file = open(file_name, "rb")
     r = PcapReader(local_file)
     while count < end or noend:
@@ -551,7 +546,6 @@ def process_pcap(file_name, end, noend):
     print(mainTable)
 
     names = [key for key in TrafficClasses if TrafficClasses[key].hasDataAvailable()]
-    framesToConcat = [TrafficClasses[name].getDataFrameIPG() for name in names]
     for name in names:
         allDF = TrafficClasses[name].getDataFrameIPG()
         allDF = allDF.fillna(allDF.mean())
