@@ -10,21 +10,14 @@
 
 import argparse
 import binascii
-import io
-import math
-import os
 import pathlib
-from datetime import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from beautifultable import BeautifulTable
-from scapy.all import *
-from scapy.layers.inet import IP, TCP
-from scapy.layers.l2 import Dot1Q, Ether
-from scapy.utils import PcapReader, RawPcapNgReader, RawPcapReader
+from scapy.layers.l2 import Dot1Q
+from scapy.utils import PcapReader
 
 preambleLength = 7 + 1
 crcLength = 4
