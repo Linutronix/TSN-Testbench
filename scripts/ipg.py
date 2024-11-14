@@ -8,40 +8,70 @@
 # Parse PcapNG files produced by Profishark and plot interpacket gap, etc.
 #
 
-import os
-import math
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 import argparse
-import pathlib
-import seaborn as sns
-
 import binascii
+import io
+import math
+import os
+import pathlib
 from datetime import datetime
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 from beautifultable import BeautifulTable
-
 from scapy.all import *
-from scapy.utils import RawPcapReader, RawPcapNgReader, PcapReader
-from scapy.layers.l2 import Ether, Dot1Q
 from scapy.layers.inet import IP, TCP
-import io
-
+from scapy.layers.l2 import Dot1Q, Ether
+from scapy.utils import PcapReader, RawPcapNgReader, RawPcapReader
 
 preambleLength = 7 + 1
 crcLength = 4
-headerLength = 18 #With Vlan
+headerLength = 18  # With Vlan
 fullOverhead = preambleLength + crcLength + headerLength
 
 tclass_cycle_time = 0.001
 
+
 class Stats:
     def __init__(self):
-        self.IPG={"count":0, "mean": 0, "std" "min": 0, "Q25":0, "Q50":0, "Q75":0, "max":0}
-        self.BatchStart={"count":0, "mean": 0, "std" "min": 0, "Q25":0, "Q50":0, "Q75":0, "max":0}
-        self.BatchEnd={"count":0, "mean": 0, "std" "min": 0, "Q25":0, "Q50":0, "Q75":0, "max":0}
-        self.BatchCount={"count":0, "mean": 0, "std" "min": 0, "Q25":0, "Q50":0, "Q75":0, "max":0}
+        self.IPG = {
+            "count": 0,
+            "mean": 0,
+            "std" "min": 0,
+            "Q25": 0,
+            "Q50": 0,
+            "Q75": 0,
+            "max": 0,
+        }
+        self.BatchStart = {
+            "count": 0,
+            "mean": 0,
+            "std" "min": 0,
+            "Q25": 0,
+            "Q50": 0,
+            "Q75": 0,
+            "max": 0,
+        }
+        self.BatchEnd = {
+            "count": 0,
+            "mean": 0,
+            "std" "min": 0,
+            "Q25": 0,
+            "Q50": 0,
+            "Q75": 0,
+            "max": 0,
+        }
+        self.BatchCount = {
+            "count": 0,
+            "mean": 0,
+            "std" "min": 0,
+            "Q25": 0,
+            "Q50": 0,
+            "Q75": 0,
+            "max": 0,
+        }
         self.cycles = 0
         self.packetLenght = 0
 
@@ -49,131 +79,143 @@ class Stats:
 def create_main_table():
     global tclass_start_cycle
     ipgTable = BeautifulTable(precision=4)
-    ipgTable.rows.append(["count","min", "mean", "std", "Q25", "Q50", "Q75", "max"])
+    ipgTable.rows.append(["count", "min", "mean", "std", "Q25", "Q50", "Q75", "max"])
     ipgTable.columns.width = [14, 14, 14, 14, 14, 14, 14, 14]
-    ipgTable.border.left = ''
-    ipgTable.border.right = ''
-    ipgTable.border.top = ''
-    ipgTable.border.bottom = ''
+    ipgTable.border.left = ""
+    ipgTable.border.right = ""
+    ipgTable.border.top = ""
+    ipgTable.border.bottom = ""
 
     # Batch Count
     bcTable = BeautifulTable(precision=4)
     bcTable.rows.append(["min", "mean", "max"])
     bcTable.columns.width = [5, 6, 5]
-    bcTable.border.left = ''
-    bcTable.border.right = ''
-    bcTable.border.top = ''
-    bcTable.border.bottom = ''
+    bcTable.border.left = ""
+    bcTable.border.right = ""
+    bcTable.border.top = ""
+    bcTable.border.bottom = ""
     # Batch Start
     bsTable = BeautifulTable(precision=4)
     bsTable.rows.append(["min", "mean", "max"])
     bsTable.columns.width = [14, 14, 14]
-    bsTable.border.left = ''
-    bsTable.border.right = ''
-    bsTable.border.top = ''
-    bsTable.border.bottom = ''
+    bsTable.border.left = ""
+    bsTable.border.right = ""
+    bsTable.border.top = ""
+    bsTable.border.bottom = ""
     # Batch End
     beTable = BeautifulTable(precision=4)
     beTable.rows.append(["min", "mean", "max"])
     beTable.columns.width = [14, 14, 14]
-    beTable.border.left = ''
-    beTable.border.right = ''
-    beTable.border.top = ''
-    beTable.border.bottom = ''
+    beTable.border.left = ""
+    beTable.border.right = ""
+    beTable.border.top = ""
+    beTable.border.bottom = ""
 
     # Main table
     mainTable = BeautifulTable(maxwidth=500)
-    mainTable.columns.header = [ "Traffic Class",
-                                 "Cycles",
-                                 "Pkt Len",
-                                "Batch Count",
-                                 "IPG",
-                                 "Batch Start",
-                                 "Batch End" ]
+    mainTable.columns.header = [
+        "Traffic Class",
+        "Cycles",
+        "Pkt Len",
+        "Batch Count",
+        "IPG",
+        "Batch Start",
+        "Batch End",
+    ]
 
-    #mainTable.columns.header = [ "Traffic Class",
+    # mainTable.columns.header = [ "Traffic Class",
     #                             "Cycles",
     #                             "Pkt Len",
     #                            "Batch Count",
     #                             "IPG" ]
-    mainTable.rows.append(["Cycle Time (s)", tclass_cycle_time, "", bcTable, ipgTable,
-                              bsTable, beTable])
+    mainTable.rows.append(
+        ["Cycle Time (s)", tclass_cycle_time, "", bcTable, ipgTable, bsTable, beTable]
+    )
 
-    #mainTable.rows.append(["Cycle Time (s)", tclass_cycle_time, "", bcTable, ipgTable])
+    # mainTable.rows.append(["Cycle Time (s)", tclass_cycle_time, "", bcTable, ipgTable])
 
     return mainTable
 
-def populate_stats(stats, className ,table):
+
+def populate_stats(stats, className, table):
     global tclass_start_cycle
     resultIPGTable = BeautifulTable(precision=4)
     try:
-        resultIPGTable.rows.append([stats.IPG["count"],
-                                    stats.IPG["min"],
-                                    stats.IPG["mean"],
-                                    stats.IPG["std"],
-                                    stats.IPG["Q25"],
-                                    stats.IPG["Q50"],
-                                    stats.IPG["Q75"],
-                                    stats.IPG["max"]])
+        resultIPGTable.rows.append(
+            [
+                stats.IPG["count"],
+                stats.IPG["min"],
+                stats.IPG["mean"],
+                stats.IPG["std"],
+                stats.IPG["Q25"],
+                stats.IPG["Q50"],
+                stats.IPG["Q75"],
+                stats.IPG["max"],
+            ]
+        )
     except:
         print("not enough data to calculate IPG")
 
     resultIPGTable.columns.width = [14, 14, 14, 14, 14, 14, 14, 14]
-    resultIPGTable.border.left = ''
-    resultIPGTable.border.right = ''
-    resultIPGTable.border.top = ''
-    resultIPGTable.border.bottom = ''
+    resultIPGTable.border.left = ""
+    resultIPGTable.border.right = ""
+    resultIPGTable.border.top = ""
+    resultIPGTable.border.bottom = ""
 
     resultBCTable = BeautifulTable(precision=0)
 
     try:
-        resultBCTable.rows.append([stats.BatchCount["min"],
-                                   stats.BatchCount["mean"],
-                                   stats.BatchCount["max"] ])
+        resultBCTable.rows.append(
+            [stats.BatchCount["min"], stats.BatchCount["mean"], stats.BatchCount["max"]]
+        )
     except KeyError:
         print("Missing Batch count values")
 
     resultBCTable.columns.width = [5, 6, 5]
-    resultBCTable.border.left = ''
-    resultBCTable.border.right = ''
-    resultBCTable.border.top = ''
-    resultBCTable.border.bottom = ''
+    resultBCTable.border.left = ""
+    resultBCTable.border.right = ""
+    resultBCTable.border.top = ""
+    resultBCTable.border.bottom = ""
 
     resultBSTable = BeautifulTable(precision=6)
     try:
-        resultBSTable.rows.append([ stats.BatchStart["min"],
-                                    stats.BatchStart["mean"],
-                                    stats.BatchStart["max"]])
+        resultBSTable.rows.append(
+            [stats.BatchStart["min"], stats.BatchStart["mean"], stats.BatchStart["max"]]
+        )
     except KeyError:
         print("Missing Batch start values")
 
     resultBSTable.columns.width = [14, 14, 14]
-    resultBSTable.border.left = ''
-    resultBSTable.border.right = ''
-    resultBSTable.border.top = ''
-    resultBSTable.border.bottom = ''
+    resultBSTable.border.left = ""
+    resultBSTable.border.right = ""
+    resultBSTable.border.top = ""
+    resultBSTable.border.bottom = ""
 
     resultBETable = BeautifulTable(precision=6)
     try:
-        resultBETable.rows.append([stats.BatchEnd["min"],
-                                   stats.BatchEnd["mean"],
-                                   stats.BatchEnd["max"]])
+        resultBETable.rows.append(
+            [stats.BatchEnd["min"], stats.BatchEnd["mean"], stats.BatchEnd["max"]]
+        )
     except KeyError:
         print("Missing Batch start end")
 
     resultBETable.columns.width = [14, 14, 14]
-    resultBETable.border.left = ''
-    resultBETable.border.right = ''
-    resultBETable.border.top = ''
-    resultBETable.border.bottom = ''
-    table.rows.append([className,
-                       stats.cycles,
-                       stats.packetLenght,
-                       resultBCTable,
-                       resultIPGTable,
-                       resultBSTable,
-                       resultBETable])
-    #table.rows.append([className,
+    resultBETable.border.left = ""
+    resultBETable.border.right = ""
+    resultBETable.border.top = ""
+    resultBETable.border.bottom = ""
+    table.rows.append(
+        [
+            className,
+            stats.cycles,
+            stats.packetLenght,
+            resultBCTable,
+            resultIPGTable,
+            resultBSTable,
+            resultBETable,
+        ]
+    )
+    # table.rows.append([className,
     #                   stats.cycles,
     #                   stats.packetLenght,
     #                   resultBCTable,
@@ -182,31 +224,33 @@ def populate_stats(stats, className ,table):
 
 def cycleOffset(cycleCounter, pkt_time, startTime):
     global tclass_cycle_time
-    currCycleTime= (cycleCounter - 1) * tclass_cycle_time
+    currCycleTime = (cycleCounter - 1) * tclass_cycle_time
     deltaTime = pkt_time - startTime
-    #if cycleCounter < 4:
+    # if cycleCounter < 4:
     res = deltaTime - currCycleTime
     return res
 
+
 class TrafficClass:
     global tclass_start_cycle
-    def __init__(self,pcp, tcName):
+
+    def __init__(self, pcp, tcName):
         self.pcp = pcp
         self.tcName = tcName
-        self.DeltaTime=[]
-        self.DTimeTime=[]
-        self.IPG=[]
-        self.IPGTime=[]
-        self.framesWithinCycle=[]
-        self.framesWithinCycleTime=[]
-        self.batch_End=[]
-        self.batch_Start=[]
-        self.burstTime=[]
-        self.aveIPGInBurst=[]
-        self.countIPG= 0
-        self.lengths=[]
+        self.DeltaTime = []
+        self.DTimeTime = []
+        self.IPG = []
+        self.IPGTime = []
+        self.framesWithinCycle = []
+        self.framesWithinCycleTime = []
+        self.batch_End = []
+        self.batch_Start = []
+        self.burstTime = []
+        self.aveIPGInBurst = []
+        self.countIPG = 0
+        self.lengths = []
         self.deltaPktTime = 0
-        self.prevPktTime= 0
+        self.prevPktTime = 0
         self.curpktTime = 0
         self.bytesStransmitedPerBurst = 0
         self.framesInBurst = 0
@@ -236,7 +280,6 @@ class TrafficClass:
             self.currentCycle = cycleCounter
 
         self.prevPktTime = self.curpktTime
-
 
         if self.firstCycle == cycleCounter:
             return
@@ -268,7 +311,7 @@ class TrafficClass:
                 self.framesWithinCycle.append(self.framesInBurst)
                 self.framesWithinCycleTime.append(pkt.time)
                 burstTime = self.burstTimeEnd - self.burstTimeStart
-                #print(self.pcp, self.currentCycle, sequenceCounter, self.framesInBurst, burstTime)
+                # print(self.pcp, self.currentCycle, sequenceCounter, self.framesInBurst, burstTime)
             if self.cycleCounter > self.firstCycle + 1:
                 self.batch_Start.append(self.curpktTime - self.burstTimeStart)
             self.burstTimeStart = self.curpktTime
@@ -276,9 +319,10 @@ class TrafficClass:
             self.framesInBurst = 1
             self.currentCycle = cycleCounter
 
-
-        self.prevPktLength = len(pkt.load)  + fullOverhead
-        self.bytesStransmitedPerBurst = self.bytesStransmitedPerBurst + self.prevPktLength
+        self.prevPktLength = len(pkt.load) + fullOverhead
+        self.bytesStransmitedPerBurst = (
+            self.bytesStransmitedPerBurst + self.prevPktLength
+        )
         self.transmitTime = (self.prevPktLength * 8) / 1e9
         self.prevSequenceCounter = sequenceCounter
 
@@ -288,17 +332,24 @@ class TrafficClass:
         print(self.lengths)
         nofFrames = max(self.framesWithinCycle)
         fig, axs = plt.subplots(2, 2, sharex=True)
-        fig.suptitle(self.tcName + " " + str(self.prevPktLength) + "bytes x" + str(nofFrames) + " Time trace" )
-        axs[0,0].plot(self.DTimeTime, self.DeltaTime , 'ro')
-        axs[0,0].set_title('Delta Time between packets')
-        axs[0,0].set(xlabel='Time(s)', ylabel='Delta in us')
-        axs[0,1].plot(self.IPGTime, self.IPG , 'ro')
-        axs[0,1].set_title('IPG (us)')
-        axs[0,1].set(xlabel='Time (s)', ylabel='IPG in us')
-        axs[1,1].plot(self.framesWithinCycleTime, self.framesWithinCycle , 'ro')
-        Title = 'Frames per burst ' + str(nofFrames)
-        axs[1,1].set_title(Title)
-        axs[1,1].set(xlabel='Time (s)', ylabel='Count of frames per burst')
+        fig.suptitle(
+            self.tcName
+            + " "
+            + str(self.prevPktLength)
+            + "bytes x"
+            + str(nofFrames)
+            + " Time trace"
+        )
+        axs[0, 0].plot(self.DTimeTime, self.DeltaTime, "ro")
+        axs[0, 0].set_title("Delta Time between packets")
+        axs[0, 0].set(xlabel="Time(s)", ylabel="Delta in us")
+        axs[0, 1].plot(self.IPGTime, self.IPG, "ro")
+        axs[0, 1].set_title("IPG (us)")
+        axs[0, 1].set(xlabel="Time (s)", ylabel="IPG in us")
+        axs[1, 1].plot(self.framesWithinCycleTime, self.framesWithinCycle, "ro")
+        Title = "Frames per burst " + str(nofFrames)
+        axs[1, 1].set_title(Title)
+        axs[1, 1].set(xlabel="Time (s)", ylabel="Count of frames per burst")
         plt.show()
 
     def plotMeSplit(self, fileName):
@@ -307,41 +358,43 @@ class TrafficClass:
         print(self.lengths)
         nofFrames = max(self.framesWithinCycle)
 
-        plt.plot(self.DTimeTime, self.DeltaTime , 'ro')
-        plt.title(self.tcName + ' ' + 'Delta Time between packets')
-        plt.xlabel(xlabel='Time(s)')
-        plt.ylabel(ylabel='Delta in us')
+        plt.plot(self.DTimeTime, self.DeltaTime, "ro")
+        plt.title(self.tcName + " " + "Delta Time between packets")
+        plt.xlabel(xlabel="Time(s)")
+        plt.ylabel(ylabel="Delta in us")
         plt.show()
-        plt.plot(self.IPGTime, self.IPG , 'ro')
-        plt.title(self.tcName + ' ' +'IPG (us)')
-        plt.xlabel('Time (s)')
-        plt.ylabel('IPG in us')
+        plt.plot(self.IPGTime, self.IPG, "ro")
+        plt.title(self.tcName + " " + "IPG (us)")
+        plt.xlabel("Time (s)")
+        plt.ylabel("IPG in us")
         plt.show()
-        plt.plot(self.framesWithinCycleTime, self.framesWithinCycle , 'ro')
-        plt.title(self.tcName + ' ' + 'Frames per burst ' + str(nofFrames))
-        plt.xlabel('Time (s)')
-        plt.ylabel('Count of frames per burst')
+        plt.plot(self.framesWithinCycleTime, self.framesWithinCycle, "ro")
+        plt.title(self.tcName + " " + "Frames per burst " + str(nofFrames))
+        plt.xlabel("Time (s)")
+        plt.ylabel("Count of frames per burst")
         plt.show()
 
     def getDataFrameIPG(self):
         nofFrames = max(self.framesWithinCycle)
-        title = self.tcName + ': ' + str(self.prevPktLength) + "bytes x" + str(nofFrames)
+        title = (
+            self.tcName + ": " + str(self.prevPktLength) + "bytes x" + str(nofFrames)
+        )
         print(title)
         self.dataframeIPG = pd.DataFrame(self.IPG[:])
-        #self.dataframeIPG.set_axis({title}, axis=1, inplace=True)
+        # self.dataframeIPG.set_axis({title}, axis=1, inplace=True)
         self.dataframeIPG.set_axis({title}, axis=1)
         return self.dataframeIPG
 
     def getLengths(self):
         print(self.lengths)
-        return ' - '.join(str(le) for le in self.lengths)
+        return " - ".join(str(le) for le in self.lengths)
 
     def getDataFrameIPGwithinBurst(self):
         nofFrames = max(self.framesWithinCycle)
-        title = self.tcName + ': ' + str(nofFrames) + ' within the burst'
+        title = self.tcName + ": " + str(nofFrames) + " within the burst"
         print(title)
         self.dataframeAveIPG = pd.DataFrame(self.aveIPGInBurst[:])
-        #self.dataframeAveIPG.set_axis({title}, axis=1, inplace=True)
+        # self.dataframeAveIPG.set_axis({title}, axis=1, inplace=True)
         self.dataframeAveIPG.set_axis({title}, axis=1)
         return self.dataframeAveIPG
 
@@ -353,53 +406,55 @@ class TrafficClass:
     def getStats(self):
         df = pd.DataFrame(self.batch_End[:])
         try:
-            self.stats.BatchEnd['count'] = float(df.count())
-            self.stats.BatchEnd['min'] = float(df.min())
-            self.stats.BatchEnd['max'] = float(df.max())
-            self.stats.BatchEnd['mean'] = float(df.mean())
-            self.stats.BatchEnd['std'] = float(df.std())
-            self.stats.BatchEnd['Q25'] = df.quantile(.25)
-            self.stats.BatchEnd['Q50'] = df.quantile(.50)
-            self.stats.BatchEnd['Q75'] = df.quantile(.75)
+            self.stats.BatchEnd["count"] = float(df.count())
+            self.stats.BatchEnd["min"] = float(df.min())
+            self.stats.BatchEnd["max"] = float(df.max())
+            self.stats.BatchEnd["mean"] = float(df.mean())
+            self.stats.BatchEnd["std"] = float(df.std())
+            self.stats.BatchEnd["Q25"] = df.quantile(0.25)
+            self.stats.BatchEnd["Q50"] = df.quantile(0.50)
+            self.stats.BatchEnd["Q75"] = df.quantile(0.75)
         except TypeError:
             print("Not Possible to process Batch end")
 
         df = pd.DataFrame(self.batch_Start[:])
         try:
-            self.stats.BatchStart['min'] = float(df.min())
-            self.stats.BatchStart['max'] = float(df.max())
-            self.stats.BatchStart['mean'] = float(df.mean())
+            self.stats.BatchStart["min"] = float(df.min())
+            self.stats.BatchStart["max"] = float(df.max())
+            self.stats.BatchStart["mean"] = float(df.mean())
         except TypeError:
             print("Not Possible to process Batch start")
 
-
         df = pd.DataFrame(self.IPG[:])
         try:
-            self.stats.IPG['count'] = float(df.count().iloc[0])
-            self.stats.IPG['min'] = float(df.min().iloc[0])
-            self.stats.IPG['max'] = float(df.max().iloc[0])
-            self.stats.IPG['mean'] = float(df.mean().iloc[0])
-            self.stats.IPG['std'] = float(df.std().iloc[0])
-            self.stats.IPG['Q25'] = float(df.quantile(.25).iloc[0])
-            self.stats.IPG['Q50'] = float(df.quantile(.50).iloc[0])
-            self.stats.IPG['Q75'] = float(df.quantile(.75).iloc[0])
+            self.stats.IPG["count"] = float(df.count().iloc[0])
+            self.stats.IPG["min"] = float(df.min().iloc[0])
+            self.stats.IPG["max"] = float(df.max().iloc[0])
+            self.stats.IPG["mean"] = float(df.mean().iloc[0])
+            self.stats.IPG["std"] = float(df.std().iloc[0])
+            self.stats.IPG["Q25"] = float(df.quantile(0.25).iloc[0])
+            self.stats.IPG["Q50"] = float(df.quantile(0.50).iloc[0])
+            self.stats.IPG["Q75"] = float(df.quantile(0.75).iloc[0])
         except TypeError:
             print("Not Possible to process IPG")
 
         df = pd.DataFrame(self.framesWithinCycle[1:])
         try:
-            self.stats.BatchCount['min'] = int(df.min().iloc[0])
-            self.stats.BatchCount['max'] = int(df.max().iloc[0])
-            self.stats.BatchCount['mean'] = int(df.mean().iloc[0])
+            self.stats.BatchCount["min"] = int(df.min().iloc[0])
+            self.stats.BatchCount["max"] = int(df.max().iloc[0])
+            self.stats.BatchCount["mean"] = int(df.mean().iloc[0])
             self.stats.cycles = self.cycleCounter
             self.stats.packetLenght = self.getLengths()
         except TypeError:
             print("Not Possible to process Batch Count")
-        print ("for the pcp ", self.pcp, ",", self.sequenceErrors, " sequence errors found")
+        print(
+            "for the pcp ", self.pcp, ",", self.sequenceErrors, " sequence errors found"
+        )
         return self.stats
 
     def hasDataAvailable(self):
         return 1 if len(self.DeltaTime) != 0 else 0
+
 
 pktCounter = []
 pktTime = []
@@ -413,16 +468,22 @@ def print_payload(pkt):
     right = 8
     loop = int(message_len / 16) + 1
     for i in range(loop):
-        print(' '*8, i, ' :', binascii.hexlify(message[left:right]),
-                              binascii.hexlify(message[left+8:right+8]))
+        print(
+            " " * 8,
+            i,
+            " :",
+            binascii.hexlify(message[left:right]),
+            binascii.hexlify(message[left + 8 : right + 8]),
+        )
         left += 16
         right += 16
 
+
 def process_pcap(file_name, end, noend):
 
-    TrafficClasses=dict()
+    TrafficClasses = dict()
 
-    print('Opening {}...'.format(file_name))
+    print("Opening {}...".format(file_name))
 
     initialPrio = -1
     flipped = False
@@ -446,23 +507,19 @@ def process_pcap(file_name, end, noend):
         if pkt.type == 0x8100:
             vlan_pkt = pkt[Dot1Q]
 
-
-
             pktCounter.append(count)
             pktTime.append(float(pkt.time))
             prio = vlan_pkt.fields["prio"]
             pcp.append(vlan_pkt.fields["prio"])
 
-
             if prio not in TrafficClasses:
-                TrafficClasses[prio]=TrafficClass(prio,'PCP ' + str(prio))
-
+                TrafficClasses[prio] = TrafficClass(prio, "PCP " + str(prio))
 
             sequenceCounter = int.from_bytes(pkt.load[2:6], "big")
             cycleCounter = int.from_bytes(pkt.load[6:10], "big")
-            #frameId = int.from_bytes(pkt.load[0:2], "big")
-            #payloadStr = pkt.load[10:34].decode("utf-8")
-            #print (prio, cycleCounter, sequenceCounter, frameId, payloadStr)
+            # frameId = int.from_bytes(pkt.load[0:2], "big")
+            # payloadStr = pkt.load[10:34].decode("utf-8")
+            # print (prio, cycleCounter, sequenceCounter, frameId, payloadStr)
 
             if firstObservedCycle == -1:
                 firstObservedCycle = cycleCounter
@@ -475,25 +532,23 @@ def process_pcap(file_name, end, noend):
         continue
 
         interesting_packet_count += 1
-    #return
-    plt.plot(pktCounter, pcp , 'ro')
-    plt.title('Packet order')
-    plt.ylabel('PCP value')
-    plt.xlabel('Count units')
+    # return
+    plt.plot(pktCounter, pcp, "ro")
+    plt.title("Packet order")
+    plt.ylabel("PCP value")
+    plt.xlabel("Count units")
     plt.show()
 
-
-    plt.plot(pktTime, pcp , 'ro')
-    plt.title('Packet order in time')
-    plt.ylabel('PCP value')
-    plt.xlabel('Time')
+    plt.plot(pktTime, pcp, "ro")
+    plt.title("Packet order in time")
+    plt.ylabel("PCP value")
+    plt.xlabel("Time")
     plt.show()
-
 
     for key in TrafficClasses:
         TrafficClasses[key].plotMe(file_name)
-        #TrafficClasses[key].plotMeSplit(file_name)
-        #TrafficClasses[key].describe()
+        # TrafficClasses[key].plotMeSplit(file_name)
+        # TrafficClasses[key].describe()
 
     mainTable = create_main_table()
     for key in TrafficClasses:
@@ -507,31 +562,60 @@ def process_pcap(file_name, end, noend):
     for name in names:
         allDF = TrafficClasses[name].getDataFrameIPG()
         allDF = allDF.fillna(allDF.mean())
-        ax = sns.boxplot(data = allDF )
-        title = "IPG Boxplot: " + ' '.join(str(names))
+        ax = sns.boxplot(data=allDF)
+        title = "IPG Boxplot: " + " ".join(str(names))
         ax.set_title(title)
         ax.set_ylabel("IPG (us)")
         plt.show()
 
-    print('{} contains {} packets ({} interesting)'.
-          format(file_name, count, interesting_packet_count))
+    print(
+        "{} contains {} packets ({} interesting)".format(
+            file_name, count, interesting_packet_count
+        )
+    )
+
 
 def main():
     global tclass_cycle_time
-    parser = argparse.ArgumentParser(description='Process long term data recorded with TSN dashboard  \
-    generating graphics and statistics summary for the key performance indicators.')
+    parser = argparse.ArgumentParser(
+        description="Process long term data recorded with TSN dashboard  \
+    generating graphics and statistics summary for the key performance indicators."
+    )
 
-    parser.add_argument('--file', metavar='file', type = pathlib.Path,
-                        help='Name of the file generated by the profishark (pcapng)', required=True)
+    parser.add_argument(
+        "--file",
+        metavar="file",
+        type=pathlib.Path,
+        help="Name of the file generated by the profishark (pcapng)",
+        required=True,
+    )
 
-    parser.add_argument('--end', metavar='end', type = int, default = 2000,
-                        help='Number of of points to use', required=False)
+    parser.add_argument(
+        "--end",
+        metavar="end",
+        type=int,
+        default=2000,
+        help="Number of of points to use",
+        required=False,
+    )
 
-    parser.add_argument('-a', '--all', default = False, action='store_true',
-                        help='Use all available data points', required=False)
+    parser.add_argument(
+        "-a",
+        "--all",
+        default=False,
+        action="store_true",
+        help="Use all available data points",
+        required=False,
+    )
 
-    parser.add_argument('-c', '--cycle-time', help="Cycle time (second). Default 0.0005s (500us)", type=float, required=False, default=0.0005)
-
+    parser.add_argument(
+        "-c",
+        "--cycle-time",
+        help="Cycle time (second). Default 0.0005s (500us)",
+        type=float,
+        required=False,
+        default=0.0005,
+    )
 
     args = parser.parse_args()
 
