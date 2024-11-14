@@ -145,54 +145,54 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 					   bool out_of_order, bool payload_mismatch,
 					   bool frame_id_mismatch)
 {
-	struct statistics *stat_per_period_pre = &statistics_per_period[frame_type];
+	struct statistics *stat_per_period = &statistics_per_period[frame_type];
 	uint64_t elapsed_t;
 
-	if (stat_per_period_pre->first_time_stamp == 0)
-		stat_per_period_pre->first_time_stamp = curr_time;
+	if (stat_per_period->first_time_stamp == 0)
+		stat_per_period->first_time_stamp = curr_time;
 
 	/*
 	 * Test if the amount of time specified in the config is arrived.  if true this will be the
 	 * last point to be taken into stats per period
 	 */
-	elapsed_t = curr_time - stat_per_period_pre->first_time_stamp;
+	elapsed_t = curr_time - stat_per_period->first_time_stamp;
 	if (elapsed_t >= app_config.stats_collection_interval_ns) {
-		stat_per_period_pre->ready = true;
-		stat_per_period_pre->last_time_stamp = curr_time;
+		stat_per_period->ready = true;
+		stat_per_period->last_time_stamp = curr_time;
 	}
 
 	if (log_stat_user_selected == LOG_REFERENCE) {
 		if (stat_frame_type_is_real_time(frame_type) && rt_time > rtt_expected_rt_limit)
-			stat_per_period_pre->round_trip_outliers++;
-		stat_update_min_max(rt_time, &stat_per_period_pre->round_trip_min,
-				    &stat_per_period_pre->round_trip_max);
+			stat_per_period->round_trip_outliers++;
+		stat_update_min_max(rt_time, &stat_per_period->round_trip_min,
+				    &stat_per_period->round_trip_max);
 
-		stat_per_period_pre->round_trip_count++;
-		stat_per_period_pre->round_trip_sum += rt_time;
-		stat_per_period_pre->round_trip_avg = stat_per_period_pre->round_trip_sum /
-						      (double)stat_per_period_pre->round_trip_count;
+		stat_per_period->round_trip_count++;
+		stat_per_period->round_trip_sum += rt_time;
+		stat_per_period->round_trip_avg =
+			stat_per_period->round_trip_sum / (double)stat_per_period->round_trip_count;
 	}
 
-	stat_update_min_max(oneway_time, &stat_per_period_pre->oneway_min,
-			    &stat_per_period_pre->oneway_max);
+	stat_update_min_max(oneway_time, &stat_per_period->oneway_min,
+			    &stat_per_period->oneway_max);
 
 	if (stat_frame_type_is_real_time(frame_type) && oneway_time > rtt_expected_rt_limit / 2)
-		stat_per_period_pre->oneway_outliers++;
-	stat_per_period_pre->oneway_count++;
-	stat_per_period_pre->oneway_sum += oneway_time;
-	stat_per_period_pre->oneway_avg =
-		stat_per_period_pre->oneway_sum / (double)stat_per_period_pre->oneway_count;
+		stat_per_period->oneway_outliers++;
+	stat_per_period->oneway_count++;
+	stat_per_period->oneway_sum += oneway_time;
+	stat_per_period->oneway_avg =
+		stat_per_period->oneway_sum / (double)stat_per_period->oneway_count;
 
-	stat_per_period_pre->frames_received++;
-	stat_per_period_pre->out_of_order_errors += out_of_order;
-	stat_per_period_pre->payload_errors += payload_mismatch;
-	stat_per_period_pre->frame_id_errors += frame_id_mismatch;
+	stat_per_period->frames_received++;
+	stat_per_period->out_of_order_errors += out_of_order;
+	stat_per_period->payload_errors += payload_mismatch;
+	stat_per_period->frame_id_errors += frame_id_mismatch;
 
 	/*
 	 * Final bits can be used in the logger reseting copying actual values and reseting the
 	 * preparation
 	 */
-	if (stat_per_period_pre->ready) {
+	if (stat_per_period->ready) {
 		log_via_mqtt_stats(frame_type, &statistics_per_period[frame_type]);
 		stats_reset_stats(&statistics_per_period[frame_type]);
 	}
@@ -200,10 +200,10 @@ static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint
 
 static void stat_frame_sent_per_period(enum stat_frame_type frame_type)
 {
-	struct statistics *stat_per_period_pre = &statistics_per_period[frame_type];
+	struct statistics *stat_per_period = &statistics_per_period[frame_type];
 
 	/* Just increment the Tx counter. The reset per period is done by the Rx part. */
-	stat_per_period_pre->frames_sent++;
+	stat_per_period->frames_sent++;
 }
 #else
 static void stat_frame_received_per_period(enum stat_frame_type frame_type, uint64_t curr_time,
