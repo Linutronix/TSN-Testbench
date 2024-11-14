@@ -1,0 +1,8 @@
+#
+# Copyright (C) 2024 Authors
+# Author The TSN Project https://github.com/Linutronix/TSN-Testbench
+# SPDX-License-Identifier: BSD-2-Clause
+#
+[flake8]
+ignore = E203, E722, W503
+max-line-length = 100
