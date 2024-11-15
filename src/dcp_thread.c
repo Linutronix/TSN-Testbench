@@ -38,7 +38,7 @@ static void dcp_initialize_frames(unsigned char *frame_data, size_t num_frames,
 			SECURITY_MODE_NONE, frame_idx(frame_data, i), MAX_FRAME_SIZE, source,
 			app_config.dcp_destination, app_config.dcp_payload_pattern,
 			app_config.dcp_payload_pattern_length,
-			app_config.dcp_vid | app_config.dcp_pcp << VLAN_PCP_SHIFT, 0xfefe);
+			app_config.dcp_vid | app_config.dcp_pcp << VLAN_PCP_SHIFT, DCP_FRAMEID);
 }
 
 static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_frame_len,

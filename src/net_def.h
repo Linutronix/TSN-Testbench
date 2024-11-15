@@ -37,6 +37,13 @@
 #define TSN_LOW_PCP_VALUE 5
 #define TSN_HIGH_PCP_VALUE 6
 
+/* PROFINET FrameIds used by Testbench. */
+#define TSN_HIGH_FRAMEID 0x0100
+#define TSN_LOW_FRAMEID 0x0200
+#define RTC_FRAMEID 0x8000
+#define RTA_FRAMEID 0xfc01
+#define DCP_FRAMEID 0xfefe
+
 /* VLAN 802.1Q frame. */
 struct vlan_ethernet_header {
 	unsigned char destination[ETH_ALEN];
