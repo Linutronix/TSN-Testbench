@@ -62,10 +62,14 @@ int xdp_sock_prog(struct xdp_md *ctx)
 
 	frame_id = bpf_htons(rt->frame_id);
 	switch (frame_id) {
-	case 0x0100 ... 0x01ff: /* TSN HIGH */
-	case 0x0200 ... 0x03ff: /* TSN LOW */
-	case 0x8000 ... 0xbbff: /* RTC */
-	case 0xfc01:            /* RTA */
+	case TSN_HIGH_FRAMEID:
+	case TSN_HIGH_SEC_FRAMEID:
+	case TSN_LOW_FRAMEID:
+	case TSN_LOW_SEC_FRAMEID:
+	case RTC_FRAMEID:
+	case RTC_SEC_FRAMEID:
+	case RTA_FRAMEID:
+	case RTA_SEC_FRAMEID:
 		goto redirect;
 	default:
 		return XDP_PASS;

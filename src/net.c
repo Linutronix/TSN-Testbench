@@ -90,14 +90,15 @@ static struct sock_filter rtc_frame_filter[] = {
  *   ld vlan_tci
  *   jne #VlanTCI, drop
  *   ldh [14]
- *   jne #0xfc01, drop
+ *   jlt #0xfc01, drop
+ *   jgt #0xfc02, drop
  *   ret #-1
  *   drop: ret #0
  */
 static struct sock_filter rta_frame_filter[] = {
-	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 5, 0x00008892}, {0x20, 0, 0, 0xfffff02c},
-	{0x15, 0, 3, 0x00001234}, {0x28, 0, 0, 0x0000000e}, {0x15, 0, 1, 0x0000fc01},
-	{0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
+	{0x28, 0, 0, 0x0000000c}, {0x15, 0, 6, 0x00008892}, {0x20, 0, 0, 0xfffff02c},
+	{0x15, 0, 4, 0x00001234}, {0x28, 0, 0, 0x0000000e}, {0x35, 0, 2, 0x0000fc01},
+	{0x25, 1, 0, 0x0000fc02}, {0x06, 0, 0, 0xffffffff}, {0x06, 0, 0, 0000000000},
 };
 
 /*

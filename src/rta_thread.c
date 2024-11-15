@@ -32,6 +32,8 @@
 static void rta_initialize_frames(unsigned char *frame_data, size_t num_frames,
 				  const unsigned char *source, const unsigned char *destination)
 {
+	uint16_t frame_id =
+		app_config.rta_security_mode == SECURITY_MODE_NONE ? RTA_FRAMEID : RTA_SEC_FRAMEID;
 	size_t i;
 
 	for (i = 0; i < num_frames; ++i)
@@ -39,7 +41,7 @@ static void rta_initialize_frames(unsigned char *frame_data, size_t num_frames,
 			app_config.rta_security_mode, frame_idx(frame_data, i), MAX_FRAME_SIZE,
 			source, destination, app_config.rta_payload_pattern,
 			app_config.rta_payload_pattern_length,
-			app_config.rta_vid | app_config.rta_pcp << VLAN_PCP_SHIFT, RTA_FRAMEID);
+			app_config.rta_vid | app_config.rta_pcp << VLAN_PCP_SHIFT, frame_id);
 }
 
 static int rta_send_messages(struct thread_context *thread_context, int socket_fd,
@@ -381,6 +383,7 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	struct timespec tx_timespec_mirror = {};
 	unsigned char plaintext[MAX_FRAME_SIZE];
 	unsigned char new_frame[MAX_FRAME_SIZE];
+	uint16_t frame_id, expected_frame_id;
 	struct profinet_secure_header *srt;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
@@ -388,7 +391,6 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	bool vlan_tag_missing;
 	void *p = frame_data;
 	struct ethhdr *eth;
-	uint16_t frame_id;
 	uint16_t proto;
 
 	if (len < sizeof(struct vlan_ethernet_header)) {
@@ -534,9 +536,12 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 				 begin_of_security_checksum);
 	}
 
+	expected_frame_id =
+		app_config.rta_security_mode == SECURITY_MODE_NONE ? RTA_FRAMEID : RTA_SEC_FRAMEID;
+
 	out_of_order = sequence_counter != thread_context->rx_sequence_counter;
 	payload_mismatch = memcmp(p, expected_pattern, expected_pattern_length);
-	frame_id_mismatch = frame_id != RTA_FRAMEID;
+	frame_id_mismatch = frame_id != expected_frame_id;
 
 	stat_frame_received(RTA_FRAME_TYPE, sequence_counter, out_of_order, payload_mismatch,
 			    frame_id_mismatch, tx_timestamp);
@@ -544,7 +549,7 @@ static int rta_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	if (frame_id_mismatch)
 		log_message(LOG_LEVEL_WARNING,
 			    "RtaRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n",
-			    sequence_counter, RTA_FRAMEID);
+			    sequence_counter, expected_frame_id);
 
 	if (out_of_order) {
 		if (!ignore_rx_errors)

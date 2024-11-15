@@ -1014,7 +1014,9 @@ int tsn_low_threads_create(struct thread_context *tsn_thread_context)
 	tsn_config->create_tsn_socket = create_tsn_low_socket;
 	tsn_config->vlan_id = app_config.tsn_low_vid;
 	tsn_config->vlan_pcp = app_config.tsn_low_pcp;
-	tsn_config->frame_id = TSN_LOW_FRAMEID;
+	tsn_config->frame_id = tsn_config->tsn_security_mode == SECURITY_MODE_NONE
+				       ? TSN_LOW_FRAMEID
+				       : TSN_LOW_SEC_FRAMEID;
 
 	return tsn_threads_create(tsn_thread_context, tsn_config);
 }
@@ -1070,7 +1072,9 @@ int tsn_high_threads_create(struct thread_context *tsn_thread_context)
 	tsn_config->create_tsn_socket = create_tsn_high_socket;
 	tsn_config->vlan_id = app_config.tsn_high_vid;
 	tsn_config->vlan_pcp = app_config.tsn_high_pcp;
-	tsn_config->frame_id = TSN_HIGH_FRAMEID;
+	tsn_config->frame_id = tsn_config->tsn_security_mode == SECURITY_MODE_NONE
+				       ? TSN_HIGH_FRAMEID
+				       : TSN_HIGH_SEC_FRAMEID;
 
 	return tsn_threads_create(tsn_thread_context, tsn_config);
 }

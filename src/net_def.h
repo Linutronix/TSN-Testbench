@@ -39,9 +39,13 @@
 
 /* PROFINET FrameIds used by Testbench. */
 #define TSN_HIGH_FRAMEID 0x0100
+#define TSN_HIGH_SEC_FRAMEID 0x0101
 #define TSN_LOW_FRAMEID 0x0200
+#define TSN_LOW_SEC_FRAMEID 0x0201
 #define RTC_FRAMEID 0x8000
+#define RTC_SEC_FRAMEID 0x8001
 #define RTA_FRAMEID 0xfc01
+#define RTA_SEC_FRAMEID 0xfc02
 #define DCP_FRAMEID 0xfefe
 
 /* VLAN 802.1Q frame. */
