@@ -56,8 +56,7 @@ struct tsn_thread_configuration {
 	/* TSN low/high specific */
 	int vlan_id;
 	int vlan_pcp;
-	int frame_id_range_start;
-	int frame_id_range_end;
+	uint16_t frame_id;
 };
 
 int tsn_high_threads_create(struct thread_context *thread_context);

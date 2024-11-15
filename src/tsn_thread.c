@@ -46,7 +46,7 @@ static void tsn_initialize_frames(const struct tsn_thread_configuration *tsn_con
 			source, destination, tsn_config->tsn_payload_pattern,
 			tsn_config->tsn_payload_pattern_length,
 			tsn_config->vlan_id | tsn_config->vlan_pcp << VLAN_PCP_SHIFT,
-			tsn_config->frame_id_range_start);
+			tsn_config->frame_id);
 }
 
 static int tsn_send_messages(const struct tsn_thread_configuration *tsn_config,
@@ -602,7 +602,7 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 
 	out_of_order = sequence_counter != thread_context->rx_sequence_counter;
 	payload_mismatch = memcmp(p, expected_pattern, expected_pattern_length);
-	frame_id_mismatch = frame_id != tsn_config->frame_id_range_start;
+	frame_id_mismatch = frame_id != tsn_config->frame_id;
 
 	stat_frame_received(tsn_config->frame_type, sequence_counter, out_of_order,
 			    payload_mismatch, frame_id_mismatch, tx_timestamp);
@@ -610,8 +610,7 @@ static int tsn_rx_frame(void *data, unsigned char *frame_data, size_t len)
 	if (frame_id_mismatch)
 		log_message(LOG_LEVEL_WARNING,
 			    "%sRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n",
-			    tsn_config->traffic_class, sequence_counter,
-			    tsn_config->frame_id_range_start);
+			    tsn_config->traffic_class, sequence_counter, tsn_config->frame_id);
 
 	if (out_of_order) {
 		if (!ignore_rx_errors)
@@ -1015,8 +1014,7 @@ int tsn_low_threads_create(struct thread_context *tsn_thread_context)
 	tsn_config->create_tsn_socket = create_tsn_low_socket;
 	tsn_config->vlan_id = app_config.tsn_low_vid;
 	tsn_config->vlan_pcp = app_config.tsn_low_pcp;
-	tsn_config->frame_id_range_start = TSN_LOW_FRAMEID;
-	tsn_config->frame_id_range_end = 0x03ff;
+	tsn_config->frame_id = TSN_LOW_FRAMEID;
 
 	return tsn_threads_create(tsn_thread_context, tsn_config);
 }
@@ -1072,8 +1070,7 @@ int tsn_high_threads_create(struct thread_context *tsn_thread_context)
 	tsn_config->create_tsn_socket = create_tsn_high_socket;
 	tsn_config->vlan_id = app_config.tsn_high_vid;
 	tsn_config->vlan_pcp = app_config.tsn_high_pcp;
-	tsn_config->frame_id_range_start = TSN_HIGH_FRAMEID;
-	tsn_config->frame_id_range_end = 0x01ff;
+	tsn_config->frame_id = TSN_HIGH_FRAMEID;
 
 	return tsn_threads_create(tsn_thread_context, tsn_config);
 }
