@@ -87,8 +87,6 @@ The following list contains ideas for further development:
 - Add interface for workload emulation
 - Add support for XDP and Tx Launch Time
 - Add configurations for other hardware platforms (hybrid!) and NIC(s)
-- Add Wireshark dissector for MetaData
-- Add analyzer scripts for Profishark captures
 - Add integration with `ClockManager`
 - Extend statistics with hardware timestamps
 - Make it more user friendly
