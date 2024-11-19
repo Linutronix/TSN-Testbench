@@ -31,6 +31,7 @@ struct application_config app_config;
 /* The configuration file is YAML based. Use libyaml to parse it. */
 int config_read_from_file(const char *config_file)
 {
+	bool base_time_seen = false;
 	int ret, state_key = 0;
 	yaml_parser_t parser;
 	yaml_token_t token;
@@ -357,6 +358,9 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_STRING_PARAM(LogViaMQTTMeasurementName,
 						  log_via_mqtt_measurement_name);
 
+			if (!strcmp(key, "ApplicationBaseStartTimeNS"))
+				base_time_seen = true;
+
 			if (key)
 				free(key);
 
@@ -368,6 +372,21 @@ int config_read_from_file(const char *config_file)
 			yaml_token_delete(&token);
 
 	} while (token.type != YAML_STREAM_END_TOKEN);
+
+	/*
+	 * Re-calculate default base start time. There is one case where this necessary:
+	 *  - The user provided a different clock_id than TAI in yaml file
+	 *  - The user did not provide a base time in yaml file
+	 *
+	 * In that case the default base time calculated by config_set_defaults() is based on
+	 * TAI. That has to be re-done by using the user provided clock id.
+	 */
+	if (app_config.application_clock_id != CLOCK_TAI && !base_time_seen) {
+		struct timespec current;
+
+		clock_gettime(app_config.application_clock_id, &current);
+		app_config.application_base_start_time_ns = (current.tv_sec + 30) * NSEC_PER_SEC;
+	}
 
 	ret = 0;
 
