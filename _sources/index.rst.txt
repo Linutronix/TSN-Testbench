@@ -56,6 +56,11 @@ Welcome to Linux TSN Testbench's documentation!
 .. toctree::
    :maxdepth: 2
 
+   wireshark.rst
+
+.. toctree::
+   :maxdepth: 2
+
    debug.rst
 
 .. toctree::
