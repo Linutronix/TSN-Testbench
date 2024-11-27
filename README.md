@@ -88,11 +88,7 @@ The following list contains ideas for further development:
 - Add support for XDP and Tx Launch Time
 - Add configurations for other hardware platforms (hybrid!) and NIC(s)
 - Add integration with `ClockManager`
-- Extend statistics with hardware timestamps
-- Make it more user friendly
-- Improve documentation
 - Test (virtual) container networking
-- Test 10G+ NIC(s) especially wrt to IPG
 - Package for Debian
 
 ## Documentation
