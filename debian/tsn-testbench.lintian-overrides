@@ -1,3 +1,0 @@
-# BPF binaries
-tsn-testbench: binary-from-other-architecture [usr/share/testbench/ebpf/*.o]
-tsn-testbench: arch-dependent-file-in-usr-share [usr/share/testbench/ebpf/*.o]

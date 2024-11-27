@@ -15,10 +15,6 @@ Files: .github/workflows/sphinx.yml devtools/conda-envs/docs_env.yaml requiremen
 Copyright: 2024 Pablo Iranzo Gómez <Pablo.Iranzo@gmail.com>
 License: BSD-2-Clause
 
-Files: debian/*
-Copyright: 2023-2024 Linutronix GmbH
-License: GPL-2.0-or-later
-
 Files: docker/mqtt-composer/*
 Copyright: 2024 Intel Corporation
 License: BSD-2-Clause
