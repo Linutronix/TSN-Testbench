@@ -49,6 +49,7 @@ Version history:
 - v3.0: August 2022, Multi Middleware simulation
 - v4.0: July 2023, PROFINET Security
 - v5.0: September 2024, Grafana visualization
+- v5.1: November 2024, Tooling and bugfixes
 
 Motivation
 ^^^^^^^^^^
