@@ -342,6 +342,12 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_BOOL_PARAM(DebugMonitorMode, debug_monitor_mode);
 			CONFIG_STORE_MAC_PARAM(DebugMonitorDestination, debug_monitor_destination);
 
+			CONFIG_STORE_BOOL_PARAM(StatsHistogramEnabled, stats_histogram_enabled);
+			CONFIG_STORE_ULONG_PARAM(StatsHistogramMininumNS,
+						 stats_histogram_mininum_ns);
+			CONFIG_STORE_ULONG_PARAM(StatsHistogramMaximumNS,
+						 stats_histogram_maximum_ns);
+			CONFIG_STORE_STRING_PARAM(StatsHistogramFile, stats_histogram_file);
 			CONFIG_STORE_ULONG_PARAM(StatsCollectionIntervalNS,
 						 stats_collection_interval_ns);
 
@@ -715,6 +721,10 @@ void config_print_values(void)
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
+	printf("StatsHistogramEnabled=%s\n", app_config.stats_histogram_enabled ? "True" : "False");
+	printf("StatsHistogramMinimumNS=%" PRIu64 "\n", app_config.stats_histogram_mininum_ns);
+	printf("StatsHistogramMaximumNS=%" PRIu64 "\n", app_config.stats_histogram_maximum_ns);
+	printf("StatsHistogramFile=%s\n", app_config.stats_histogram_file);
 	printf("StatsCollectionIntervalNS=%" PRIu64 "\n", app_config.stats_collection_interval_ns);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
@@ -742,6 +752,7 @@ int config_set_defaults(bool mirror_enabled)
 	static const char *default_log_via_mqtt_broker_ip = "127.0.0.1";
 	static const char *default_udp_low_source = "192.168.2.119";
 	static const char *default_payload_pattern = "Payload";
+	static const char *default_hist_file = "histogram.txt";
 	static const char *default_udp_low_port = "6666";
 	static const char *default_log_level = "Debug";
 	struct timespec current;
@@ -1042,6 +1053,13 @@ int config_set_defaults(bool mirror_enabled)
 	       ETH_ALEN);
 
 	/* Stats */
+	app_config.stats_histogram_enabled = false;
+	app_config.stats_histogram_mininum_ns = 1 * 1e6;
+	app_config.stats_histogram_maximum_ns = 10 * 1e6;
+	app_config.stats_histogram_file = strdup(default_hist_file);
+	if (!app_config.stats_histogram_file)
+		goto out;
+	app_config.stats_histogram_file_length = strlen(default_hist_file);
 	app_config.stats_collection_interval_ns = 1e9;
 
 	/* LogViaMQTT */
@@ -1238,6 +1256,12 @@ bool config_sanity_check(void)
 		    app_config.rta_security_key_length, app_config.rta_security_iv_prefix_length))
 		return false;
 
+	/* Stats */
+	if (app_config.stats_histogram_mininum_ns > app_config.stats_histogram_maximum_ns) {
+		fprintf(stderr, "Histogram minimum and maximum values are invalid!\n");
+		return false;
+	}
+
 	return true;
 }
 
@@ -1277,6 +1301,8 @@ void config_free(void)
 
 	free(app_config.generic_l2_name);
 	free(app_config.generic_l2_payload_pattern);
+
+	free(app_config.stats_histogram_file);
 
 	free(app_config.log_file);
 	free(app_config.log_level);
