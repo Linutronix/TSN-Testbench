@@ -52,7 +52,8 @@ add_executable(reference
   src/xdp.c
   src/tx_time.c
   src/security.c
-  src/packet.c)
+  src/packet.c
+  src/hist.c)
 add_executable(mirror
   src/mirror.c
   src/config.c
@@ -73,7 +74,8 @@ add_executable(mirror
   src/xdp.c
   src/tx_time.c
   src/security.c
-  src/packet.c)
+  src/packet.c
+  src/hist.c)
 
 option(WITH_MQTT, "Enable/Disable logging via MQTT" OFF)
 if (WITH_MQTT)
