@@ -14,6 +14,7 @@
 #include "app_config.h"
 #include "config.h"
 #include "dcp_thread.h"
+#include "hist.h"
 #include "layer2_thread.h"
 #include "lldp_thread.h"
 #include "log.h"
@@ -148,6 +149,12 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	ret = histogram_init();
+	if (ret) {
+		fprintf(stderr, "Failed to initialize histogram code!\n");
+		exit(EXIT_FAILURE);
+	}
+
 	ret = stat_init(LOG_REFERENCE);
 	if (ret) {
 		fprintf(stderr, "Failed to initialize statistics!\n");
@@ -243,6 +250,8 @@ int main(int argc, char *argv[])
 	log_via_mqtt_thread_wait_for_finish(log_via_mqtt_thread);
 	log_thread_wait_for_finish(log_thread);
 
+	histogram_write();
+
 	tsn_high_threads_free(&threads[TSN_HIGH_THREAD]);
 	tsn_low_threads_free(&threads[TSN_LOW_THREAD]);
 	rtc_threads_free(&threads[RTC_THREAD]);
@@ -255,6 +264,7 @@ int main(int argc, char *argv[])
 	log_via_mqtt_thread_free(log_via_mqtt_thread);
 	log_thread_free(log_thread);
 
+	histogram_free();
 	stat_free();
 	log_free();
 	log_via_mqtt_free();

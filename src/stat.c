@@ -12,6 +12,7 @@
 #include <time.h>
 
 #include "config.h"
+#include "hist.h"
 #include "log.h"
 #include "logviamqtt.h"
 #include "stat.h"
@@ -242,6 +243,7 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 			 bool payload_mismatch, bool frame_id_mismatch, uint64_t tx_timestamp)
 {
 	struct round_trip_context *rtt = &round_trip_contexts[frame_type];
+	const bool histogram = app_config.stats_histogram_enabled;
 	struct statistics *stat = &global_statistics[frame_type];
 	uint64_t rt_time = 0, curr_time, oneway_time;
 	struct timespec rx_time = {};
@@ -267,6 +269,10 @@ void stat_frame_received(enum stat_frame_type frame_type, uint64_t cycle_number,
 		stat->round_trip_count++;
 		stat->round_trip_sum += rt_time;
 		stat->round_trip_avg = stat->round_trip_sum / (double)stat->round_trip_count;
+
+		/* Update histogram */
+		if (histogram)
+			histogram_update(frame_type, rt_time);
 	}
 
 	oneway_time = curr_time - tx_timestamp;
