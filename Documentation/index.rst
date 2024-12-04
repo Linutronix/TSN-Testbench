@@ -51,6 +51,11 @@ Welcome to Linux TSN Testbench's documentation!
 .. toctree::
    :maxdepth: 2
 
+   histogram.rst
+
+.. toctree::
+   :maxdepth: 2
+
    test.rst
 
 .. toctree::
