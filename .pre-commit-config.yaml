@@ -57,6 +57,7 @@ repos:
       - id: requirements-txt-fixer
       - id: sort-simple-yaml
       - id: trailing-whitespace
+        exclude: docker
       - id: mixed-line-ending
       - id: detect-private-key
       - id: check-byte-order-marker
