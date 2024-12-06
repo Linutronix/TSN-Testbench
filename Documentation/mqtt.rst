@@ -77,7 +77,7 @@ an indirect approach to deliver the file was taken. In the docker/mqtt-composer 
 .. code:: bash
 
    cd docker/mqtt-composer
-   ./create_docker_composer.sh
+   ./create_docker_compose.sh
    ./set_permissions.sh
 
 Creating the services
