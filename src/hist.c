@@ -16,6 +16,7 @@
 #include "stat.h"
 
 static struct histogram histograms[NUM_FRAME_TYPES];
+static FILE *hist_file;
 
 int histogram_init(void)
 {
@@ -37,6 +38,13 @@ int histogram_init(void)
 		hist->data = calloc(hist->max - hist->min, sizeof(uint64_t));
 		if (!hist->data)
 			return -ENOMEM;
+	}
+
+	hist_file = fopen(app_config.stats_histogram_file, "w");
+	if (!hist_file) {
+		fprintf(stderr, "Failed to open file '%s': %s!\n", app_config.stats_histogram_file,
+			strerror(errno));
+		return -EINVAL;
 	}
 
 	return 0;
@@ -87,20 +95,12 @@ void histogram_update(enum stat_frame_type frame_type, uint64_t rtt)
 int histogram_write(void)
 {
 	uint64_t rtt;
-	FILE *f;
 	int i;
 
 	if (!app_config.stats_histogram_enabled)
 		return 0;
 
-	f = fopen(app_config.stats_histogram_file, "w");
-	if (!f) {
-		fprintf(stderr, "Failed to open file '%s': %s!\n", app_config.stats_histogram_file,
-			strerror(errno));
-		return -EINVAL;
-	}
-
-	fprintf(f, "Testbench RTT Histogram: %s %s %s %s %s %s %s %s %s\n",
+	fprintf(hist_file, "Testbench RTT Histogram: %s %s %s %s %s %s %s %s %s\n",
 		stat_frame_type_to_string(TSN_HIGH_FRAME_TYPE),
 		stat_frame_type_to_string(TSN_LOW_FRAME_TYPE),
 		stat_frame_type_to_string(RTC_FRAME_TYPE),
@@ -125,32 +125,32 @@ int histogram_write(void)
 		if (!print)
 			continue;
 
-		fprintf(f, "%08" PRIu64 ": ", rtt);
+		fprintf(hist_file, "%08" PRIu64 ": ", rtt);
 		for (i = 0; i < NUM_FRAME_TYPES; i++) {
 			struct histogram *hist = &histograms[i];
 
-			fprintf(f, "%08" PRIu64 "  ", hist->data[rtt - hist->min]);
+			fprintf(hist_file, "%08" PRIu64 "  ", hist->data[rtt - hist->min]);
 		}
-		fprintf(f, "\n");
+		fprintf(hist_file, "\n");
 	}
 
-	fprintf(f, "Overflow: ");
+	fprintf(hist_file, "Overflow: ");
 	for (i = 0; i < NUM_FRAME_TYPES; i++) {
 		struct histogram *hist = &histograms[i];
 
-		fprintf(f, "%08" PRIu64 "  ", hist->overflow);
+		fprintf(hist_file, "%08" PRIu64 "  ", hist->overflow);
 	}
-	fprintf(f, "\n");
+	fprintf(hist_file, "\n");
 
-	fprintf(f, "Underflow: ");
+	fprintf(hist_file, "Underflow: ");
 	for (i = 0; i < NUM_FRAME_TYPES; i++) {
 		struct histogram *hist = &histograms[i];
 
-		fprintf(f, "%08" PRIu64 "  ", hist->underflow);
+		fprintf(hist_file, "%08" PRIu64 "  ", hist->underflow);
 	}
-	fprintf(f, "\n");
+	fprintf(hist_file, "\n");
 
-	fclose(f);
+	fclose(hist_file);
 
 	return 0;
 }
