@@ -13,11 +13,11 @@
 >       - stats
 14,15c18,20
 <       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-<
+<   
 ---
 >       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
 >     cpuset: "3"
->
+> 
 17c22,26
 <     image: influxdb
 ---
@@ -43,13 +43,13 @@
 <       - DOCKER_INFLUXDB_INIT_ORG=some_org
 <       - DOCKER_INFLUXDB_INIT_BUCKET=some_data
 <       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=4eYvsu8wZCJ6tKuE2sxvFHkvYFwSMVK0011hEEiojvejzpSaij86vYQomN_12au6eK-2MZ6Knr-Sax201y70w==
-<
+<   
 ---
 >       - INFLUXDB_DB="testbench"
 >     security_opt:
 >       - no-new-privileges:true
 >     cpuset: "3"
->
+> 
 36a44,47
 >     logging:
 >       options:
@@ -57,11 +57,11 @@
 >         max-file: "3"
 45,46c56,58
 <       - iot
-<
+<   
 ---
 >       - stats
 >     cpuset: "3"
->
+> 
 48a61,64
 >     logging:
 >       options:
@@ -78,7 +78,7 @@
 ---
 >       - ./grafana-data:/var/lib/grafana
 >       - ./grafana.ini:/etc/grafana/grafana.ini
->
+>       
 59a79
 >     cpuset: "3"
 62c82
