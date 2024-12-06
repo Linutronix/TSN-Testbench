@@ -10,8 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/utsname.h>
+
 #include "hist.h"
 
+#include "app_config.h"
 #include "config.h"
 #include "stat.h"
 
@@ -85,6 +88,43 @@ void histogram_update(enum stat_frame_type frame_type, uint64_t rtt)
 	hist->data[sample]++;
 }
 
+static void hist_print_kernel_info(void)
+{
+	struct utsname name;
+	int ret;
+
+	ret = uname(&name);
+	if (ret) {
+		fprintf(stderr, "uname() failed: %s\n", strerror(errno));
+		fprintf(stderr, "Could not get system information!\n");
+		return;
+	}
+
+	fprintf(hist_file, "Kernel: %s %s %s %s %s\n", name.sysname, name.nodename, name.release,
+		name.version, name.machine);
+}
+
+static void hist_print_kernel_cmdline(void)
+{
+	char buf[1024];
+	FILE *f;
+
+	f = fopen("/proc/cmdline", "r");
+	if (!f) {
+		fprintf(stderr, "Failed to open '/proc/cmdline': %s\n", strerror(errno));
+		fprintf(stderr, "Could not get the kernel command line!\n");
+		return;
+	}
+
+	if (!fgets(buf, sizeof(buf), f))
+		goto out;
+
+	fprintf(hist_file, "Kernel Command Line: %s", buf);
+
+out:
+	fclose(f);
+}
+
 /*
  * Write histogram to disk in form like this:
  *   RTT HistMin + 0: TsnHighSampleCount TsnLowSampleCount ...
@@ -100,6 +140,9 @@ int histogram_write(void)
 	if (!app_config.stats_histogram_enabled)
 		return 0;
 
+	fprintf(hist_file, "Testbench: Version '%s'\n", VERSION);
+	hist_print_kernel_info();
+	hist_print_kernel_cmdline();
 	fprintf(hist_file, "Testbench RTT Histogram: %s %s %s %s %s %s %s %s %s\n",
 		stat_frame_type_to_string(TSN_HIGH_FRAME_TYPE),
 		stat_frame_type_to_string(TSN_LOW_FRAME_TYPE),
