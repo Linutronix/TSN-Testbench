@@ -596,7 +596,7 @@ void config_print_values(void)
 	       "\n");
 	printf("LldpEnabled=%s\n", app_config.lldp_enabled ? "True" : "False");
 	printf("LldpRxMirrorEnabled=%s\n", app_config.lldp_rx_mirror_enabled ? "True" : "False");
-	printf("LldpIgnoreRxErrors=%s\n", app_config.dcp_ignore_rx_errors ? "True" : "False");
+	printf("LldpIgnoreRxErrors=%s\n", app_config.lldp_ignore_rx_errors ? "True" : "False");
 	printf("LldpBurstPeriodNS=%" PRIu64 "\n", app_config.lldp_burst_period_ns);
 	printf("LldpNumFramesPerCycle=%zu\n", app_config.lldp_num_frames_per_cycle);
 	printf("LldpPayloadPattern=");
