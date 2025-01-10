@@ -100,25 +100,25 @@ static struct thread_context *find_next_pn_thread(struct thread_context *pn_thre
 {
 	switch (start) {
 	case TSN_HIGH_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_low))
+		if (config_is_traffic_class_active("TsnLow"))
 			return &pn_threads[TSN_LOW_THREAD];
 	case TSN_LOW_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc))
+		if (config_is_traffic_class_active("Rtc"))
 			return &pn_threads[RTC_THREAD];
 	case RTC_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rta))
+		if (config_is_traffic_class_active("Rta"))
 			return &pn_threads[RTA_THREAD];
 	case RTA_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(dcp))
+		if (config_is_traffic_class_active("Dcp"))
 			return &pn_threads[DCP_THREAD];
 	case DCP_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(lldp))
+		if (config_is_traffic_class_active("Lldp"))
 			return &pn_threads[LLDP_THREAD];
 	case LLDP_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_high))
+		if (config_is_traffic_class_active("UdpHigh"))
 			return &pn_threads[UDP_HIGH_THREAD];
 	case UDP_HIGH_THREAD:
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_low))
+		if (config_is_traffic_class_active("UdpLow"))
 			return &pn_threads[UDP_LOW_THREAD];
 	case UDP_LOW_THREAD:
 		return NULL;
@@ -149,11 +149,11 @@ int link_pn_threads(struct thread_context *pn_threads)
 	 *
 	 * GenericL2 has nothing todo with Profinet.
 	 */
-	if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high))
+	if (config_is_traffic_class_active("TsnHigh"))
 		pn_threads[TSN_HIGH_THREAD].is_first = true;
-	else if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc))
+	else if (config_is_traffic_class_active("Rtc"))
 		pn_threads[RTC_THREAD].is_first = true;
-	else if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2))
+	else if (config_is_traffic_class_active("GenericL2"))
 		return 0;
 	else
 		return -EINVAL;

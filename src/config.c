@@ -16,6 +16,7 @@
 #include "config.h"
 #include "net_def.h"
 #include "security.h"
+#include "stat.h"
 #include "utils.h"
 
 #include "dcp_thread.h"
@@ -27,6 +28,79 @@
 #include "udp_thread.h"
 
 struct application_config app_config;
+
+bool config_is_traffic_class_active(const char *traffic_class)
+{
+	enum stat_frame_type type = config_opt_to_type(traffic_class);
+
+	return app_config.classes[type].enabled &&
+	       app_config.classes[type].num_frames_per_cycle > 0;
+}
+
+static bool str_match_second(const char *opt, const char *s)
+{
+	return !strncmp(opt, s, strlen(s));
+}
+
+enum stat_frame_type config_opt_to_type(const char *opt)
+{
+	if (str_match_second(opt, "TsnHigh"))
+		return TSN_HIGH_FRAME_TYPE;
+	if (str_match_second(opt, "TsnLow"))
+		return TSN_LOW_FRAME_TYPE;
+	if (str_match_second(opt, "Rtc"))
+		return RTC_FRAME_TYPE;
+	if (str_match_second(opt, "Rta"))
+		return RTA_FRAME_TYPE;
+	if (str_match_second(opt, "Dcp"))
+		return DCP_FRAME_TYPE;
+	if (str_match_second(opt, "Lldp"))
+		return LLDP_FRAME_TYPE;
+	if (str_match_second(opt, "UdpHigh"))
+		return UDP_HIGH_FRAME_TYPE;
+	if (str_match_second(opt, "UdpLow"))
+		return UDP_LOW_FRAME_TYPE;
+	if (str_match_second(opt, "GenericL2"))
+		return GENERICL2_FRAME_TYPE;
+
+	/* Not a traffic class option */
+	fprintf(stderr, "BUG: Invalid option '%s' found!\n", opt);
+	return NUM_FRAME_TYPES;
+}
+
+int config_parse_bool(const char *value, bool *ret)
+{
+	if (!strcmp(value, "0") || !strcasecmp(value, "false"))
+		*ret = false;
+	else if (!strcmp(value, "1") || !strcasecmp(value, "true"))
+		*ret = true;
+	else
+		return -EINVAL;
+
+	return 0;
+}
+
+int config_parse_int(const char *value, long *ret)
+{
+	char *endptr;
+
+	*ret = strtol(value, &endptr, 10);
+	if (errno != 0 || endptr == value || *endptr != '\0')
+		return -ERANGE;
+
+	return 0;
+}
+
+int config_parse_ulong(const char *value, unsigned long long *ret)
+{
+	char *endptr;
+
+	*ret = strtoull(value, &endptr, 10);
+	if (errno != 0 || endptr == value || *endptr != '\0')
+		return -ERANGE;
+
+	return 0;
+}
 
 /* The configuration file is YAML based. Use libyaml to parse it. */
 int config_read_from_file(const char *config_file)
@@ -102,233 +176,220 @@ int config_read_from_file(const char *config_file)
 						 application_rx_base_offset_ns);
 			CONFIG_STORE_STRING_PARAM(ApplicationXdpProgram, application_xdp_program);
 
-			CONFIG_STORE_BOOL_PARAM(TsnHighEnabled, tsn_high_enabled);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpEnabled, tsn_high_xdp_enabled);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpSkbMode, tsn_high_xdp_skb_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpZcMode, tsn_high_xdp_zc_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpWakeupMode, tsn_high_xdp_wakeup_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighXdpBusyPollMode,
-						tsn_high_xdp_busy_poll_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnHighTxTimeEnabled, tsn_high_tx_time_enabled);
-			CONFIG_STORE_BOOL_PARAM(TsnHighIgnoreRxErrors, tsn_high_ignore_rx_errors);
-			CONFIG_STORE_ULONG_PARAM(TsnHighTxTimeOffsetNS, tsn_high_tx_time_offset_ns);
-			CONFIG_STORE_INT_PARAM(TsnHighVid, tsn_high_vid);
-			CONFIG_STORE_INT_PARAM(TsnHighPcp, tsn_high_pcp);
-			CONFIG_STORE_ULONG_PARAM(TsnHighNumFramesPerCycle,
-						 tsn_high_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(TsnHighPayloadPattern, tsn_high_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(TsnHighFrameLength, tsn_high_frame_length);
-			CONFIG_STORE_SECURITY_MODE_PARAM(TsnHighSecurityMode,
-							 tsn_high_security_mode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(TsnHighSecurityAlgorithm,
-							      tsn_high_security_algorithm);
-			CONFIG_STORE_STRING_PARAM(TsnHighSecurityKey, tsn_high_security_key);
-			CONFIG_STORE_STRING_PARAM(TsnHighSecurityIvPrefix,
-						  tsn_high_security_iv_prefix);
-			CONFIG_STORE_INT_PARAM(TsnHighRxQueue, tsn_high_rx_queue);
-			CONFIG_STORE_INT_PARAM(TsnHighTxQueue, tsn_high_tx_queue);
-			CONFIG_STORE_INT_PARAM(TsnHighSocketPriority, tsn_high_socket_priority);
-			CONFIG_STORE_INT_PARAM(TsnHighTxThreadPriority,
-					       tsn_high_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(TsnHighRxThreadPriority,
-					       tsn_high_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(TsnHighTxThreadCpu, tsn_high_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(TsnHighRxThreadCpu, tsn_high_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(TsnHighInterface, tsn_high_interface);
-			CONFIG_STORE_MAC_PARAM(TsnHighDestination, tsn_high_destination);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighXdpEnabled, xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighXdpSkbMode, xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighXdpZcMode, xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighXdpWakeupMode, xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighXdpBusyPollMode, xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighTxTimeEnabled, tx_time_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnHighIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM_CLASS(TsnHighTxTimeOffsetNS, tx_time_offset_ns);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighVid, vid);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighPcp, pcp);
+			CONFIG_STORE_ULONG_PARAM_CLASS(TsnHighNumFramesPerCycle,
+						       num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(TsnHighPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(TsnHighFrameLength, frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM_CLASS(TsnHighSecurityMode, security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM_CLASS(TsnHighSecurityAlgorithm,
+								    security_algorithm);
+			CONFIG_STORE_STRING_PARAM_CLASS(TsnHighSecurityKey, security_key);
+			CONFIG_STORE_STRING_PARAM_CLASS(TsnHighSecurityIvPrefix,
+							security_iv_prefix);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnHighRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(TsnHighInterface, interface);
+			CONFIG_STORE_MAC_PARAM_CLASS(TsnHighDestination, l2_destination);
 
-			CONFIG_STORE_BOOL_PARAM(TsnLowEnabled, tsn_low_enabled);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpEnabled, tsn_low_xdp_enabled);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpSkbMode, tsn_low_xdp_skb_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpZcMode, tsn_low_xdp_zc_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpWakeupMode, tsn_low_xdp_wakeup_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowXdpBusyPollMode, tsn_low_xdp_busy_poll_mode);
-			CONFIG_STORE_BOOL_PARAM(TsnLowTxTimeEnabled, tsn_low_tx_time_enabled);
-			CONFIG_STORE_BOOL_PARAM(TsnLowIgnoreRxErrors, tsn_low_ignore_rx_errors);
-			CONFIG_STORE_ULONG_PARAM(TsnLowTxTimeOffsetNS, tsn_low_tx_time_offset_ns);
-			CONFIG_STORE_INT_PARAM(TsnLowVid, tsn_low_vid);
-			CONFIG_STORE_INT_PARAM(TsnLowPcp, tsn_low_pcp);
-			CONFIG_STORE_ULONG_PARAM(TsnLowNumFramesPerCycle,
-						 tsn_low_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(TsnLowPayloadPattern, tsn_low_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(TsnLowFrameLength, tsn_low_frame_length);
-			CONFIG_STORE_SECURITY_MODE_PARAM(TsnLowSecurityMode, tsn_low_security_mode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(TsnLowSecurityAlgorithm,
-							      tsn_low_security_algorithm);
-			CONFIG_STORE_STRING_PARAM(TsnLowSecurityKey, tsn_low_security_key);
-			CONFIG_STORE_STRING_PARAM(TsnLowSecurityIvPrefix,
-						  tsn_low_security_iv_prefix);
-			CONFIG_STORE_INT_PARAM(TsnLowRxQueue, tsn_low_rx_queue);
-			CONFIG_STORE_INT_PARAM(TsnLowTxQueue, tsn_low_tx_queue);
-			CONFIG_STORE_INT_PARAM(TsnLowSocketPriority, tsn_low_socket_priority);
-			CONFIG_STORE_INT_PARAM(TsnLowTxThreadPriority, tsn_low_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(TsnLowRxThreadPriority, tsn_low_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(TsnLowTxThreadCpu, tsn_low_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(TsnLowRxThreadCpu, tsn_low_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(TsnLowInterface, tsn_low_interface);
-			CONFIG_STORE_MAC_PARAM(TsnLowDestination, tsn_low_destination);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowXdpEnabled, xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowXdpSkbMode, xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowXdpZcMode, xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowXdpWakeupMode, xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowXdpBusyPollMode, xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowTxTimeEnabled, tx_time_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(TsnLowIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM_CLASS(TsnLowTxTimeOffsetNS, tx_time_offset_ns);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowVid, vid);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowPcp, pcp);
+			CONFIG_STORE_ULONG_PARAM_CLASS(TsnLowNumFramesPerCycle,
+						       num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(TsnLowPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(TsnLowFrameLength, frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM_CLASS(TsnLowSecurityMode, security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM_CLASS(TsnLowSecurityAlgorithm,
+								    security_algorithm);
+			CONFIG_STORE_STRING_PARAM_CLASS(TsnLowSecurityKey, security_key);
+			CONFIG_STORE_STRING_PARAM_CLASS(TsnLowSecurityIvPrefix, security_iv_prefix);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(TsnLowRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(TsnLowInterface, interface);
+			CONFIG_STORE_MAC_PARAM_CLASS(TsnLowDestination, l2_destination);
 
-			CONFIG_STORE_BOOL_PARAM(RtcEnabled, rtc_enabled);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpEnabled, rtc_xdp_enabled);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpSkbMode, rtc_xdp_skb_mode);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpZcMode, rtc_xdp_zc_mode);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpWakeupMode, rtc_xdp_wakeup_mode);
-			CONFIG_STORE_BOOL_PARAM(RtcXdpBusyPollMode, rtc_xdp_busy_poll_mode);
-			CONFIG_STORE_BOOL_PARAM(RtcIgnoreRxErrors, rtc_ignore_rx_errors);
-			CONFIG_STORE_INT_PARAM(RtcVid, rtc_vid);
-			CONFIG_STORE_INT_PARAM(RtcPcp, rtc_pcp);
-			CONFIG_STORE_ULONG_PARAM(RtcNumFramesPerCycle, rtc_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(RtcPayloadPattern, rtc_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(RtcFrameLength, rtc_frame_length);
-			CONFIG_STORE_SECURITY_MODE_PARAM(RtcSecurityMode, rtc_security_mode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(RtcSecurityAlgorithm,
-							      rtc_security_algorithm);
-			CONFIG_STORE_STRING_PARAM(RtcSecurityKey, rtc_security_key);
-			CONFIG_STORE_STRING_PARAM(RtcSecurityIvPrefix, rtc_security_iv_prefix);
-			CONFIG_STORE_INT_PARAM(RtcRxQueue, rtc_rx_queue);
-			CONFIG_STORE_INT_PARAM(RtcTxQueue, rtc_tx_queue);
-			CONFIG_STORE_INT_PARAM(RtcSocketPriority, rtc_socket_priority);
-			CONFIG_STORE_INT_PARAM(RtcTxThreadPriority, rtc_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(RtcRxThreadPriority, rtc_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(RtcTxThreadCpu, rtc_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(RtcRxThreadCpu, rtc_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(RtcInterface, rtc_interface);
-			CONFIG_STORE_MAC_PARAM(RtcDestination, rtc_destination);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtcEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtcXdpEnabled, xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtcXdpSkbMode, xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtcXdpZcMode, xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtcXdpWakeupMode, xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtcXdpBusyPollMode, xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtcIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcVid, vid);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcPcp, pcp);
+			CONFIG_STORE_ULONG_PARAM_CLASS(RtcNumFramesPerCycle, num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(RtcPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(RtcFrameLength, frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM_CLASS(RtcSecurityMode, security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM_CLASS(RtcSecurityAlgorithm,
+								    security_algorithm);
+			CONFIG_STORE_STRING_PARAM_CLASS(RtcSecurityKey, security_key);
+			CONFIG_STORE_STRING_PARAM_CLASS(RtcSecurityIvPrefix, security_iv_prefix);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(RtcRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(RtcInterface, interface);
+			CONFIG_STORE_MAC_PARAM_CLASS(RtcDestination, l2_destination);
 
-			CONFIG_STORE_BOOL_PARAM(RtaEnabled, rta_enabled);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpEnabled, rta_xdp_enabled);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpSkbMode, rta_xdp_skb_mode);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpZcMode, rta_xdp_zc_mode);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpWakeupMode, rta_xdp_wakeup_mode);
-			CONFIG_STORE_BOOL_PARAM(RtaXdpBusyPollMode, rta_xdp_busy_poll_mode);
-			CONFIG_STORE_BOOL_PARAM(RtaIgnoreRxErrors, rta_ignore_rx_errors);
-			CONFIG_STORE_INT_PARAM(RtaVid, rta_vid);
-			CONFIG_STORE_INT_PARAM(RtaPcp, rta_pcp);
-			CONFIG_STORE_ULONG_PARAM(RtaBurstPeriodNS, rta_burst_period_ns);
-			CONFIG_STORE_ULONG_PARAM(RtaNumFramesPerCycle, rta_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(RtaPayloadPattern, rta_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(RtaFrameLength, rta_frame_length);
-			CONFIG_STORE_SECURITY_MODE_PARAM(RtaSecurityMode, rta_security_mode);
-			CONFIG_STORE_SECURITY_ALGORITHM_PARAM(RtaSecurityAlgorithm,
-							      rta_security_algorithm);
-			CONFIG_STORE_STRING_PARAM(RtaSecurityKey, rta_security_key);
-			CONFIG_STORE_STRING_PARAM(RtaSecurityIvPrefix, rta_security_iv_prefix);
-			CONFIG_STORE_INT_PARAM(RtaRxQueue, rta_rx_queue);
-			CONFIG_STORE_INT_PARAM(RtaTxQueue, rta_tx_queue);
-			CONFIG_STORE_INT_PARAM(RtaSocketPriority, rta_socket_priority);
-			CONFIG_STORE_INT_PARAM(RtaTxThreadPriority, rta_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(RtaRxThreadPriority, rta_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(RtaTxThreadCpu, rta_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(RtaRxThreadCpu, rta_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(RtaInterface, rta_interface);
-			CONFIG_STORE_MAC_PARAM(RtaDestination, rta_destination);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtaEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtaXdpEnabled, xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtaXdpSkbMode, xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtaXdpZcMode, xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtaXdpWakeupMode, xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtaXdpBusyPollMode, xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(RtaIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaVid, vid);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaPcp, pcp);
+			CONFIG_STORE_ULONG_PARAM_CLASS(RtaBurstPeriodNS, burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM_CLASS(RtaNumFramesPerCycle, num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(RtaPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(RtaFrameLength, frame_length);
+			CONFIG_STORE_SECURITY_MODE_PARAM_CLASS(RtaSecurityMode, security_mode);
+			CONFIG_STORE_SECURITY_ALGORITHM_PARAM_CLASS(RtaSecurityAlgorithm,
+								    security_algorithm);
+			CONFIG_STORE_STRING_PARAM_CLASS(RtaSecurityKey, security_key);
+			CONFIG_STORE_STRING_PARAM_CLASS(RtaSecurityIvPrefix, security_iv_prefix);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(RtaRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(RtaInterface, interface);
+			CONFIG_STORE_MAC_PARAM_CLASS(RtaDestination, l2_destination);
 
-			CONFIG_STORE_BOOL_PARAM(DcpEnabled, dcp_enabled);
-			CONFIG_STORE_BOOL_PARAM(DcpIgnoreRxErrors, dcp_ignore_rx_errors);
-			CONFIG_STORE_INT_PARAM(DcpVid, dcp_vid);
-			CONFIG_STORE_INT_PARAM(DcpPcp, dcp_pcp);
-			CONFIG_STORE_ULONG_PARAM(DcpBurstPeriodNS, dcp_burst_period_ns);
-			CONFIG_STORE_ULONG_PARAM(DcpNumFramesPerCycle, dcp_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(DcpPayloadPattern, dcp_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(DcpFrameLength, dcp_frame_length);
-			CONFIG_STORE_INT_PARAM(DcpRxQueue, dcp_rx_queue);
-			CONFIG_STORE_INT_PARAM(DcpTxQueue, dcp_tx_queue);
-			CONFIG_STORE_INT_PARAM(DcpSocketPriority, dcp_socket_priority);
-			CONFIG_STORE_INT_PARAM(DcpTxThreadPriority, dcp_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(DcpRxThreadPriority, dcp_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(DcpTxThreadCpu, dcp_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(DcpRxThreadCpu, dcp_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(DcpInterface, dcp_interface);
-			CONFIG_STORE_MAC_PARAM(DcpDestination, dcp_destination);
+			CONFIG_STORE_BOOL_PARAM_CLASS(DcpEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(DcpIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpVid, vid);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpPcp, pcp);
+			CONFIG_STORE_ULONG_PARAM_CLASS(DcpBurstPeriodNS, burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM_CLASS(DcpNumFramesPerCycle, num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(DcpPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(DcpFrameLength, frame_length);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(DcpRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(DcpInterface, interface);
+			CONFIG_STORE_MAC_PARAM_CLASS(DcpDestination, l2_destination);
 
-			CONFIG_STORE_BOOL_PARAM(LldpEnabled, lldp_enabled);
-			CONFIG_STORE_BOOL_PARAM(LldpIgnoreRxErrors, lldp_ignore_rx_errors);
-			CONFIG_STORE_ULONG_PARAM(LldpBurstPeriodNS, lldp_burst_period_ns);
-			CONFIG_STORE_ULONG_PARAM(LldpNumFramesPerCycle, lldp_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(LldpPayloadPattern, lldp_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(LldpFrameLength, lldp_frame_length);
-			CONFIG_STORE_INT_PARAM(LldpRxQueue, lldp_rx_queue);
-			CONFIG_STORE_INT_PARAM(LldpTxQueue, lldp_tx_queue);
-			CONFIG_STORE_INT_PARAM(LldpSocketPriority, lldp_socket_priority);
-			CONFIG_STORE_INT_PARAM(LldpTxThreadPriority, lldp_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(LldpRxThreadPriority, lldp_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(LldpTxThreadCpu, lldp_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(LldpRxThreadCpu, lldp_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(LldpInterface, lldp_interface);
-			CONFIG_STORE_MAC_PARAM(LldpDestination, lldp_destination);
+			CONFIG_STORE_BOOL_PARAM_CLASS(LldpEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(LldpIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM_CLASS(LldpBurstPeriodNS, burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM_CLASS(LldpNumFramesPerCycle, num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(LldpPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(LldpFrameLength, frame_length);
+			CONFIG_STORE_INT_PARAM_CLASS(LldpRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(LldpTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(LldpSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(LldpTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(LldpRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(LldpTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(LldpRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(LldpInterface, interface);
+			CONFIG_STORE_MAC_PARAM_CLASS(LldpDestination, l2_destination);
 
-			CONFIG_STORE_BOOL_PARAM(UdpHighEnabled, udp_high_enabled);
-			CONFIG_STORE_BOOL_PARAM(UdpHighIgnoreRxErrors, udp_high_ignore_rx_errors);
-			CONFIG_STORE_ULONG_PARAM(UdpHighBurstPeriodNS, udp_high_burst_period_ns);
-			CONFIG_STORE_ULONG_PARAM(UdpHighNumFramesPerCycle,
-						 udp_high_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(UdpHighPayloadPattern, udp_high_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(UdpHighFrameLength, udp_high_frame_length);
-			CONFIG_STORE_INT_PARAM(UdpHighRxQueue, udp_high_rx_queue);
-			CONFIG_STORE_INT_PARAM(UdpHighTxQueue, udp_high_tx_queue);
-			CONFIG_STORE_INT_PARAM(UdpHighSocketPriority, udp_high_socket_priority);
-			CONFIG_STORE_INT_PARAM(UdpHighTxThreadPriority,
-					       udp_high_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(UdpHighRxThreadPriority,
-					       udp_high_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(UdpHighTxThreadCpu, udp_high_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(UdpHighRxThreadCpu, udp_high_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(UdpHighInterface, udp_high_interface);
-			CONFIG_STORE_STRING_PARAM(UdpHighPort, udp_high_port);
-			CONFIG_STORE_STRING_PARAM(UdpHighDestination, udp_high_destination);
-			CONFIG_STORE_STRING_PARAM(UdpHighSource, udp_high_source);
+			CONFIG_STORE_BOOL_PARAM_CLASS(UdpHighEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(UdpHighIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM_CLASS(UdpHighBurstPeriodNS, burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM_CLASS(UdpHighNumFramesPerCycle,
+						       num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpHighPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(UdpHighFrameLength, frame_length);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpHighRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpHighTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpHighSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpHighTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpHighRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpHighTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpHighRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(UdpHighInterface, interface);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpHighPort, l3_port);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpHighDestination, l3_destination);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpHighSource, l3_source);
 
-			CONFIG_STORE_BOOL_PARAM(UdpLowEnabled, udp_low_enabled);
-			CONFIG_STORE_BOOL_PARAM(UdpLowIgnoreRxErrors, udp_low_ignore_rx_errors);
-			CONFIG_STORE_ULONG_PARAM(UdpLowBurstPeriodNS, udp_low_burst_period_ns);
-			CONFIG_STORE_ULONG_PARAM(UdpLowNumFramesPerCycle,
-						 udp_low_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(UdpLowPayloadPattern, udp_low_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(UdpLowFrameLength, udp_low_frame_length);
-			CONFIG_STORE_INT_PARAM(UdpLowRxQueue, udp_low_rx_queue);
-			CONFIG_STORE_INT_PARAM(UdpLowTxQueue, udp_low_tx_queue);
-			CONFIG_STORE_INT_PARAM(UdpLowSocketPriority, udp_low_socket_priority);
-			CONFIG_STORE_INT_PARAM(UdpLowTxThreadPriority, udp_low_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(UdpLowRxThreadPriority, udp_low_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(UdpLowTxThreadCpu, udp_low_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(UdpLowRxThreadCpu, udp_low_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(UdpLowInterface, udp_low_interface);
-			CONFIG_STORE_STRING_PARAM(UdpLowPort, udp_low_port);
-			CONFIG_STORE_STRING_PARAM(UdpLowDestination, udp_low_destination);
-			CONFIG_STORE_STRING_PARAM(UdpLowSource, udp_low_source);
+			CONFIG_STORE_BOOL_PARAM_CLASS(UdpLowEnabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(UdpLowIgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM_CLASS(UdpLowBurstPeriodNS, burst_period_ns);
+			CONFIG_STORE_ULONG_PARAM_CLASS(UdpLowNumFramesPerCycle,
+						       num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpLowPayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(UdpLowFrameLength, frame_length);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpLowRxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpLowTxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpLowSocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpLowTxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpLowRxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpLowTxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(UdpLowRxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(UdpLowInterface, interface);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpLowPort, l3_port);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpLowDestination, l3_destination);
+			CONFIG_STORE_STRING_PARAM_CLASS(UdpLowSource, l3_source);
 
-			CONFIG_STORE_STRING_PARAM(GenericL2Name, generic_l2_name);
-			CONFIG_STORE_BOOL_PARAM(GenericL2Enabled, generic_l2_enabled);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpEnabled, generic_l2_xdp_enabled);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpSkbMode, generic_l2_xdp_skb_mode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpZcMode, generic_l2_xdp_zc_mode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpWakeupMode, generic_l2_xdp_wakeup_mode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2XdpBusyPollMode,
-						generic_l2_xdp_busy_poll_mode);
-			CONFIG_STORE_BOOL_PARAM(GenericL2TxTimeEnabled, generic_l2_tx_time_enabled);
-			CONFIG_STORE_BOOL_PARAM(GenericL2IgnoreRxErrors,
-						generic_l2_ignore_rx_errors);
-			CONFIG_STORE_ULONG_PARAM(GenericL2TxTimeOffsetNS,
-						 generic_l2_tx_time_offset_ns);
-			CONFIG_STORE_INT_PARAM(GenericL2Vid, generic_l2_vid);
-			CONFIG_STORE_INT_PARAM(GenericL2Pcp, generic_l2_pcp);
-			CONFIG_STORE_ETHER_TYPE(GenericL2EtherType, generic_l2_ether_type);
-			CONFIG_STORE_ULONG_PARAM(GenericL2NumFramesPerCycle,
-						 generic_l2_num_frames_per_cycle);
-			CONFIG_STORE_STRING_PARAM(GenericL2PayloadPattern,
-						  generic_l2_payload_pattern);
-			CONFIG_STORE_ULONG_PARAM(GenericL2FrameLength, generic_l2_frame_length);
-			CONFIG_STORE_INT_PARAM(GenericL2RxQueue, generic_l2_rx_queue);
-			CONFIG_STORE_INT_PARAM(GenericL2TxQueue, generic_l2_tx_queue);
-			CONFIG_STORE_INT_PARAM(GenericL2SocketPriority, generic_l2_socket_priority);
-			CONFIG_STORE_INT_PARAM(GenericL2TxThreadPriority,
-					       generic_l2_tx_thread_priority);
-			CONFIG_STORE_INT_PARAM(GenericL2RxThreadPriority,
-					       generic_l2_rx_thread_priority);
-			CONFIG_STORE_INT_PARAM(GenericL2TxThreadCpu, generic_l2_tx_thread_cpu);
-			CONFIG_STORE_INT_PARAM(GenericL2RxThreadCpu, generic_l2_rx_thread_cpu);
-			CONFIG_STORE_INTERFACE_PARAM(GenericL2Interface, generic_l2_interface);
-			CONFIG_STORE_MAC_PARAM(GenericL2Destination, generic_l2_destination);
+			CONFIG_STORE_STRING_PARAM_CLASS(GenericL2Name, name);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2Enabled, enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2XdpEnabled, xdp_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2XdpSkbMode, xdp_skb_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2XdpZcMode, xdp_zc_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2XdpWakeupMode, xdp_wakeup_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2XdpBusyPollMode, xdp_busy_poll_mode);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2TxTimeEnabled, tx_time_enabled);
+			CONFIG_STORE_BOOL_PARAM_CLASS(GenericL2IgnoreRxErrors, ignore_rx_errors);
+			CONFIG_STORE_ULONG_PARAM_CLASS(GenericL2TxTimeOffsetNS, tx_time_offset_ns);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2Vid, vid);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2Pcp, pcp);
+			CONFIG_STORE_ETHER_TYPE_CLASS(GenericL2EtherType, ether_type);
+			CONFIG_STORE_ULONG_PARAM_CLASS(GenericL2NumFramesPerCycle,
+						       num_frames_per_cycle);
+			CONFIG_STORE_STRING_PARAM_CLASS(GenericL2PayloadPattern, payload_pattern);
+			CONFIG_STORE_ULONG_PARAM_CLASS(GenericL2FrameLength, frame_length);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2RxQueue, rx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2TxQueue, tx_queue);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2SocketPriority, socket_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2TxThreadPriority, tx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2RxThreadPriority, rx_thread_priority);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2TxThreadCpu, tx_thread_cpu);
+			CONFIG_STORE_INT_PARAM_CLASS(GenericL2RxThreadCpu, rx_thread_cpu);
+			CONFIG_STORE_INTERFACE_PARAM_CLASS(GenericL2Interface, interface);
+			CONFIG_STORE_MAC_PARAM_CLASS(GenericL2Destination, l3_destination);
 
 			CONFIG_STORE_ULONG_PARAM(LogThreadPeriodNS, log_thread_period_ns);
 			CONFIG_STORE_INT_PARAM(LogThreadPriority, log_thread_priority);
@@ -408,6 +469,8 @@ err_yaml:
 
 void config_print_values(void)
 {
+	const struct traffic_class_config *conf;
+
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
 	printf("ApplicationClockId=%s\n",
@@ -421,289 +484,282 @@ void config_print_values(void)
 	printf("ApplicationXdpProgram=%s\n", app_config.application_xdp_program);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("TsnHighEnabled=%s\n", app_config.tsn_high_enabled ? "True" : "False");
-	printf("TsnHighRxMirrorEnabled=%s\n",
-	       app_config.tsn_high_rx_mirror_enabled ? "True" : "False");
-	printf("TsnHighXdpEnabled=%s\n", app_config.tsn_high_xdp_enabled ? "True" : "False");
-	printf("TsnHighXdpSkbMode=%s\n", app_config.tsn_high_xdp_skb_mode ? "True" : "False");
-	printf("TsnHighXdpZcMode=%s\n", app_config.tsn_high_xdp_zc_mode ? "True" : "False");
-	printf("TsnHighXdpWakeupMode=%s\n", app_config.tsn_high_xdp_wakeup_mode ? "True" : "False");
-	printf("TsnHighXdpBusyPollMode=%s\n",
-	       app_config.tsn_high_xdp_busy_poll_mode ? "True" : "False");
-	printf("TsnHighTxTimeEnabled=%s\n", app_config.tsn_high_tx_time_enabled ? "True" : "False");
-	printf("TsnHighIgnoreRxErrors=%s\n",
-	       app_config.tsn_high_ignore_rx_errors ? "True" : "False");
-	printf("TsnHighTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_high_tx_time_offset_ns);
-	printf("TsnHighVid=%d\n", app_config.tsn_high_vid);
-	printf("TsnHighPcp=%d\n", app_config.tsn_high_pcp);
-	printf("TsnHighNumFramesPerCycle=%zu\n", app_config.tsn_high_num_frames_per_cycle);
+
+	conf = &app_config.classes[TSN_HIGH_FRAME_TYPE];
+	printf("TsnHighEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("TsnHighRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("TsnHighXdpEnabled=%s\n", conf->xdp_enabled ? "True" : "False");
+	printf("TsnHighXdpSkbMode=%s\n", conf->xdp_skb_mode ? "True" : "False");
+	printf("TsnHighXdpZcMode=%s\n", conf->xdp_zc_mode ? "True" : "False");
+	printf("TsnHighXdpWakeupMode=%s\n", conf->xdp_wakeup_mode ? "True" : "False");
+	printf("TsnHighXdpBusyPollMode=%s\n", conf->xdp_busy_poll_mode ? "True" : "False");
+	printf("TsnHighTxTimeEnabled=%s\n", conf->tx_time_enabled ? "True" : "False");
+	printf("TsnHighIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("TsnHighTxTimeOffsetNS=%" PRIu64 "\n", conf->tx_time_offset_ns);
+	printf("TsnHighVid=%d\n", conf->vid);
+	printf("TsnHighPcp=%d\n", conf->pcp);
+	printf("TsnHighNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("TsnHighPayloadPattern=");
-	print_payload_pattern(app_config.tsn_high_payload_pattern,
-			      app_config.tsn_high_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("TsnHighFrameLength=%zu\n", app_config.tsn_high_frame_length);
-	printf("TsnHighSecurityMode=%s\n",
-	       security_mode_to_string(app_config.tsn_high_security_mode));
+	printf("TsnHighFrameLength=%zu\n", conf->frame_length);
+	printf("TsnHighSecurityMode=%s\n", security_mode_to_string(conf->security_mode));
 	printf("TsnHighSecurityAlgorithm=%s\n",
-	       security_algorithm_to_string(app_config.tsn_high_security_algorithm));
-	printf("TsnHighSecurityKey=%s\n", app_config.tsn_high_security_key);
-	printf("TsnHighSecurityIvPrefix=%s\n", app_config.tsn_high_security_iv_prefix);
-	printf("TsnHighRxQueue=%d\n", app_config.tsn_high_rx_queue);
-	printf("TsnHighTxQueue=%d\n", app_config.tsn_high_tx_queue);
-	printf("TsnHighSocketPriority=%d\n", app_config.tsn_high_socket_priority);
-	printf("TsnHighTxThreadPriority=%d\n", app_config.tsn_high_tx_thread_priority);
-	printf("TsnHighRxThreadPriority=%d\n", app_config.tsn_high_rx_thread_priority);
-	printf("TsnHighTxThreadCpu=%d\n", app_config.tsn_high_tx_thread_cpu);
-	printf("TsnHighRxThreadCpu=%d\n", app_config.tsn_high_rx_thread_cpu);
-	printf("TsnHighInterface=%s\n", app_config.tsn_high_interface);
+	       security_algorithm_to_string(conf->security_algorithm));
+	printf("TsnHighSecurityKey=%s\n", conf->security_key);
+	printf("TsnHighSecurityIvPrefix=%s\n", conf->security_iv_prefix);
+	printf("TsnHighRxQueue=%d\n", conf->rx_queue);
+	printf("TsnHighTxQueue=%d\n", conf->tx_queue);
+	printf("TsnHighSocketPriority=%d\n", conf->socket_priority);
+	printf("TsnHighTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("TsnHighRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("TsnHighTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("TsnHighRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("TsnHighInterface=%s\n", conf->interface);
 	printf("TsnHighDestination=");
-	print_mac_address(app_config.tsn_high_destination);
+	print_mac_address(conf->l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("TsnLowEnabled=%s\n", app_config.tsn_low_enabled ? "True" : "False");
-	printf("TsnLowRxMirrorEnabled=%s\n",
-	       app_config.tsn_low_rx_mirror_enabled ? "True" : "False");
-	printf("TsnLowXdpEnabled=%s\n", app_config.tsn_low_xdp_enabled ? "True" : "False");
-	printf("TsnLowXdpSkbMode=%s\n", app_config.tsn_low_xdp_skb_mode ? "True" : "False");
-	printf("TsnLowXdpZcMode=%s\n", app_config.tsn_low_xdp_zc_mode ? "True" : "False");
-	printf("TsnLowXdpWakeupMode=%s\n", app_config.tsn_low_xdp_wakeup_mode ? "True" : "False");
-	printf("TsnLowXdpBusyPollMode=%s\n",
-	       app_config.tsn_low_xdp_busy_poll_mode ? "True" : "False");
-	printf("TsnLowTxTimeEnabled=%s\n", app_config.tsn_low_tx_time_enabled ? "True" : "False");
-	printf("TsnLowIgnoreRxErrors=%s\n", app_config.tsn_low_ignore_rx_errors ? "True" : "False");
-	printf("TsnLowTxTimeOffsetNS=%" PRIu64 "\n", app_config.tsn_low_tx_time_offset_ns);
-	printf("TsnLowVid=%d\n", app_config.tsn_low_vid);
-	printf("TsnLowPcp=%d\n", app_config.tsn_low_pcp);
-	printf("TsnLowNumFramesPerCycle=%zu\n", app_config.tsn_low_num_frames_per_cycle);
+
+	conf = &app_config.classes[TSN_LOW_FRAME_TYPE];
+	printf("TsnLowEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("TsnLowRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("TsnLowXdpEnabled=%s\n", conf->xdp_enabled ? "True" : "False");
+	printf("TsnLowXdpSkbMode=%s\n", conf->xdp_skb_mode ? "True" : "False");
+	printf("TsnLowXdpZcMode=%s\n", conf->xdp_zc_mode ? "True" : "False");
+	printf("TsnLowXdpWakeupMode=%s\n", conf->xdp_wakeup_mode ? "True" : "False");
+	printf("TsnLowXdpBusyPollMode=%s\n", conf->xdp_busy_poll_mode ? "True" : "False");
+	printf("TsnLowTxTimeEnabled=%s\n", conf->tx_time_enabled ? "True" : "False");
+	printf("TsnLowIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("TsnLowTxTimeOffsetNS=%" PRIu64 "\n", conf->tx_time_offset_ns);
+	printf("TsnLowVid=%d\n", conf->vid);
+	printf("TsnLowPcp=%d\n", conf->pcp);
+	printf("TsnLowNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("TsnLowPayloadPattern=");
-	print_payload_pattern(app_config.tsn_low_payload_pattern,
-			      app_config.tsn_low_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("TsnLowFrameLength=%zu\n", app_config.tsn_low_frame_length);
-	printf("TsnLowSecurityMode=%s\n",
-	       security_mode_to_string(app_config.tsn_low_security_mode));
+	printf("TsnLowFrameLength=%zu\n", conf->frame_length);
+	printf("TsnLowSecurityMode=%s\n", security_mode_to_string(conf->security_mode));
 	printf("TsnLowSecurityAlgorithm=%s\n",
-	       security_algorithm_to_string(app_config.tsn_low_security_algorithm));
-	printf("TsnLowSecurityKey=%s\n", app_config.tsn_low_security_key);
-	printf("TsnLowSecurityIvPrefix=%s\n", app_config.tsn_low_security_iv_prefix);
-	printf("TsnLowRxQueue=%d\n", app_config.tsn_low_rx_queue);
-	printf("TsnLowTxQueue=%d\n", app_config.tsn_low_tx_queue);
-	printf("TsnLowSocketPriority=%d\n", app_config.tsn_low_socket_priority);
-	printf("TsnLowTxThreadPriority=%d\n", app_config.tsn_low_tx_thread_priority);
-	printf("TsnLowRxThreadPriority=%d\n", app_config.tsn_low_rx_thread_priority);
-	printf("TsnLowTxThreadCpu=%d\n", app_config.tsn_low_tx_thread_cpu);
-	printf("TsnLowRxThreadCpu=%d\n", app_config.tsn_low_rx_thread_cpu);
-	printf("TsnLowInterface=%s\n", app_config.tsn_low_interface);
+	       security_algorithm_to_string(conf->security_algorithm));
+	printf("TsnLowSecurityKey=%s\n", conf->security_key);
+	printf("TsnLowSecurityIvPrefix=%s\n", conf->security_iv_prefix);
+	printf("TsnLowRxQueue=%d\n", conf->rx_queue);
+	printf("TsnLowTxQueue=%d\n", conf->tx_queue);
+	printf("TsnLowSocketPriority=%d\n", conf->socket_priority);
+	printf("TsnLowTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("TsnLowRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("TsnLowTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("TsnLowRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("TsnLowInterface=%s\n", conf->interface);
 	printf("TsnLowDestination=");
-	print_mac_address(app_config.tsn_low_destination);
+	print_mac_address(conf->l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("RtcEnabled=%s\n", app_config.rtc_enabled ? "True" : "False");
-	printf("RtcRxMirrorEnabled=%s\n", app_config.rtc_rx_mirror_enabled ? "True" : "False");
-	printf("RtcXdpEnabled=%s\n", app_config.rtc_xdp_enabled ? "True" : "False");
-	printf("RtcXdpSkbMode=%s\n", app_config.rtc_xdp_skb_mode ? "True" : "False");
-	printf("RtcXdpZcMode=%s\n", app_config.rtc_xdp_zc_mode ? "True" : "False");
-	printf("RtcXdpWakeupMode=%s\n", app_config.rtc_xdp_wakeup_mode ? "True" : "False");
-	printf("RtcXdpBusyPollMode=%s\n", app_config.rtc_xdp_busy_poll_mode ? "True" : "False");
-	printf("RtcIgnoreRxErrors=%s\n", app_config.rtc_ignore_rx_errors ? "True" : "False");
-	printf("RtcVid=%d\n", app_config.rtc_vid);
-	printf("RtcPcp=%d\n", app_config.rtc_pcp);
-	printf("RtcNumFramesPerCycle=%zu\n", app_config.rtc_num_frames_per_cycle);
+
+	conf = &app_config.classes[RTC_FRAME_TYPE];
+	printf("RtcEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("RtcRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("RtcXdpEnabled=%s\n", conf->xdp_enabled ? "True" : "False");
+	printf("RtcXdpSkbMode=%s\n", conf->xdp_skb_mode ? "True" : "False");
+	printf("RtcXdpZcMode=%s\n", conf->xdp_zc_mode ? "True" : "False");
+	printf("RtcXdpWakeupMode=%s\n", conf->xdp_wakeup_mode ? "True" : "False");
+	printf("RtcXdpBusyPollMode=%s\n", conf->xdp_busy_poll_mode ? "True" : "False");
+	printf("RtcIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("RtcVid=%d\n", conf->vid);
+	printf("RtcPcp=%d\n", conf->pcp);
+	printf("RtcNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("RtcPayloadPattern=");
-	print_payload_pattern(app_config.rtc_payload_pattern,
-			      app_config.rtc_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("RtcFrameLength=%zu\n", app_config.rtc_frame_length);
-	printf("RtcSecurityMode=%s\n", security_mode_to_string(app_config.rtc_security_mode));
-	printf("RtcSecurityAlgorithm=%s\n",
-	       security_algorithm_to_string(app_config.rtc_security_algorithm));
-	printf("RtcSecurityKey=%s\n", app_config.rtc_security_key);
-	printf("RtcSecurityIvPrefix=%s\n", app_config.rtc_security_iv_prefix);
-	printf("RtcRxQueue=%d\n", app_config.rtc_rx_queue);
-	printf("RtcTxQueue=%d\n", app_config.rtc_tx_queue);
-	printf("RtcSocketPriority=%d\n", app_config.rtc_socket_priority);
-	printf("RtcTxThreadPriority=%d\n", app_config.rtc_tx_thread_priority);
-	printf("RtcRxThreadPriority=%d\n", app_config.rtc_rx_thread_priority);
-	printf("RtcTxThreadCpu=%d\n", app_config.rtc_tx_thread_cpu);
-	printf("RtcRxThreadCpu=%d\n", app_config.rtc_rx_thread_cpu);
-	printf("RtcInterface=%s\n", app_config.rtc_interface);
+	printf("RtcFrameLength=%zu\n", conf->frame_length);
+	printf("RtcSecurityMode=%s\n", security_mode_to_string(conf->security_mode));
+	printf("RtcSecurityAlgorithm=%s\n", security_algorithm_to_string(conf->security_algorithm));
+	printf("RtcSecurityKey=%s\n", conf->security_key);
+	printf("RtcSecurityIvPrefix=%s\n", conf->security_iv_prefix);
+	printf("RtcRxQueue=%d\n", conf->rx_queue);
+	printf("RtcTxQueue=%d\n", conf->tx_queue);
+	printf("RtcSocketPriority=%d\n", conf->socket_priority);
+	printf("RtcTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("RtcRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("RtcTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("RtcRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("RtcInterface=%s\n", conf->interface);
 	printf("RtcDestination=");
-	print_mac_address(app_config.rtc_destination);
+	print_mac_address(conf->l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("RtaEnabled=%s\n", app_config.rta_enabled ? "True" : "False");
-	printf("RtaRxMirrorEnabled=%s\n", app_config.rta_rx_mirror_enabled ? "True" : "False");
-	printf("RtaXdpEnabled=%s\n", app_config.rta_xdp_enabled ? "True" : "False");
-	printf("RtaXdpSkbMode=%s\n", app_config.rta_xdp_skb_mode ? "True" : "False");
-	printf("RtaXdpZcMode=%s\n", app_config.rta_xdp_zc_mode ? "True" : "False");
-	printf("RtaXdpWakeupMode=%s\n", app_config.rta_xdp_wakeup_mode ? "True" : "False");
-	printf("RtaXdpBusyPollMode=%s\n", app_config.rta_xdp_busy_poll_mode ? "True" : "False");
-	printf("RtaIgnoreRxErrors=%s\n", app_config.rta_ignore_rx_errors ? "True" : "False");
-	printf("RtaVid=%d\n", app_config.rta_vid);
-	printf("RtaPcp=%d\n", app_config.rta_pcp);
-	printf("RtaBurstPeriodNS=%" PRIu64 "\n", app_config.rta_burst_period_ns);
-	printf("RtaNumFramesPerCycle=%zu\n", app_config.rta_num_frames_per_cycle);
+
+	conf = &app_config.classes[RTA_FRAME_TYPE];
+	printf("RtaEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("RtaRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("RtaXdpEnabled=%s\n", conf->xdp_enabled ? "True" : "False");
+	printf("RtaXdpSkbMode=%s\n", conf->xdp_skb_mode ? "True" : "False");
+	printf("RtaXdpZcMode=%s\n", conf->xdp_zc_mode ? "True" : "False");
+	printf("RtaXdpWakeupMode=%s\n", conf->xdp_wakeup_mode ? "True" : "False");
+	printf("RtaXdpBusyPollMode=%s\n", conf->xdp_busy_poll_mode ? "True" : "False");
+	printf("RtaIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("RtaVid=%d\n", conf->vid);
+	printf("RtaPcp=%d\n", conf->pcp);
+	printf("RtaBurstPeriodNS=%" PRIu64 "\n", conf->burst_period_ns);
+	printf("RtaNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("RtaPayloadPattern=");
-	print_payload_pattern(app_config.rta_payload_pattern,
-			      app_config.rta_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("RtaFrameLength=%zu\n", app_config.rta_frame_length);
-	printf("RtaSecurityMode=%s\n", security_mode_to_string(app_config.rta_security_mode));
-	printf("RtaSecurityAlgorithm=%s\n",
-	       security_algorithm_to_string(app_config.rta_security_algorithm));
-	printf("RtaSecurityKey=%s\n", app_config.rta_security_key);
-	printf("RtaSecurityIvPrefix=%s\n", app_config.rta_security_iv_prefix);
-	printf("RtaRxQueue=%d\n", app_config.rta_rx_queue);
-	printf("RtaTxQueue=%d\n", app_config.rta_tx_queue);
-	printf("RtaSocketPriority=%d\n", app_config.rta_socket_priority);
-	printf("RtaTxThreadPriority=%d\n", app_config.rta_tx_thread_priority);
-	printf("RtaRxThreadPriority=%d\n", app_config.rta_rx_thread_priority);
-	printf("RtaTxThreadCpu=%d\n", app_config.rta_tx_thread_cpu);
-	printf("RtaRxThreadCpu=%d\n", app_config.rta_rx_thread_cpu);
-	printf("RtaInterface=%s\n", app_config.rta_interface);
+	printf("RtaFrameLength=%zu\n", conf->frame_length);
+	printf("RtaSecurityMode=%s\n", security_mode_to_string(conf->security_mode));
+	printf("RtaSecurityAlgorithm=%s\n", security_algorithm_to_string(conf->security_algorithm));
+	printf("RtaSecurityKey=%s\n", conf->security_key);
+	printf("RtaSecurityIvPrefix=%s\n", conf->security_iv_prefix);
+	printf("RtaRxQueue=%d\n", conf->rx_queue);
+	printf("RtaTxQueue=%d\n", conf->tx_queue);
+	printf("RtaSocketPriority=%d\n", conf->socket_priority);
+	printf("RtaTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("RtaRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("RtaTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("RtaRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("RtaInterface=%s\n", conf->interface);
 	printf("RtaDestination=");
-	print_mac_address(app_config.rta_destination);
+	print_mac_address(conf->l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("DcpEnabled=%s\n", app_config.dcp_enabled ? "True" : "False");
-	printf("DcpRxMirrorEnabled=%s\n", app_config.dcp_rx_mirror_enabled ? "True" : "False");
-	printf("DcpIgnoreRxErrors=%s\n", app_config.dcp_ignore_rx_errors ? "True" : "False");
-	printf("DcpVid=%d\n", app_config.dcp_vid);
-	printf("DcpPcp=%d\n", app_config.dcp_pcp);
-	printf("DcpBurstPeriodNS=%" PRIu64 "\n", app_config.dcp_burst_period_ns);
-	printf("DcpNumFramesPerCycle=%zu\n", app_config.dcp_num_frames_per_cycle);
+
+	conf = &app_config.classes[DCP_FRAME_TYPE];
+	printf("DcpEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("DcpRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("DcpIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("DcpVid=%d\n", conf->vid);
+	printf("DcpPcp=%d\n", conf->pcp);
+	printf("DcpBurstPeriodNS=%" PRIu64 "\n", conf->burst_period_ns);
+	printf("DcpNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("DcpPayloadPattern=");
-	print_payload_pattern(app_config.dcp_payload_pattern,
-			      app_config.dcp_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("DcpFrameLength=%zu\n", app_config.dcp_frame_length);
-	printf("DcpRxQueue=%d\n", app_config.dcp_rx_queue);
-	printf("DcpTxQueue=%d\n", app_config.dcp_tx_queue);
-	printf("DcpSocketPriority=%d\n", app_config.dcp_socket_priority);
-	printf("DcpTxThreadPriority=%d\n", app_config.dcp_tx_thread_priority);
-	printf("DcpRxThreadPriority=%d\n", app_config.dcp_rx_thread_priority);
-	printf("DcpTxThreadCpu=%d\n", app_config.dcp_tx_thread_cpu);
-	printf("DcpRxThreadCpu=%d\n", app_config.dcp_rx_thread_cpu);
-	printf("DcpInterface=%s\n", app_config.dcp_interface);
+	printf("DcpFrameLength=%zu\n", conf->frame_length);
+	printf("DcpRxQueue=%d\n", conf->rx_queue);
+	printf("DcpTxQueue=%d\n", conf->tx_queue);
+	printf("DcpSocketPriority=%d\n", conf->socket_priority);
+	printf("DcpTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("DcpRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("DcpTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("DcpRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("DcpInterface=%s\n", conf->interface);
 	printf("DcpDestination=");
-	print_mac_address(app_config.dcp_destination);
+	print_mac_address(conf->l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("LldpEnabled=%s\n", app_config.lldp_enabled ? "True" : "False");
-	printf("LldpRxMirrorEnabled=%s\n", app_config.lldp_rx_mirror_enabled ? "True" : "False");
-	printf("LldpIgnoreRxErrors=%s\n", app_config.lldp_ignore_rx_errors ? "True" : "False");
-	printf("LldpBurstPeriodNS=%" PRIu64 "\n", app_config.lldp_burst_period_ns);
-	printf("LldpNumFramesPerCycle=%zu\n", app_config.lldp_num_frames_per_cycle);
+
+	conf = &app_config.classes[LLDP_FRAME_TYPE];
+	printf("LldpEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("LldpRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("LldpIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("LldpBurstPeriodNS=%" PRIu64 "\n", conf->burst_period_ns);
+	printf("LldpNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("LldpPayloadPattern=");
-	print_payload_pattern(app_config.lldp_payload_pattern,
-			      app_config.lldp_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("LldpFrameLength=%zu\n", app_config.lldp_frame_length);
-	printf("LldpRxQueue=%d\n", app_config.lldp_rx_queue);
-	printf("LldpTxQueue=%d\n", app_config.lldp_tx_queue);
-	printf("LldpSocketPriority=%d\n", app_config.lldp_socket_priority);
-	printf("LldpTxThreadPriority=%d\n", app_config.lldp_tx_thread_priority);
-	printf("LldpRxThreadPriority=%d\n", app_config.lldp_rx_thread_priority);
-	printf("LldpTxThreadCpu=%d\n", app_config.lldp_tx_thread_cpu);
-	printf("LldpRxThreadCpu=%d\n", app_config.lldp_rx_thread_cpu);
-	printf("LldpInterface=%s\n", app_config.lldp_interface);
+	printf("LldpFrameLength=%zu\n", conf->frame_length);
+	printf("LldpRxQueue=%d\n", conf->rx_queue);
+	printf("LldpTxQueue=%d\n", conf->tx_queue);
+	printf("LldpSocketPriority=%d\n", conf->socket_priority);
+	printf("LldpTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("LldpRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("LldpTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("LldpRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("LldpInterface=%s\n", conf->interface);
 	printf("LldpDestination=");
-	print_mac_address(app_config.lldp_destination);
+	print_mac_address(conf->l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("UdpHighEnabled=%s\n", app_config.udp_high_enabled ? "True" : "False");
-	printf("UdpHighRxMirrorEnabled=%s\n",
-	       app_config.udp_high_rx_mirror_enabled ? "True" : "False");
-	printf("UdpHighIgnoreRxErrors=%s\n",
-	       app_config.udp_high_ignore_rx_errors ? "True" : "False");
-	printf("UdpHighBurstPeriodNS=%" PRIu64 "\n", app_config.udp_high_burst_period_ns);
-	printf("UdpHighNumFramesPerCycle=%zu\n", app_config.udp_high_num_frames_per_cycle);
+
+	conf = &app_config.classes[UDP_HIGH_FRAME_TYPE];
+	printf("UdpHighEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("UdpHighRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("UdpHighIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("UdpHighBurstPeriodNS=%" PRIu64 "\n", conf->burst_period_ns);
+	printf("UdpHighNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("UdpHighPayloadPattern=");
-	print_payload_pattern(app_config.udp_high_payload_pattern,
-			      app_config.udp_high_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("UdpHighFrameLength=%zu\n", app_config.udp_high_frame_length);
-	printf("UdpHighRxQueue=%d\n", app_config.udp_high_rx_queue);
-	printf("UdpHighTxQueue=%d\n", app_config.udp_high_tx_queue);
-	printf("UdpHighSocketPriority=%d\n", app_config.udp_high_socket_priority);
-	printf("UdpHighTxThreadPriority=%d\n", app_config.udp_high_tx_thread_priority);
-	printf("UdpHighRxThreadPriority=%d\n", app_config.udp_high_rx_thread_priority);
-	printf("UdpHighTxThreadCpu=%d\n", app_config.udp_high_tx_thread_cpu);
-	printf("UdpHighRxThreadCpu=%d\n", app_config.udp_high_rx_thread_cpu);
-	printf("UdpHighInterface=%s\n", app_config.udp_high_interface);
-	printf("UdpHighPort=%s\n", app_config.udp_high_port);
-	printf("UdpHighDestination=%s\n", app_config.udp_high_destination);
-	printf("UdpHighSource=%s\n", app_config.udp_high_source);
+	printf("UdpHighFrameLength=%zu\n", conf->frame_length);
+	printf("UdpHighRxQueue=%d\n", conf->rx_queue);
+	printf("UdpHighTxQueue=%d\n", conf->tx_queue);
+	printf("UdpHighSocketPriority=%d\n", conf->socket_priority);
+	printf("UdpHighTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("UdpHighRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("UdpHighTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("UdpHighRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("UdpHighInterface=%s\n", conf->interface);
+	printf("UdpHighPort=%s\n", conf->l3_port);
+	printf("UdpHighDestination=%s\n", conf->l3_destination);
+	printf("UdpHighSource=%s\n", conf->l3_source);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("UdpLowEnabled=%s\n", app_config.udp_low_enabled ? "True" : "False");
-	printf("UdpLowRxMirrorEnabled=%s\n",
-	       app_config.udp_low_rx_mirror_enabled ? "True" : "False");
-	printf("UdpLowIgnoreRxErrors=%s\n", app_config.udp_low_ignore_rx_errors ? "True" : "False");
-	printf("UdpLowBurstPeriodNS=%" PRIu64 "\n", app_config.udp_low_burst_period_ns);
-	printf("UdpLowNumFramesPerCycle=%zu\n", app_config.udp_low_num_frames_per_cycle);
+
+	conf = &app_config.classes[UDP_LOW_FRAME_TYPE];
+	printf("UdpLowEnabled=%s\n", conf->enabled ? "True" : "False");
+	printf("UdpLowRxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("UdpLowIgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("UdpLowBurstPeriodNS=%" PRIu64 "\n", conf->burst_period_ns);
+	printf("UdpLowNumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("UdpLowPayloadPattern=");
-	print_payload_pattern(app_config.udp_low_payload_pattern,
-			      app_config.udp_low_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("UdpLowFrameLength=%zu\n", app_config.udp_low_frame_length);
-	printf("UdpLowRxQueue=%d\n", app_config.udp_low_rx_queue);
-	printf("UdpLowTxQueue=%d\n", app_config.udp_low_tx_queue);
-	printf("UdpLowSocketPriority=%d\n", app_config.udp_low_socket_priority);
-	printf("UdpLowTxThreadPriority=%d\n", app_config.udp_low_tx_thread_priority);
-	printf("UdpLowRxThreadPriority=%d\n", app_config.udp_low_rx_thread_priority);
-	printf("UdpLowTxThreadCpu=%d\n", app_config.udp_low_tx_thread_cpu);
-	printf("UdpLowRxThreadCpu=%d\n", app_config.udp_low_rx_thread_cpu);
-	printf("UdpLowInterface=%s\n", app_config.udp_low_interface);
-	printf("UdpLowPort=%s\n", app_config.udp_low_port);
-	printf("UdpLowDestination=%s\n", app_config.udp_low_destination);
-	printf("UdpLowSource=%s\n", app_config.udp_low_source);
+	printf("UdpLowFrameLength=%zu\n", conf->frame_length);
+	printf("UdpLowRxQueue=%d\n", conf->rx_queue);
+	printf("UdpLowTxQueue=%d\n", conf->tx_queue);
+	printf("UdpLowSocketPriority=%d\n", conf->socket_priority);
+	printf("UdpLowTxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("UdpLowRxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("UdpLowTxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("UdpLowRxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("UdpLowInterface=%s\n", conf->interface);
+	printf("UdpLowPort=%s\n", conf->l3_port);
+	printf("UdpLowDestination=%s\n", conf->l3_destination);
+	printf("UdpLowSource=%s\n", conf->l3_source);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
-	printf("GenericL2Name=%s\n", app_config.generic_l2_name);
-	printf("GenericL2Enabled=%s\n", app_config.generic_l2_enabled ? "True" : "False");
-	printf("GenericL2RxMirrorEnabled=%s\n",
-	       app_config.generic_l2_rx_mirror_enabled ? "True" : "False");
-	printf("GenericL2XdpEnabled=%s\n", app_config.generic_l2_xdp_enabled ? "True" : "False");
-	printf("GenericL2XdpSkbMode=%s\n", app_config.generic_l2_xdp_skb_mode ? "True" : "False");
-	printf("GenericL2XdpZcMode=%s\n", app_config.generic_l2_xdp_zc_mode ? "True" : "False");
-	printf("GenericL2XdpWakeupMode=%s\n",
-	       app_config.generic_l2_xdp_wakeup_mode ? "True" : "False");
-	printf("GenericL2XdpBusyPollMode=%s\n",
-	       app_config.generic_l2_xdp_busy_poll_mode ? "True" : "False");
-	printf("GenericL2TxTimeEnabled=%s\n",
-	       app_config.generic_l2_tx_time_enabled ? "True" : "False");
-	printf("GenericL2IgnoreRxErrors=%s\n",
-	       app_config.generic_l2_ignore_rx_errors ? "True" : "False");
-	printf("GenericL2TxTimeOffsetNS=%" PRIu64 "\n", app_config.generic_l2_tx_time_offset_ns);
-	printf("GenericL2Vid=%d\n", app_config.generic_l2_vid);
-	printf("GenericL2Pcp=%d\n", app_config.generic_l2_pcp);
-	printf("GenericL2EtherType=0x%04x\n", app_config.generic_l2_ether_type);
-	printf("GenericL2NumFramesPerCycle=%zu\n", app_config.generic_l2_num_frames_per_cycle);
+
+	conf = &app_config.classes[GENERICL2_FRAME_TYPE];
+	printf("GenericL2Name=%s\n", conf->name);
+	printf("GenericL2Enabled=%s\n", conf->enabled ? "True" : "False");
+	printf("GenericL2RxMirrorEnabled=%s\n", conf->rx_mirror_enabled ? "True" : "False");
+	printf("GenericL2XdpEnabled=%s\n", conf->xdp_enabled ? "True" : "False");
+	printf("GenericL2XdpSkbMode=%s\n", conf->xdp_skb_mode ? "True" : "False");
+	printf("GenericL2XdpZcMode=%s\n", conf->xdp_zc_mode ? "True" : "False");
+	printf("GenericL2XdpWakeupMode=%s\n", conf->xdp_wakeup_mode ? "True" : "False");
+	printf("GenericL2XdpBusyPollMode=%s\n", conf->xdp_busy_poll_mode ? "True" : "False");
+	printf("GenericL2TxTimeEnabled=%s\n", conf->tx_time_enabled ? "True" : "False");
+	printf("GenericL2IgnoreRxErrors=%s\n", conf->ignore_rx_errors ? "True" : "False");
+	printf("GenericL2TxTimeOffsetNS=%" PRIu64 "\n", conf->tx_time_offset_ns);
+	printf("GenericL2Vid=%d\n", conf->vid);
+	printf("GenericL2Pcp=%d\n", conf->pcp);
+	printf("GenericL2EtherType=0x%04x\n", conf->ether_type);
+	printf("GenericL2NumFramesPerCycle=%zu\n", conf->num_frames_per_cycle);
 	printf("GenericL2PayloadPattern=");
-	print_payload_pattern(app_config.generic_l2_payload_pattern,
-			      app_config.generic_l2_payload_pattern_length);
+	print_payload_pattern(conf->payload_pattern, conf->payload_pattern_length);
 	printf("\n");
-	printf("GenericL2FrameLength=%zu\n", app_config.generic_l2_frame_length);
-	printf("GenericL2RxQueue=%d\n", app_config.generic_l2_rx_queue);
-	printf("GenericL2TxQueue=%d\n", app_config.generic_l2_tx_queue);
-	printf("GenericL2SocketPriority=%d\n", app_config.generic_l2_socket_priority);
-	printf("GenericL2TxThreadPriority=%d\n", app_config.generic_l2_tx_thread_priority);
-	printf("GenericL2RxThreadPriority=%d\n", app_config.generic_l2_rx_thread_priority);
-	printf("GenericL2TxThreadCpu=%d\n", app_config.generic_l2_tx_thread_cpu);
-	printf("GenericL2RxThreadCpu=%d\n", app_config.generic_l2_rx_thread_cpu);
-	printf("GenericL2Interface=%s\n", app_config.generic_l2_interface);
+	printf("GenericL2FrameLength=%zu\n", conf->frame_length);
+	printf("GenericL2RxQueue=%d\n", conf->rx_queue);
+	printf("GenericL2TxQueue=%d\n", conf->tx_queue);
+	printf("GenericL2SocketPriority=%d\n", conf->socket_priority);
+	printf("GenericL2TxThreadPriority=%d\n", conf->tx_thread_priority);
+	printf("GenericL2RxThreadPriority=%d\n", conf->rx_thread_priority);
+	printf("GenericL2TxThreadCpu=%d\n", conf->tx_thread_cpu);
+	printf("GenericL2RxThreadCpu=%d\n", conf->rx_thread_cpu);
+	printf("GenericL2Interface=%s\n", conf->interface);
 	printf("GenericL2Destination=");
-	print_mac_address(app_config.generic_l2_destination);
+	print_mac_address(conf->l2_destination);
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
+
 	printf("LogThreadPeriodNS=%" PRIu64 "\n", app_config.log_thread_period_ns);
 	printf("LogThreadPriority=%d\n", app_config.log_thread_priority);
 	printf("LogThreadCpu=%d\n", app_config.log_thread_cpu);
@@ -711,6 +767,7 @@ void config_print_values(void)
 	printf("LogLevel=%s\n", app_config.log_level);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
+
 	printf("DebugStopTraceOnOutlier=%s\n",
 	       app_config.debug_stop_trace_on_outlier ? "True" : "False");
 	printf("DebugStopTraceOnError=%s\n",
@@ -721,6 +778,7 @@ void config_print_values(void)
 	printf("\n");
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
+
 	printf("StatsHistogramEnabled=%s\n", app_config.stats_histogram_enabled ? "True" : "False");
 	printf("StatsHistogramMinimumNS=%" PRIu64 "\n", app_config.stats_histogram_mininum_ns);
 	printf("StatsHistogramMaximumNS=%" PRIu64 "\n", app_config.stats_histogram_maximum_ns);
@@ -728,6 +786,7 @@ void config_print_values(void)
 	printf("StatsCollectionIntervalNS=%" PRIu64 "\n", app_config.stats_collection_interval_ns);
 	printf("--------------------------------------------------------------------------------"
 	       "\n");
+
 	printf("LogViaMQTT=%s\n", app_config.log_via_mqtt ? "True" : "False");
 	printf("LogViaMQTTThreadPriority=%d\n", app_config.log_via_mqtt_thread_priority);
 	printf("LogViaMQTTThreadCpu=%d\n", app_config.log_via_mqtt_thread_cpu);
@@ -755,6 +814,7 @@ int config_set_defaults(bool mirror_enabled)
 	static const char *default_hist_file = "histogram.txt";
 	static const char *default_udp_low_port = "6666";
 	static const char *default_log_level = "Debug";
+	struct traffic_class_config *conf;
 	struct timespec current;
 	int ret = -ENOMEM;
 
@@ -769,270 +829,277 @@ int config_set_defaults(bool mirror_enabled)
 	app_config.application_xdp_program = NULL;
 
 	/* TSN High */
-	app_config.tsn_high_enabled = false;
-	app_config.tsn_high_rx_mirror_enabled = mirror_enabled;
-	app_config.tsn_high_xdp_enabled = false;
-	app_config.tsn_high_xdp_skb_mode = false;
-	app_config.tsn_high_xdp_zc_mode = false;
-	app_config.tsn_high_xdp_wakeup_mode = true;
-	app_config.tsn_high_xdp_busy_poll_mode = false;
-	app_config.tsn_high_tx_time_enabled = false;
-	app_config.tsn_high_ignore_rx_errors = false;
-	app_config.tsn_high_tx_time_offset_ns = 0;
-	app_config.tsn_high_vid = TSN_HIGH_VID_VALUE;
-	app_config.tsn_high_pcp = TSN_HIGH_PCP_VALUE;
-	app_config.tsn_high_num_frames_per_cycle = 0;
-	app_config.tsn_high_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.tsn_high_payload_pattern)
+	conf = &app_config.classes[TSN_HIGH_FRAME_TYPE];
+	conf->enabled = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->xdp_enabled = false;
+	conf->xdp_skb_mode = false;
+	conf->xdp_zc_mode = false;
+	conf->xdp_wakeup_mode = true;
+	conf->xdp_busy_poll_mode = false;
+	conf->tx_time_enabled = false;
+	conf->ignore_rx_errors = false;
+	conf->tx_time_offset_ns = 0;
+	conf->vid = TSN_HIGH_VID_VALUE;
+	conf->pcp = TSN_HIGH_PCP_VALUE;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.tsn_high_payload_pattern_length = strlen(app_config.tsn_high_payload_pattern);
-	app_config.tsn_high_frame_length = 200;
-	app_config.tsn_high_security_mode = SECURITY_MODE_NONE;
-	app_config.tsn_high_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
-	app_config.tsn_high_security_key = NULL;
-	app_config.tsn_high_security_iv_prefix = NULL;
-	app_config.tsn_high_rx_queue = 1;
-	app_config.tsn_high_tx_queue = 1;
-	app_config.tsn_high_socket_priority = 1;
-	app_config.tsn_high_tx_thread_priority = 98;
-	app_config.tsn_high_rx_thread_priority = 98;
-	app_config.tsn_high_tx_thread_cpu = 0;
-	app_config.tsn_high_rx_thread_cpu = 0;
-	strncpy(app_config.tsn_high_interface, "enp3s0", sizeof(app_config.tsn_high_interface) - 1);
-	memcpy((void *)app_config.tsn_high_destination, default_destination, ETH_ALEN);
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 200;
+	conf->security_mode = SECURITY_MODE_NONE;
+	conf->security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	conf->security_key = NULL;
+	conf->security_iv_prefix = NULL;
+	conf->rx_queue = 1;
+	conf->tx_queue = 1;
+	conf->socket_priority = 1;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 0;
+	conf->rx_thread_cpu = 0;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	memcpy((void *)conf->l2_destination, default_destination, ETH_ALEN);
 
 	/* TSN Low */
-	app_config.tsn_low_enabled = false;
-	app_config.tsn_low_rx_mirror_enabled = mirror_enabled;
-	app_config.tsn_low_xdp_enabled = false;
-	app_config.tsn_low_xdp_skb_mode = false;
-	app_config.tsn_low_xdp_zc_mode = false;
-	app_config.tsn_low_xdp_wakeup_mode = true;
-	app_config.tsn_low_xdp_busy_poll_mode = false;
-	app_config.tsn_low_tx_time_enabled = false;
-	app_config.tsn_low_ignore_rx_errors = false;
-	app_config.tsn_low_tx_time_offset_ns = 0;
-	app_config.tsn_low_vid = TSN_LOW_VID_VALUE;
-	app_config.tsn_low_pcp = TSN_LOW_PCP_VALUE;
-	app_config.tsn_low_num_frames_per_cycle = 0;
-	app_config.tsn_low_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.tsn_low_payload_pattern)
+	conf = &app_config.classes[TSN_LOW_FRAME_TYPE];
+	conf->enabled = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->xdp_enabled = false;
+	conf->xdp_skb_mode = false;
+	conf->xdp_zc_mode = false;
+	conf->xdp_wakeup_mode = true;
+	conf->xdp_busy_poll_mode = false;
+	conf->tx_time_enabled = false;
+	conf->ignore_rx_errors = false;
+	conf->tx_time_offset_ns = 0;
+	conf->vid = TSN_LOW_VID_VALUE;
+	conf->pcp = TSN_LOW_PCP_VALUE;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.tsn_low_payload_pattern_length = strlen(app_config.tsn_low_payload_pattern);
-	app_config.tsn_low_frame_length = 200;
-	app_config.tsn_low_security_mode = SECURITY_MODE_NONE;
-	app_config.tsn_low_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
-	app_config.tsn_low_security_key = NULL;
-	app_config.tsn_low_security_iv_prefix = NULL;
-	app_config.tsn_low_rx_queue = 1;
-	app_config.tsn_low_tx_queue = 1;
-	app_config.tsn_low_socket_priority = 1;
-	app_config.tsn_low_tx_thread_priority = 98;
-	app_config.tsn_low_rx_thread_priority = 98;
-	app_config.tsn_low_tx_thread_cpu = 0;
-	app_config.tsn_low_rx_thread_cpu = 0;
-	strncpy(app_config.tsn_low_interface, "enp3s0", sizeof(app_config.tsn_low_interface) - 1);
-	memcpy((void *)app_config.tsn_low_destination, default_destination, ETH_ALEN);
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 200;
+	conf->security_mode = SECURITY_MODE_NONE;
+	conf->security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	conf->security_key = NULL;
+	conf->security_iv_prefix = NULL;
+	conf->rx_queue = 1;
+	conf->tx_queue = 1;
+	conf->socket_priority = 1;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 0;
+	conf->rx_thread_cpu = 0;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	memcpy((void *)conf->l2_destination, default_destination, ETH_ALEN);
 
 	/* Real Time Cyclic (RTC) */
-	app_config.rtc_enabled = false;
-	app_config.rtc_rx_mirror_enabled = mirror_enabled;
-	app_config.rtc_xdp_enabled = false;
-	app_config.rtc_xdp_skb_mode = false;
-	app_config.rtc_xdp_zc_mode = false;
-	app_config.rtc_xdp_wakeup_mode = true;
-	app_config.rtc_xdp_busy_poll_mode = false;
-	app_config.rtc_ignore_rx_errors = false;
-	app_config.rtc_vid = PROFINET_RT_VID_VALUE;
-	app_config.rtc_pcp = RTC_PCP_VALUE;
-	app_config.rtc_num_frames_per_cycle = 0;
-	app_config.rtc_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.rtc_payload_pattern)
+	conf = &app_config.classes[RTC_FRAME_TYPE];
+	conf->enabled = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->xdp_enabled = false;
+	conf->xdp_skb_mode = false;
+	conf->xdp_zc_mode = false;
+	conf->xdp_wakeup_mode = true;
+	conf->xdp_busy_poll_mode = false;
+	conf->ignore_rx_errors = false;
+	conf->vid = PROFINET_RT_VID_VALUE;
+	conf->pcp = RTC_PCP_VALUE;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.rtc_payload_pattern_length = strlen(app_config.rtc_payload_pattern);
-	app_config.rtc_frame_length = 200;
-	app_config.rtc_security_mode = SECURITY_MODE_NONE;
-	app_config.rtc_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
-	app_config.rtc_security_key = NULL;
-	app_config.rtc_security_iv_prefix = NULL;
-	app_config.rtc_rx_queue = 1;
-	app_config.rtc_tx_queue = 1;
-	app_config.rtc_socket_priority = 1;
-	app_config.rtc_tx_thread_priority = 98;
-	app_config.rtc_rx_thread_priority = 98;
-	app_config.rtc_tx_thread_cpu = 0;
-	app_config.rtc_rx_thread_cpu = 0;
-	strncpy(app_config.rtc_interface, "enp3s0", sizeof(app_config.rtc_interface) - 1);
-	memcpy((void *)app_config.rtc_destination, default_destination, ETH_ALEN);
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 200;
+	conf->security_mode = SECURITY_MODE_NONE;
+	conf->security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	conf->security_key = NULL;
+	conf->security_iv_prefix = NULL;
+	conf->rx_queue = 1;
+	conf->tx_queue = 1;
+	conf->socket_priority = 1;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 0;
+	conf->rx_thread_cpu = 0;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	memcpy((void *)conf->l2_destination, default_destination, ETH_ALEN);
 
 	/* Real Time Acyclic (RTA) */
-	app_config.rta_enabled = false;
-	app_config.rta_rx_mirror_enabled = mirror_enabled;
-	app_config.rta_xdp_enabled = false;
-	app_config.rta_xdp_skb_mode = false;
-	app_config.rta_xdp_zc_mode = false;
-	app_config.rta_xdp_wakeup_mode = true;
-	app_config.rta_xdp_busy_poll_mode = false;
-	app_config.rta_ignore_rx_errors = false;
-	app_config.rta_vid = PROFINET_RT_VID_VALUE;
-	app_config.rta_pcp = RTA_PCP_VALUE;
-	app_config.rta_burst_period_ns = 200000000;
-	app_config.rta_num_frames_per_cycle = 0;
-	app_config.rta_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.rta_payload_pattern)
+	conf = &app_config.classes[RTA_FRAME_TYPE];
+	conf->enabled = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->xdp_enabled = false;
+	conf->xdp_skb_mode = false;
+	conf->xdp_zc_mode = false;
+	conf->xdp_wakeup_mode = true;
+	conf->xdp_busy_poll_mode = false;
+	conf->ignore_rx_errors = false;
+	conf->vid = PROFINET_RT_VID_VALUE;
+	conf->pcp = RTA_PCP_VALUE;
+	conf->burst_period_ns = 200000000;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.rta_payload_pattern_length = strlen(app_config.rta_payload_pattern);
-	app_config.rta_frame_length = 200;
-	app_config.rta_security_mode = SECURITY_MODE_NONE;
-	app_config.rta_security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
-	app_config.rta_security_key = NULL;
-	app_config.rta_security_iv_prefix = NULL;
-	app_config.rta_rx_queue = 1;
-	app_config.rta_tx_queue = 1;
-	app_config.rta_socket_priority = 1;
-	app_config.rta_tx_thread_priority = 98;
-	app_config.rta_rx_thread_priority = 98;
-	app_config.rta_tx_thread_cpu = 0;
-	app_config.rta_rx_thread_cpu = 0;
-	strncpy(app_config.rta_interface, "enp3s0", sizeof(app_config.rta_interface) - 1);
-	memcpy((void *)app_config.rta_destination, default_destination, ETH_ALEN);
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 200;
+	conf->security_mode = SECURITY_MODE_NONE;
+	conf->security_algorithm = SECURITY_ALGORITHM_AES256_GCM;
+	conf->security_key = NULL;
+	conf->security_iv_prefix = NULL;
+	conf->rx_queue = 1;
+	conf->tx_queue = 1;
+	conf->socket_priority = 1;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 0;
+	conf->rx_thread_cpu = 0;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	memcpy((void *)conf->l2_destination, default_destination, ETH_ALEN);
 
 	/* Discovery and Configuration Protocol (DCP) */
-	app_config.dcp_enabled = false;
-	app_config.dcp_ignore_rx_errors = false;
-	app_config.dcp_rx_mirror_enabled = mirror_enabled;
-	app_config.dcp_vid = PROFINET_RT_VID_VALUE;
-	app_config.dcp_pcp = DCP_PCP_VALUE;
-	app_config.dcp_burst_period_ns = 2000000000;
-	app_config.dcp_num_frames_per_cycle = 0;
-	app_config.dcp_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.dcp_payload_pattern)
+	conf = &app_config.classes[DCP_FRAME_TYPE];
+	conf->enabled = false;
+	conf->ignore_rx_errors = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->vid = PROFINET_RT_VID_VALUE;
+	conf->pcp = DCP_PCP_VALUE;
+	conf->burst_period_ns = 2000000000;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.dcp_payload_pattern_length = strlen(app_config.dcp_payload_pattern);
-	app_config.dcp_frame_length = 200;
-	app_config.dcp_rx_queue = 1;
-	app_config.dcp_tx_queue = 1;
-	app_config.dcp_socket_priority = 1;
-	app_config.dcp_tx_thread_priority = 98;
-	app_config.dcp_rx_thread_priority = 98;
-	app_config.dcp_tx_thread_cpu = 3;
-	app_config.dcp_rx_thread_cpu = 3;
-	strncpy(app_config.dcp_interface, "enp3s0", sizeof(app_config.dcp_interface) - 1);
-	memcpy((void *)app_config.dcp_destination, default_dcp_identify, ETH_ALEN);
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 200;
+	conf->rx_queue = 1;
+	conf->tx_queue = 1;
+	conf->socket_priority = 1;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 3;
+	conf->rx_thread_cpu = 3;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	memcpy((void *)conf->l2_destination, default_dcp_identify, ETH_ALEN);
 
 	/* Link Layer Discovery Protocol (LLDP) */
-	app_config.lldp_enabled = false;
-	app_config.lldp_ignore_rx_errors = false;
-	app_config.lldp_rx_mirror_enabled = mirror_enabled;
-	app_config.lldp_burst_period_ns = 5000000000;
-	app_config.lldp_num_frames_per_cycle = 0;
-	app_config.lldp_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.lldp_payload_pattern)
+	conf = &app_config.classes[LLDP_FRAME_TYPE];
+	conf->enabled = false;
+	conf->ignore_rx_errors = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->burst_period_ns = 5000000000;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.lldp_payload_pattern_length = strlen(app_config.lldp_payload_pattern);
-	app_config.lldp_frame_length = 200;
-	app_config.lldp_rx_queue = 1;
-	app_config.lldp_tx_queue = 1;
-	app_config.lldp_socket_priority = 1;
-	app_config.lldp_tx_thread_priority = 98;
-	app_config.lldp_rx_thread_priority = 98;
-	app_config.lldp_tx_thread_cpu = 4;
-	app_config.lldp_rx_thread_cpu = 4;
-	strncpy(app_config.lldp_interface, "enp3s0", sizeof(app_config.lldp_interface) - 1);
-	memcpy((void *)app_config.lldp_destination, default_lldp_destination, ETH_ALEN);
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 200;
+	conf->rx_queue = 1;
+	conf->tx_queue = 1;
+	conf->socket_priority = 1;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 4;
+	conf->rx_thread_cpu = 4;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	memcpy((void *)conf->l2_destination, default_lldp_destination, ETH_ALEN);
 
 	/* User Datagram Protocol (UDP) High */
-	app_config.udp_high_enabled = false;
-	app_config.udp_high_ignore_rx_errors = false;
-	app_config.udp_high_rx_mirror_enabled = mirror_enabled;
-	app_config.udp_high_burst_period_ns = 1000000000;
-	app_config.udp_high_num_frames_per_cycle = 0;
-	app_config.udp_high_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.udp_high_payload_pattern)
+	conf = &app_config.classes[UDP_HIGH_FRAME_TYPE];
+	conf->enabled = false;
+	conf->ignore_rx_errors = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->burst_period_ns = 1000000000;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.udp_high_payload_pattern_length = strlen(app_config.udp_high_payload_pattern);
-	app_config.udp_high_frame_length = 1400;
-	app_config.udp_high_rx_queue = 0;
-	app_config.udp_high_tx_queue = 0;
-	app_config.udp_high_socket_priority = 0;
-	app_config.udp_high_tx_thread_priority = 98;
-	app_config.udp_high_rx_thread_priority = 98;
-	app_config.udp_high_tx_thread_cpu = 5;
-	app_config.udp_high_rx_thread_cpu = 5;
-	strncpy(app_config.udp_high_interface, "enp3s0", sizeof(app_config.udp_high_interface) - 1);
-	app_config.udp_high_port = strdup(default_udp_low_port);
-	if (!app_config.udp_high_port)
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 1400;
+	conf->rx_queue = 0;
+	conf->tx_queue = 0;
+	conf->socket_priority = 0;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 5;
+	conf->rx_thread_cpu = 5;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	conf->l3_port = strdup(default_udp_low_port);
+	if (!conf->l3_port)
 		goto out;
-	app_config.udp_high_destination = strdup(default_udp_low_destination);
-	if (!app_config.udp_high_destination)
+	conf->l3_destination = strdup(default_udp_low_destination);
+	if (!conf->l3_destination)
 		goto out;
-	app_config.udp_high_source = strdup(default_udp_low_source);
-	if (!app_config.udp_high_source)
+	conf->l3_source = strdup(default_udp_low_source);
+	if (!conf->l3_source)
 		goto out;
 
 	/* User Datagram Protocol (UDP) Low */
-	app_config.udp_low_enabled = false;
-	app_config.udp_low_ignore_rx_errors = false;
-	app_config.udp_low_rx_mirror_enabled = mirror_enabled;
-	app_config.udp_low_burst_period_ns = 1000000000;
-	app_config.udp_low_num_frames_per_cycle = 0;
-	app_config.udp_low_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.udp_low_payload_pattern)
+	conf = &app_config.classes[UDP_LOW_FRAME_TYPE];
+	conf->enabled = false;
+	conf->ignore_rx_errors = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->burst_period_ns = 1000000000;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.udp_low_payload_pattern_length = strlen(app_config.udp_low_payload_pattern);
-	app_config.udp_low_frame_length = 1400;
-	app_config.udp_low_rx_queue = 0;
-	app_config.udp_low_tx_queue = 0;
-	app_config.udp_low_socket_priority = 0;
-	app_config.udp_low_tx_thread_priority = 98;
-	app_config.udp_low_rx_thread_priority = 98;
-	app_config.udp_low_tx_thread_cpu = 5;
-	app_config.udp_low_rx_thread_cpu = 5;
-	strncpy(app_config.udp_low_interface, "enp3s0", sizeof(app_config.udp_low_interface) - 1);
-	app_config.udp_low_port = strdup(default_udp_low_port);
-	if (!app_config.udp_low_port)
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 1400;
+	conf->rx_queue = 0;
+	conf->tx_queue = 0;
+	conf->socket_priority = 0;
+	conf->tx_thread_priority = 98;
+	conf->rx_thread_priority = 98;
+	conf->tx_thread_cpu = 5;
+	conf->rx_thread_cpu = 5;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	conf->l3_port = strdup(default_udp_low_port);
+	if (!conf->l3_port)
 		goto out;
-	app_config.udp_low_destination = strdup(default_udp_low_destination);
-	if (!app_config.udp_low_destination)
+	conf->l3_destination = strdup(default_udp_low_destination);
+	if (!conf->l3_destination)
 		goto out;
-	app_config.udp_low_source = strdup(default_udp_low_source);
-	if (!app_config.udp_low_source)
+	conf->l3_source = strdup(default_udp_low_source);
+	if (!conf->l3_source)
 		goto out;
 
 	/* Generic L2 */
-	app_config.generic_l2_name = strdup("GenericL2");
-	if (!app_config.generic_l2_name)
+	conf = &app_config.classes[GENERICL2_FRAME_TYPE];
+	conf->name = strdup("GenericL2");
+	if (!conf->name)
 		goto out;
-	app_config.generic_l2_enabled = false;
-	app_config.generic_l2_rx_mirror_enabled = mirror_enabled;
-	app_config.generic_l2_xdp_enabled = false;
-	app_config.generic_l2_xdp_skb_mode = false;
-	app_config.generic_l2_xdp_zc_mode = false;
-	app_config.generic_l2_xdp_wakeup_mode = true;
-	app_config.generic_l2_xdp_busy_poll_mode = false;
-	app_config.generic_l2_tx_time_enabled = false;
-	app_config.generic_l2_ignore_rx_errors = false;
-	app_config.generic_l2_tx_time_offset_ns = 0;
-	app_config.generic_l2_vid = 100;
-	app_config.generic_l2_pcp = 6;
-	app_config.generic_l2_ether_type = 0xb62c;
-	app_config.generic_l2_num_frames_per_cycle = 0;
-	app_config.generic_l2_payload_pattern = strdup(default_payload_pattern);
-	if (!app_config.generic_l2_payload_pattern)
+	conf->enabled = false;
+	conf->rx_mirror_enabled = mirror_enabled;
+	conf->xdp_enabled = false;
+	conf->xdp_skb_mode = false;
+	conf->xdp_zc_mode = false;
+	conf->xdp_wakeup_mode = true;
+	conf->xdp_busy_poll_mode = false;
+	conf->tx_time_enabled = false;
+	conf->ignore_rx_errors = false;
+	conf->tx_time_offset_ns = 0;
+	conf->vid = 100;
+	conf->pcp = 6;
+	conf->ether_type = 0xb62c;
+	conf->num_frames_per_cycle = 0;
+	conf->payload_pattern = strdup(default_payload_pattern);
+	if (!conf->payload_pattern)
 		goto out;
-	app_config.generic_l2_payload_pattern_length =
-		strlen(app_config.generic_l2_payload_pattern);
-	app_config.generic_l2_frame_length = 200;
-	app_config.generic_l2_rx_queue = 1;
-	app_config.generic_l2_tx_queue = 1;
-	app_config.generic_l2_socket_priority = 1;
-	app_config.generic_l2_tx_thread_priority = 90;
-	app_config.generic_l2_rx_thread_priority = 90;
-	app_config.generic_l2_tx_thread_cpu = 0;
-	app_config.generic_l2_rx_thread_cpu = 0;
-	strncpy(app_config.generic_l2_interface, "enp3s0",
-		sizeof(app_config.generic_l2_interface) - 1);
-	memcpy((void *)app_config.generic_l2_destination, default_destination, ETH_ALEN);
+	conf->payload_pattern_length = strlen(conf->payload_pattern);
+	conf->frame_length = 200;
+	conf->rx_queue = 1;
+	conf->tx_queue = 1;
+	conf->socket_priority = 1;
+	conf->tx_thread_priority = 90;
+	conf->rx_thread_priority = 90;
+	conf->tx_thread_cpu = 0;
+	conf->rx_thread_cpu = 0;
+	strncpy(conf->interface, "enp3s0", sizeof(conf->interface) - 1);
+	memcpy((void *)conf->l2_destination, default_destination, ETH_ALEN);
 
 	/* Logging */
 	app_config.log_thread_period_ns = 500000000;
@@ -1124,11 +1191,12 @@ bool config_sanity_check(void)
 	 */
 
 	/* Either GenericL2 or PROFINET should be active. */
-	if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2) &&
-	    (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc) ||
-	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rta) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(dcp) ||
-	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(lldp) || CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_high) ||
-	     CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_low))) {
+	if (config_is_traffic_class_active("GenericL2") &&
+	    (config_is_traffic_class_active("TsnHigh") ||
+	     config_is_traffic_class_active("TsnLow") || config_is_traffic_class_active("Rtc") ||
+	     config_is_traffic_class_active("Rta") || config_is_traffic_class_active("Dcp") ||
+	     config_is_traffic_class_active("Lldp") || config_is_traffic_class_active("UdpHigh") ||
+	     config_is_traffic_class_active("UdpLow"))) {
 		fprintf(stderr, "Either use PROFINET or GenericL2!\n");
 		fprintf(stderr, "For simulation of PROFINET and other middlewares in parallel "
 				"start multiple instances of ref&mirror application(s) with "
@@ -1137,96 +1205,106 @@ bool config_sanity_check(void)
 	}
 
 	/* Frame lengths */
-	if (app_config.generic_l2_frame_length > MAX_FRAME_SIZE ||
-	    app_config.generic_l2_frame_length <
+	if (app_config.classes[GENERICL2_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[GENERICL2_FRAME_TYPE].frame_length <
 		    (sizeof(struct vlan_ethernet_header) + sizeof(struct generic_l2_header) +
-		     app_config.generic_l2_payload_pattern_length)) {
+		     app_config.classes[GENERICL2_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "GenericL2FrameLength is invalid!\n");
 		return false;
 	}
 
-	min_frame_size = app_config.tsn_high_security_mode == SECURITY_MODE_NONE
+	min_frame_size = app_config.classes[TSN_HIGH_FRAME_TYPE].security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.tsn_high_frame_length > MAX_FRAME_SIZE ||
-	    app_config.tsn_high_frame_length <
-		    (min_frame_size + app_config.tsn_high_payload_pattern_length)) {
+	if (app_config.classes[TSN_HIGH_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[TSN_HIGH_FRAME_TYPE].frame_length <
+		    (min_frame_size +
+		     app_config.classes[TSN_HIGH_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "TsnHighFrameLength is invalid!\n");
 		return false;
 	}
 
-	min_frame_size = app_config.tsn_low_security_mode == SECURITY_MODE_NONE
+	min_frame_size = app_config.classes[TSN_LOW_FRAME_TYPE].security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.tsn_low_frame_length > MAX_FRAME_SIZE ||
-	    app_config.tsn_low_frame_length <
-		    (min_frame_size + app_config.tsn_low_payload_pattern_length)) {
+	if (app_config.classes[TSN_LOW_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[TSN_LOW_FRAME_TYPE].frame_length <
+		    (min_frame_size +
+		     app_config.classes[TSN_LOW_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "TsnLowFrameLength is invalid!\n");
 		return false;
 	}
 
-	min_frame_size = app_config.rtc_security_mode == SECURITY_MODE_NONE
+	min_frame_size = app_config.classes[RTC_FRAME_TYPE].security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.rtc_frame_length > MAX_FRAME_SIZE ||
-	    app_config.rtc_frame_length <
-		    (min_frame_size + app_config.rtc_payload_pattern_length)) {
+	if (app_config.classes[RTC_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[RTC_FRAME_TYPE].frame_length <
+		    (min_frame_size + app_config.classes[RTC_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "RtcFrameLength is invalid!\n");
 		return false;
 	}
 
-	min_frame_size = app_config.rta_security_mode == SECURITY_MODE_NONE
+	min_frame_size = app_config.classes[RTA_FRAME_TYPE].security_mode == SECURITY_MODE_NONE
 				 ? min_profinet_frame_size
 				 : min_secure_profinet_frame_size;
-	if (app_config.rta_frame_length > MAX_FRAME_SIZE ||
-	    app_config.rta_frame_length <
-		    (min_frame_size + app_config.rta_payload_pattern_length)) {
+	if (app_config.classes[RTA_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[RTA_FRAME_TYPE].frame_length <
+		    (min_frame_size + app_config.classes[RTA_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "RtaFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (app_config.dcp_frame_length > MAX_FRAME_SIZE ||
-	    app_config.dcp_frame_length <
-		    (min_profinet_frame_size + app_config.dcp_payload_pattern_length)) {
+	if (app_config.classes[DCP_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[DCP_FRAME_TYPE].frame_length <
+		    (min_profinet_frame_size +
+		     app_config.classes[DCP_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "DcpFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (app_config.lldp_frame_length > MAX_FRAME_SIZE ||
-	    app_config.lldp_frame_length <
+	if (app_config.classes[LLDP_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[LLDP_FRAME_TYPE].frame_length <
 		    (sizeof(struct ethhdr) + sizeof(struct reference_meta_data) +
-		     app_config.lldp_payload_pattern_length)) {
+		     app_config.classes[LLDP_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "LldpFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (app_config.udp_high_frame_length > MAX_FRAME_SIZE ||
-	    app_config.udp_high_frame_length < (sizeof(struct reference_meta_data) +
-						app_config.udp_high_payload_pattern_length)) {
+	if (app_config.classes[UDP_HIGH_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[UDP_HIGH_FRAME_TYPE].frame_length <
+		    (sizeof(struct reference_meta_data) +
+		     app_config.classes[UDP_HIGH_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "UdpHighFrameLength is invalid!\n");
 		return false;
 	}
 
-	if (app_config.udp_low_frame_length > MAX_FRAME_SIZE ||
-	    app_config.udp_low_frame_length < (sizeof(struct reference_meta_data) +
-					       app_config.udp_low_payload_pattern_length)) {
+	if (app_config.classes[UDP_LOW_FRAME_TYPE].frame_length > MAX_FRAME_SIZE ||
+	    app_config.classes[UDP_LOW_FRAME_TYPE].frame_length <
+		    (sizeof(struct reference_meta_data) +
+		     app_config.classes[UDP_LOW_FRAME_TYPE].payload_pattern_length)) {
 		fprintf(stderr, "UdpLowFrameLength is invalid!\n");
 		return false;
 	}
 
 	/* XDP and TxLauchTime combined doesn't work */
-	if ((app_config.generic_l2_tx_time_enabled && app_config.generic_l2_xdp_enabled) ||
-	    (app_config.tsn_high_tx_time_enabled && app_config.tsn_high_xdp_enabled) ||
-	    (app_config.tsn_low_tx_time_enabled && app_config.tsn_low_xdp_enabled)) {
+	if ((app_config.classes[GENERICL2_FRAME_TYPE].tx_time_enabled &&
+	     app_config.classes[GENERICL2_FRAME_TYPE].xdp_enabled) ||
+	    (app_config.classes[TSN_HIGH_FRAME_TYPE].tx_time_enabled &&
+	     app_config.classes[TSN_HIGH_FRAME_TYPE].xdp_enabled) ||
+	    (app_config.classes[TSN_LOW_FRAME_TYPE].tx_time_enabled &&
+	     app_config.classes[TSN_LOW_FRAME_TYPE].xdp_enabled)) {
 		fprintf(stderr, "TxTime and Xdp cannot be used at the same time!\n");
 		return false;
 	}
 
 	/* XDP busy polling only works beginning with Linux kernel version v5.11 */
 	if (!config_have_busy_poll() &&
-	    (app_config.tsn_high_xdp_busy_poll_mode || app_config.tsn_low_xdp_busy_poll_mode ||
-	     app_config.rtc_xdp_busy_poll_mode || app_config.rta_xdp_busy_poll_mode ||
-	     app_config.generic_l2_xdp_busy_poll_mode)) {
+	    (app_config.classes[TSN_HIGH_FRAME_TYPE].xdp_busy_poll_mode ||
+	     app_config.classes[TSN_LOW_FRAME_TYPE].xdp_busy_poll_mode ||
+	     app_config.classes[RTC_FRAME_TYPE].xdp_busy_poll_mode ||
+	     app_config.classes[RTA_FRAME_TYPE].xdp_busy_poll_mode ||
+	     app_config.classes[GENERICL2_FRAME_TYPE].xdp_busy_poll_mode)) {
 		fprintf(stderr, "XDP busy polling selected, but not supported!\n");
 		return false;
 	}
@@ -1237,23 +1315,25 @@ bool config_sanity_check(void)
 	}
 
 	/* Check keys and IV */
-	if (!config_check_keys("TsnHigh", app_config.tsn_high_security_mode,
-			       app_config.tsn_high_security_algorithm,
-			       app_config.tsn_high_security_key_length,
-			       app_config.tsn_high_security_iv_prefix_length))
+	if (!config_check_keys("TsnHigh", app_config.classes[TSN_HIGH_FRAME_TYPE].security_mode,
+			       app_config.classes[TSN_HIGH_FRAME_TYPE].security_algorithm,
+			       app_config.classes[TSN_HIGH_FRAME_TYPE].security_key_length,
+			       app_config.classes[TSN_HIGH_FRAME_TYPE].security_iv_prefix_length))
 		return false;
-	if (!config_check_keys("TsnLow", app_config.tsn_low_security_mode,
-			       app_config.tsn_low_security_algorithm,
-			       app_config.tsn_low_security_key_length,
-			       app_config.tsn_low_security_iv_prefix_length))
+	if (!config_check_keys("TsnLow", app_config.classes[TSN_LOW_FRAME_TYPE].security_mode,
+			       app_config.classes[TSN_LOW_FRAME_TYPE].security_algorithm,
+			       app_config.classes[TSN_LOW_FRAME_TYPE].security_key_length,
+			       app_config.classes[TSN_LOW_FRAME_TYPE].security_iv_prefix_length))
 		return false;
-	if (!config_check_keys(
-		    "Rtc", app_config.rtc_security_mode, app_config.rtc_security_algorithm,
-		    app_config.rtc_security_key_length, app_config.rtc_security_iv_prefix_length))
+	if (!config_check_keys("Rtc", app_config.classes[RTC_FRAME_TYPE].security_mode,
+			       app_config.classes[RTC_FRAME_TYPE].security_algorithm,
+			       app_config.classes[RTC_FRAME_TYPE].security_key_length,
+			       app_config.classes[RTC_FRAME_TYPE].security_iv_prefix_length))
 		return false;
-	if (!config_check_keys(
-		    "Rta", app_config.rta_security_mode, app_config.rta_security_algorithm,
-		    app_config.rta_security_key_length, app_config.rta_security_iv_prefix_length))
+	if (!config_check_keys("Rta", app_config.classes[RTA_FRAME_TYPE].security_mode,
+			       app_config.classes[RTA_FRAME_TYPE].security_algorithm,
+			       app_config.classes[RTA_FRAME_TYPE].security_key_length,
+			       app_config.classes[RTA_FRAME_TYPE].security_iv_prefix_length))
 		return false;
 
 	/* Stats */
@@ -1269,38 +1349,38 @@ void config_free(void)
 {
 	free(app_config.application_xdp_program);
 
-	free(app_config.tsn_high_payload_pattern);
-	free(app_config.tsn_high_security_key);
-	free(app_config.tsn_high_security_iv_prefix);
+	free(app_config.classes[TSN_HIGH_FRAME_TYPE].payload_pattern);
+	free(app_config.classes[TSN_HIGH_FRAME_TYPE].security_key);
+	free(app_config.classes[TSN_HIGH_FRAME_TYPE].security_iv_prefix);
 
-	free(app_config.tsn_low_payload_pattern);
-	free(app_config.tsn_low_security_key);
-	free(app_config.tsn_low_security_iv_prefix);
+	free(app_config.classes[TSN_LOW_FRAME_TYPE].payload_pattern);
+	free(app_config.classes[TSN_LOW_FRAME_TYPE].security_key);
+	free(app_config.classes[TSN_LOW_FRAME_TYPE].security_iv_prefix);
 
-	free(app_config.rtc_payload_pattern);
-	free(app_config.rtc_security_key);
-	free(app_config.rtc_security_iv_prefix);
+	free(app_config.classes[RTC_FRAME_TYPE].payload_pattern);
+	free(app_config.classes[RTC_FRAME_TYPE].security_key);
+	free(app_config.classes[RTC_FRAME_TYPE].security_iv_prefix);
 
-	free(app_config.rta_payload_pattern);
-	free(app_config.rta_security_key);
-	free(app_config.rta_security_iv_prefix);
+	free(app_config.classes[RTA_FRAME_TYPE].payload_pattern);
+	free(app_config.classes[RTA_FRAME_TYPE].security_key);
+	free(app_config.classes[RTA_FRAME_TYPE].security_iv_prefix);
 
-	free(app_config.dcp_payload_pattern);
+	free(app_config.classes[DCP_FRAME_TYPE].payload_pattern);
 
-	free(app_config.lldp_payload_pattern);
+	free(app_config.classes[LLDP_FRAME_TYPE].payload_pattern);
 
-	free(app_config.udp_high_payload_pattern);
-	free(app_config.udp_high_port);
-	free(app_config.udp_high_destination);
-	free(app_config.udp_high_source);
+	free(app_config.classes[UDP_HIGH_FRAME_TYPE].payload_pattern);
+	free(app_config.classes[UDP_HIGH_FRAME_TYPE].l3_port);
+	free(app_config.classes[UDP_HIGH_FRAME_TYPE].l3_destination);
+	free(app_config.classes[UDP_HIGH_FRAME_TYPE].l3_source);
 
-	free(app_config.udp_low_payload_pattern);
-	free(app_config.udp_low_port);
-	free(app_config.udp_low_destination);
-	free(app_config.udp_low_source);
+	free(app_config.classes[UDP_LOW_FRAME_TYPE].payload_pattern);
+	free(app_config.classes[UDP_LOW_FRAME_TYPE].l3_port);
+	free(app_config.classes[UDP_LOW_FRAME_TYPE].l3_destination);
+	free(app_config.classes[UDP_LOW_FRAME_TYPE].l3_source);
 
-	free(app_config.generic_l2_name);
-	free(app_config.generic_l2_payload_pattern);
+	free(app_config.classes[GENERICL2_FRAME_TYPE].name);
+	free(app_config.classes[GENERICL2_FRAME_TYPE].payload_pattern);
 
 	free(app_config.stats_histogram_file);
 

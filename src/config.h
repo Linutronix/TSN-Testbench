@@ -21,6 +21,62 @@
 #include "app_config.h"
 
 #include "security.h"
+#include "stat.h"
+
+struct traffic_class_config {
+	/* General */
+	bool enabled;
+	bool rx_mirror_enabled;
+	char *name;
+	size_t name_length;
+
+	/* Network settings */
+	bool xdp_enabled;
+	bool xdp_skb_mode;
+	bool xdp_zc_mode;
+	bool xdp_wakeup_mode;
+	bool xdp_busy_poll_mode;
+	bool tx_time_enabled;
+	bool ignore_rx_errors;
+	uint64_t tx_time_offset_ns;
+	uint64_t burst_period_ns;
+
+	/* Traffic class settings */
+	unsigned int ether_type;
+	int vid;
+	int pcp;
+	size_t num_frames_per_cycle;
+	char *payload_pattern;
+	size_t payload_pattern_length;
+	size_t frame_length;
+	int rx_queue;
+	int tx_queue;
+
+	/* Layer 2/3 settings */
+	char interface[IF_NAMESIZE];
+	unsigned char l2_destination[ETH_ALEN];
+	char *l3_port;
+	size_t l3_port_length;
+	char *l3_destination;
+	size_t l3_destination_length;
+	char *l3_source;
+	size_t l3_source_length;
+
+	/* Security settings */
+	enum security_mode security_mode;
+	enum security_algorithm security_algorithm;
+	char *security_key;
+	size_t security_key_length;
+	char *security_iv_prefix;
+	size_t security_iv_prefix_length;
+
+	/* Operating system settings */
+	int socket_priority;
+	int tx_thread_priority;
+	int rx_thread_priority;
+	int tx_thread_cpu;
+	int rx_thread_cpu;
+};
 
 struct application_config {
 	/* Application scheduling configuration */
@@ -31,244 +87,8 @@ struct application_config {
 	uint64_t application_rx_base_offset_ns;
 	char *application_xdp_program;
 	size_t application_xdp_program_length;
-	/* TSN High */
-	bool tsn_high_enabled;
-	bool tsn_high_rx_mirror_enabled;
-	bool tsn_high_xdp_enabled;
-	bool tsn_high_xdp_skb_mode;
-	bool tsn_high_xdp_zc_mode;
-	bool tsn_high_xdp_wakeup_mode;
-	bool tsn_high_xdp_busy_poll_mode;
-	bool tsn_high_tx_time_enabled;
-	bool tsn_high_ignore_rx_errors;
-	uint64_t tsn_high_tx_time_offset_ns;
-	int tsn_high_vid;
-	int tsn_high_pcp;
-	size_t tsn_high_num_frames_per_cycle;
-	char *tsn_high_payload_pattern;
-	size_t tsn_high_payload_pattern_length;
-	size_t tsn_high_frame_length;
-	enum security_mode tsn_high_security_mode;
-	enum security_algorithm tsn_high_security_algorithm;
-	char *tsn_high_security_key;
-	size_t tsn_high_security_key_length;
-	char *tsn_high_security_iv_prefix;
-	size_t tsn_high_security_iv_prefix_length;
-	int tsn_high_rx_queue;
-	int tsn_high_tx_queue;
-	int tsn_high_socket_priority;
-	int tsn_high_tx_thread_priority;
-	int tsn_high_rx_thread_priority;
-	int tsn_high_tx_thread_cpu;
-	int tsn_high_rx_thread_cpu;
-	char tsn_high_interface[IF_NAMESIZE];
-	unsigned char tsn_high_destination[ETH_ALEN];
-	/* TSN Low */
-	bool tsn_low_enabled;
-	bool tsn_low_rx_mirror_enabled;
-	bool tsn_low_xdp_enabled;
-	bool tsn_low_xdp_skb_mode;
-	bool tsn_low_xdp_zc_mode;
-	bool tsn_low_xdp_wakeup_mode;
-	bool tsn_low_xdp_busy_poll_mode;
-	bool tsn_low_tx_time_enabled;
-	bool tsn_low_ignore_rx_errors;
-	uint64_t tsn_low_tx_time_offset_ns;
-	int tsn_low_vid;
-	int tsn_low_pcp;
-	size_t tsn_low_num_frames_per_cycle;
-	char *tsn_low_payload_pattern;
-	size_t tsn_low_payload_pattern_length;
-	size_t tsn_low_frame_length;
-	enum security_mode tsn_low_security_mode;
-	enum security_algorithm tsn_low_security_algorithm;
-	char *tsn_low_security_key;
-	size_t tsn_low_security_key_length;
-	char *tsn_low_security_iv_prefix;
-	size_t tsn_low_security_iv_prefix_length;
-	int tsn_low_rx_queue;
-	int tsn_low_tx_queue;
-	int tsn_low_socket_priority;
-	int tsn_low_tx_thread_priority;
-	int tsn_low_rx_thread_priority;
-	int tsn_low_tx_thread_cpu;
-	int tsn_low_rx_thread_cpu;
-	char tsn_low_interface[IF_NAMESIZE];
-	unsigned char tsn_low_destination[ETH_ALEN];
-	/* Real Time Cyclic (RTC) */
-	bool rtc_enabled;
-	bool rtc_rx_mirror_enabled;
-	bool rtc_xdp_enabled;
-	bool rtc_xdp_skb_mode;
-	bool rtc_xdp_zc_mode;
-	bool rtc_xdp_wakeup_mode;
-	bool rtc_xdp_busy_poll_mode;
-	bool rtc_ignore_rx_errors;
-	int rtc_vid;
-	int rtc_pcp;
-	size_t rtc_num_frames_per_cycle;
-	char *rtc_payload_pattern;
-	size_t rtc_payload_pattern_length;
-	size_t rtc_frame_length;
-	enum security_mode rtc_security_mode;
-	enum security_algorithm rtc_security_algorithm;
-	char *rtc_security_key;
-	size_t rtc_security_key_length;
-	char *rtc_security_iv_prefix;
-	size_t rtc_security_iv_prefix_length;
-	int rtc_rx_queue;
-	int rtc_tx_queue;
-	int rtc_socket_priority;
-	int rtc_tx_thread_priority;
-	int rtc_rx_thread_priority;
-	int rtc_tx_thread_cpu;
-	int rtc_rx_thread_cpu;
-	char rtc_interface[IF_NAMESIZE];
-	unsigned char rtc_destination[ETH_ALEN];
-	/* Real Time Acyclic (RTA) */
-	bool rta_enabled;
-	bool rta_rx_mirror_enabled;
-	bool rta_xdp_enabled;
-	bool rta_xdp_skb_mode;
-	bool rta_xdp_zc_mode;
-	bool rta_xdp_wakeup_mode;
-	bool rta_xdp_busy_poll_mode;
-	bool rta_ignore_rx_errors;
-	int rta_vid;
-	int rta_pcp;
-	uint64_t rta_burst_period_ns;
-	size_t rta_num_frames_per_cycle;
-	char *rta_payload_pattern;
-	size_t rta_payload_pattern_length;
-	size_t rta_frame_length;
-	enum security_mode rta_security_mode;
-	enum security_algorithm rta_security_algorithm;
-	char *rta_security_key;
-	size_t rta_security_key_length;
-	char *rta_security_iv_prefix;
-	size_t rta_security_iv_prefix_length;
-	int rta_rx_queue;
-	int rta_tx_queue;
-	int rta_socket_priority;
-	int rta_tx_thread_priority;
-	int rta_rx_thread_priority;
-	int rta_tx_thread_cpu;
-	int rta_rx_thread_cpu;
-	char rta_interface[IF_NAMESIZE];
-	unsigned char rta_destination[ETH_ALEN];
-	/* Discovery and Configuration Protocol (DCP) */
-	bool dcp_enabled;
-	bool dcp_rx_mirror_enabled;
-	bool dcp_ignore_rx_errors;
-	int dcp_vid;
-	int dcp_pcp;
-	uint64_t dcp_burst_period_ns;
-	size_t dcp_num_frames_per_cycle;
-	char *dcp_payload_pattern;
-	size_t dcp_payload_pattern_length;
-	size_t dcp_frame_length;
-	int dcp_rx_queue;
-	int dcp_tx_queue;
-	int dcp_socket_priority;
-	int dcp_tx_thread_priority;
-	int dcp_rx_thread_priority;
-	int dcp_tx_thread_cpu;
-	int dcp_rx_thread_cpu;
-	char dcp_interface[IF_NAMESIZE];
-	unsigned char dcp_destination[ETH_ALEN];
-	/* Link Layer Discovery Protocol (LLDP) */
-	bool lldp_enabled;
-	bool lldp_rx_mirror_enabled;
-	bool lldp_ignore_rx_errors;
-	uint64_t lldp_burst_period_ns;
-	size_t lldp_num_frames_per_cycle;
-	char *lldp_payload_pattern;
-	size_t lldp_payload_pattern_length;
-	size_t lldp_frame_length;
-	int lldp_rx_queue;
-	int lldp_tx_queue;
-	int lldp_socket_priority;
-	int lldp_tx_thread_priority;
-	int lldp_rx_thread_priority;
-	int lldp_tx_thread_cpu;
-	int lldp_rx_thread_cpu;
-	char lldp_interface[IF_NAMESIZE];
-	unsigned char lldp_destination[ETH_ALEN];
-	/* User Datagram Protocol (UDP) High */
-	bool udp_high_enabled;
-	bool udp_high_rx_mirror_enabled;
-	bool udp_high_ignore_rx_errors;
-	uint64_t udp_high_burst_period_ns;
-	size_t udp_high_num_frames_per_cycle;
-	char *udp_high_payload_pattern;
-	size_t udp_high_payload_pattern_length;
-	size_t udp_high_frame_length;
-	int udp_high_rx_queue;
-	int udp_high_tx_queue;
-	int udp_high_socket_priority;
-	int udp_high_tx_thread_priority;
-	int udp_high_rx_thread_priority;
-	int udp_high_tx_thread_cpu;
-	int udp_high_rx_thread_cpu;
-	char udp_high_interface[IF_NAMESIZE];
-	char *udp_high_port;
-	size_t udp_high_port_length;
-	char *udp_high_destination;
-	size_t udp_high_destination_length;
-	char *udp_high_source;
-	size_t udp_high_source_length;
-	/* User Datagram Protocol (UDP) Low */
-	bool udp_low_enabled;
-	bool udp_low_rx_mirror_enabled;
-	bool udp_low_ignore_rx_errors;
-	uint64_t udp_low_burst_period_ns;
-	size_t udp_low_num_frames_per_cycle;
-	char *udp_low_payload_pattern;
-	size_t udp_low_payload_pattern_length;
-	size_t udp_low_frame_length;
-	int udp_low_rx_queue;
-	int udp_low_tx_queue;
-	int udp_low_socket_priority;
-	int udp_low_tx_thread_priority;
-	int udp_low_rx_thread_priority;
-	int udp_low_tx_thread_cpu;
-	int udp_low_rx_thread_cpu;
-	char udp_low_interface[IF_NAMESIZE];
-	char *udp_low_port;
-	size_t udp_low_port_length;
-	char *udp_low_destination;
-	size_t udp_low_destination_length;
-	char *udp_low_source;
-	size_t udp_low_source_length;
-	/* Generic Layer 2 (example: OPC/UA PubSub) */
-	char *generic_l2_name;
-	size_t generic_l2_name_length;
-	bool generic_l2_enabled;
-	bool generic_l2_rx_mirror_enabled;
-	bool generic_l2_xdp_enabled;
-	bool generic_l2_xdp_skb_mode;
-	bool generic_l2_xdp_zc_mode;
-	bool generic_l2_xdp_wakeup_mode;
-	bool generic_l2_xdp_busy_poll_mode;
-	bool generic_l2_tx_time_enabled;
-	bool generic_l2_ignore_rx_errors;
-	uint64_t generic_l2_tx_time_offset_ns;
-	int generic_l2_vid;
-	int generic_l2_pcp;
-	unsigned int generic_l2_ether_type;
-	size_t generic_l2_num_frames_per_cycle;
-	char *generic_l2_payload_pattern;
-	size_t generic_l2_payload_pattern_length;
-	size_t generic_l2_frame_length;
-	int generic_l2_rx_queue;
-	int generic_l2_tx_queue;
-	int generic_l2_socket_priority;
-	int generic_l2_tx_thread_priority;
-	int generic_l2_rx_thread_priority;
-	int generic_l2_tx_thread_cpu;
-	int generic_l2_rx_thread_cpu;
-	char generic_l2_interface[IF_NAMESIZE];
-	unsigned char generic_l2_destination[ETH_ALEN];
+	/* Traffic class configurations */
+	struct traffic_class_config classes[NUM_FRAME_TYPES];
 	/* Logging */
 	uint64_t log_thread_period_ns;
 	int log_thread_priority;
@@ -310,16 +130,54 @@ void config_print_values(void);
 bool config_sanity_check(void);
 void config_free(void);
 
+enum stat_frame_type config_opt_to_type(const char *opt);
+int config_parse_bool(const char *value, bool *ret);
+int config_parse_int(const char *value, long *ret);
+int config_parse_ulong(const char *value, unsigned long long *ret);
+
+#define CONFIG_STORE_BOOL_PARAM_CLASS(name, var)                                                   \
+	do {                                                                                       \
+		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+			bool result;                                                               \
+                                                                                                   \
+			if (config_parse_bool(value, &result)) {                                   \
+				ret = -EINVAL;                                                     \
+				fprintf(stderr, "The value for " #name " is invalid!\n");          \
+				goto err_parse;                                                    \
+			} else {                                                                   \
+				app_config.classes[type].var = result;                             \
+			}                                                                          \
+		}                                                                                  \
+	} while (0)
+
 #define CONFIG_STORE_BOOL_PARAM(name, var)                                                         \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			if (!strcmp(value, "0") || !strcasecmp(value, "false"))                    \
-				app_config.var = false;                                            \
-			else if (!strcmp(value, "1") || !strcasecmp(value, "true"))                \
-				app_config.var = true;                                             \
-			else {                                                                     \
+			bool result;                                                               \
+                                                                                                   \
+			if (config_parse_bool(value, &result)) {                                   \
+				ret = -EINVAL;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
 				goto err_parse;                                                    \
+			} else {                                                                   \
+				app_config.var = result;                                           \
+			}                                                                          \
+		}                                                                                  \
+	} while (0)
+
+#define CONFIG_STORE_INT_PARAM_CLASS(name, var)                                                    \
+	do {                                                                                       \
+		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+			long result;                                                               \
+                                                                                                   \
+			if (config_parse_int(value, &result)) {                                    \
+				ret = -ERANGE;                                                     \
+				fprintf(stderr, "The value for " #name " is invalid!\n");          \
+				goto err_parse;                                                    \
+			} else {                                                                   \
+				app_config.classes[type].var = result;                             \
 			}                                                                          \
 		}                                                                                  \
 	} while (0)
@@ -327,11 +185,30 @@ void config_free(void);
 #define CONFIG_STORE_INT_PARAM(name, var)                                                          \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.var = strtol(value, &endptr, 10);                               \
-			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
+			long result;                                                               \
+                                                                                                   \
+			if (config_parse_int(value, &result)) {                                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
 				goto err_parse;                                                    \
+			} else {                                                                   \
+				app_config.var = result;                                           \
+			}                                                                          \
+		}                                                                                  \
+	} while (0)
+
+#define CONFIG_STORE_ULONG_PARAM_CLASS(name, var)                                                  \
+	do {                                                                                       \
+		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+			unsigned long long result;                                                 \
+                                                                                                   \
+			if (config_parse_ulong(value, &result)) {                                  \
+				ret = -ERANGE;                                                     \
+				fprintf(stderr, "The value for " #name " is invalid!\n");          \
+				goto err_parse;                                                    \
+			} else {                                                                   \
+				app_config.classes[type].var = result;                             \
 			}                                                                          \
 		}                                                                                  \
 	} while (0)
@@ -339,12 +216,32 @@ void config_free(void);
 #define CONFIG_STORE_ULONG_PARAM(name, var)                                                        \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.var = strtoull(value, &endptr, 10);                             \
-			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
+			unsigned long long result;                                                 \
+                                                                                                   \
+			if (config_parse_ulong(value, &result)) {                                  \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
 				goto err_parse;                                                    \
+			} else {                                                                   \
+				app_config.var = result;                                           \
 			}                                                                          \
+		}                                                                                  \
+	} while (0)
+
+#define CONFIG_STORE_STRING_PARAM_CLASS(name, var)                                                 \
+	do {                                                                                       \
+		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+                                                                                                   \
+			/* config_set_defaults() may have set a default value. */                  \
+			free(app_config.classes[type].var);                                        \
+			app_config.classes[type].var = strdup(value);                              \
+			if (!app_config.classes[type].var) {                                       \
+				ret = -ENOMEM;                                                     \
+				fprintf(stderr, "strdup() for " #name " failed!\n");               \
+				goto err_parse;                                                    \
+			}                                                                          \
+			app_config.classes[type].var##_length = strlen(value);                     \
 		}                                                                                  \
 	} while (0)
 
@@ -363,10 +260,35 @@ void config_free(void);
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_INTERFACE_PARAM(name, var)                                                    \
+#define CONFIG_STORE_INTERFACE_PARAM_CLASS(name, var)                                              \
 	do {                                                                                       \
-		if (!strcmp(key, #name))                                                           \
-			strncpy(app_config.var, value, sizeof(app_config.var) - 1);                \
+		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+                                                                                                   \
+			strncpy(app_config.classes[type].var, value,                               \
+				sizeof(app_config.classes[type].var) - 1);                         \
+		}                                                                                  \
+	} while (0)
+
+#define CONFIG_STORE_MAC_PARAM_CLASS(name, var)                                                    \
+	do {                                                                                       \
+		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+			unsigned int tmp[ETH_ALEN];                                                \
+			int i;                                                                     \
+                                                                                                   \
+			ret = sscanf(value, "%x:%x:%x:%x:%x:%x", &tmp[0], &tmp[1], &tmp[2],        \
+				     &tmp[3], &tmp[4], &tmp[5]);                                   \
+                                                                                                   \
+			if (ret != ETH_ALEN) {                                                     \
+				fprintf(stderr, "Failed to parse MAC Address!\n");                 \
+				ret = -EINVAL;                                                     \
+				goto err_parse;                                                    \
+			}                                                                          \
+                                                                                                   \
+			for (i = 0; i < ETH_ALEN; ++i)                                             \
+				app_config.classes[type].var[i] = (unsigned char)tmp[i];           \
+		}                                                                                  \
 	} while (0)
 
 #define CONFIG_STORE_MAC_PARAM(name, var)                                                          \
@@ -404,10 +326,12 @@ void config_free(void);
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_ETHER_TYPE(name, var)                                                         \
+#define CONFIG_STORE_ETHER_TYPE_CLASS(name, var)                                                   \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
-			app_config.var = strtoul(value, &endptr, 16);                              \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+                                                                                                   \
+			app_config.classes[type].var = strtoul(value, &endptr, 16);                \
 			if (errno != 0 || endptr == value || *endptr != '\0') {                    \
 				ret = -ERANGE;                                                     \
 				fprintf(stderr, "The value for " #name " is invalid!\n");          \
@@ -416,9 +340,11 @@ void config_free(void);
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_SECURITY_MODE_PARAM(name, var)                                                \
+#define CONFIG_STORE_SECURITY_MODE_PARAM_CLASS(name, var)                                          \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+                                                                                                   \
 			if (strcasecmp(value, "none") && strcasecmp(value, "ao") &&                \
 			    strcasecmp(value, "ae")) {                                             \
 				fprintf(stderr, "Invalid security mode specified!\n");             \
@@ -426,38 +352,35 @@ void config_free(void);
 			}                                                                          \
                                                                                                    \
 			if (!strcasecmp(value, "none"))                                            \
-				app_config.var = SECURITY_MODE_NONE;                               \
+				app_config.classes[type].var = SECURITY_MODE_NONE;                 \
 			if (!strcasecmp(value, "ao"))                                              \
-				app_config.var = SECURITY_MODE_AO;                                 \
+				app_config.classes[type].var = SECURITY_MODE_AO;                   \
 			if (!strcasecmp(value, "ae"))                                              \
-				app_config.var = SECURITY_MODE_AE;                                 \
+				app_config.classes[type].var = SECURITY_MODE_AE;                   \
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_STORE_SECURITY_ALGORITHM_PARAM(name, var)                                           \
+#define CONFIG_STORE_SECURITY_ALGORITHM_PARAM_CLASS(name, var)                                     \
 	do {                                                                                       \
 		if (!strcmp(key, #name)) {                                                         \
+			enum stat_frame_type type = config_opt_to_type(#name);                     \
+                                                                                                   \
 			if (strcasecmp(value, "aes256-gcm") && strcasecmp(value, "aes128-gcm") &&  \
 			    strcasecmp(value, "chacha20-poly1305")) {                              \
 				fprintf(stderr, "Invalid security algorithm specified!\n");        \
 				goto err_parse;                                                    \
 			}                                                                          \
 			if (!strcasecmp(value, "aes256-gcm"))                                      \
-				app_config.var = SECURITY_ALGORITHM_AES256_GCM;                    \
+				app_config.classes[type].var = SECURITY_ALGORITHM_AES256_GCM;      \
 			if (!strcasecmp(value, "aes128-gcm"))                                      \
-				app_config.var = SECURITY_ALGORITHM_AES128_GCM;                    \
+				app_config.classes[type].var = SECURITY_ALGORITHM_AES128_GCM;      \
 			if (!strcasecmp(value, "chacha20-poly1305"))                               \
-				app_config.var = SECURITY_ALGORITHM_CHACHA20_POLY1305;             \
+				app_config.classes[type].var =                                     \
+					SECURITY_ALGORITHM_CHACHA20_POLY1305;                      \
 		}                                                                                  \
 	} while (0)
 
-#define CONFIG_IS_TRAFFIC_CLASS_ACTIVE(name)                                                       \
-	({                                                                                         \
-		bool __ret = false;                                                                \
-		if (app_config.name##_enabled && app_config.name##_num_frames_per_cycle > 0)       \
-			__ret = true;                                                              \
-		__ret;                                                                             \
-	})
+bool config_is_traffic_class_active(const char *traffic_class);
 
 static inline bool config_have_busy_poll(void)
 {

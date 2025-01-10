@@ -17,6 +17,7 @@
 
 #include <linux/if_ether.h>
 
+#include "config.h"
 #include "xdp.h"
 
 #define MAX_FRAME_SIZE XDP_FRAME_SIZE
@@ -59,7 +60,6 @@ struct thread_context {
 	pthread_cond_t data_cond_var; /* Cond var to signal Tx thread */
 	size_t num_frames_available;  /* How many frames are ready to be sent? */
 	bool is_first;                /* Is this the first active traffic class? */
-	uint32_t meta_data_offset;    /* Where is the MetaData in the frame? */
 
 	/* Security related */
 	struct security_context *tx_security_context; /* Tx context for Auth and Crypt */
@@ -67,8 +67,13 @@ struct thread_context {
 	unsigned char *payload_pattern;               /* Frame payload pattern used for AE */
 	size_t payload_pattern_length;                /* Length of payload pattern */
 
-	/* Thread private data */
-	void *private_data; /* Pointer to private data e.g, a structure */
+	/* Traffic class related */
+	struct traffic_class_config *conf; /* Pointer to traffic class configuration */
+	enum stat_frame_type frame_type;   /* Frame type */
+	const char *traffic_class;         /* Traffic class string */
+	uint32_t meta_data_offset;         /* Where is the MetaData in the frame? */
+	uint16_t frame_id;                 /* What's the Profinet frame id */
+	int (*create_socket)(void);        /* Function to create socket */
 };
 
 enum pn_thread_type {

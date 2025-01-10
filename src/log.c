@@ -167,29 +167,29 @@ static void *log_thread_routine(void *data)
 		p = stat_message;
 		stat_message_length = sizeof(stat_message) - 1;
 
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_high))
+		if (config_is_traffic_class_active("TsnHigh"))
 			log_add_traffic_class("TsnHigh", TSN_HIGH_FRAME_TYPE, &p,
 					      &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(tsn_low))
+		if (config_is_traffic_class_active("TsnLow"))
 			log_add_traffic_class("TsnLow", TSN_LOW_FRAME_TYPE, &p,
 					      &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rtc))
+		if (config_is_traffic_class_active("Rtc"))
 			log_add_traffic_class("Rtc", RTC_FRAME_TYPE, &p, &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(rta))
+		if (config_is_traffic_class_active("Rta"))
 			log_add_traffic_class("Rta", RTA_FRAME_TYPE, &p, &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(dcp))
+		if (config_is_traffic_class_active("Dcp"))
 			log_add_traffic_class("Dcp", DCP_FRAME_TYPE, &p, &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(lldp))
+		if (config_is_traffic_class_active("Lldp"))
 			log_add_traffic_class("Lldp", LLDP_FRAME_TYPE, &p, &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_high))
+		if (config_is_traffic_class_active("UdpHigh"))
 			log_add_traffic_class("UdpHigh", UDP_HIGH_FRAME_TYPE, &p,
 					      &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(udp_low))
+		if (config_is_traffic_class_active("UdpLow"))
 			log_add_traffic_class("UdpLow", UDP_LOW_FRAME_TYPE, &p,
 					      &stat_message_length);
-		if (CONFIG_IS_TRAFFIC_CLASS_ACTIVE(generic_l2))
-			log_add_traffic_class(app_config.generic_l2_name, GENERICL2_FRAME_TYPE, &p,
-					      &stat_message_length);
+		if (config_is_traffic_class_active("GenericL2"))
+			log_add_traffic_class(app_config.classes[GENERICL2_FRAME_TYPE].name,
+					      GENERICL2_FRAME_TYPE, &p, &stat_message_length);
 
 		log_message(LOG_LEVEL_INFO, "%s\n", stat_message);
 

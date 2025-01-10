@@ -28,23 +28,26 @@
 #include "stat.h"
 #include "utils.h"
 
-static void dcp_initialize_frames(unsigned char *frame_data, size_t num_frames,
-				  const unsigned char *source)
+static void dcp_initialize_frames(struct thread_context *thread_context, unsigned char *frame_data,
+				  size_t num_frames, const unsigned char *source)
 {
+	const struct traffic_class_config *dcp_config = thread_context->conf;
 	size_t i;
 
 	for (i = 0; i < num_frames; ++i)
 		initialize_profinet_frame(
 			SECURITY_MODE_NONE, frame_idx(frame_data, i), MAX_FRAME_SIZE, source,
-			app_config.dcp_destination, app_config.dcp_payload_pattern,
-			app_config.dcp_payload_pattern_length,
-			app_config.dcp_vid | app_config.dcp_pcp << VLAN_PCP_SHIFT, DCP_FRAMEID);
+			dcp_config->l2_destination, dcp_config->payload_pattern,
+			dcp_config->payload_pattern_length,
+			dcp_config->vid | dcp_config->pcp << VLAN_PCP_SHIFT, DCP_FRAMEID);
 }
 
-static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_frame_len,
+static void dcp_build_frame_from_rx(struct thread_context *thread_context,
+				    const unsigned char *old_frame, size_t old_frame_len,
 				    unsigned char *new_frame, size_t new_frame_len,
 				    const unsigned char *source)
 {
+	const struct traffic_class_config *dcp_config = thread_context->conf;
 	struct vlan_ethernet_header *eth_new, *eth_old;
 	struct timespec tx_timespec_mirror = {};
 	struct profinet_rt_header *rt;
@@ -72,7 +75,7 @@ static void dcp_build_frame_from_rx(const unsigned char *old_frame, size_t old_f
 
 	/* Inject VLAN info */
 	eth_new->vlan_proto = htons(ETH_P_8021Q);
-	eth_new->vlantci = htons(app_config.dcp_vid | app_config.dcp_pcp << VLAN_PCP_SHIFT);
+	eth_new->vlantci = htons(dcp_config->vid | dcp_config->pcp << VLAN_PCP_SHIFT);
 	eth_new->vlan_encapsulated_proto = htons(ETH_P_PROFINET_RT);
 
 	rt = (struct profinet_rt_header *)(new_frame + sizeof(*eth_new));
@@ -87,18 +90,19 @@ static int dcp_send_messages(struct thread_context *thread_context, int socket_f
 			     struct sockaddr_ll *destination, unsigned char *frame_data,
 			     size_t num_frames)
 {
+	const struct traffic_class_config *dcp_config = thread_context->conf;
 	struct packet_send_request send_req = {
 		.traffic_class = stat_frame_type_to_string(DCP_FRAME_TYPE),
 		.socket_fd = socket_fd,
 		.destination = destination,
 		.frame_data = frame_data,
 		.num_frames = num_frames,
-		.frame_length = app_config.dcp_frame_length,
+		.frame_length = dcp_config->frame_length,
 		.wakeup_time = 0,
 		.duration = 0,
 		.tx_time_offset = 0,
 		.meta_data_offset = thread_context->meta_data_offset,
-		.mirror_enabled = app_config.dcp_rx_mirror_enabled,
+		.mirror_enabled = dcp_config->rx_mirror_enabled,
 		.tx_time_enabled = false,
 	};
 
@@ -108,6 +112,7 @@ static int dcp_send_messages(struct thread_context *thread_context, int socket_f
 static int dcp_send_frames(struct thread_context *thread_context, unsigned char *frame_data,
 			   size_t num_frames, int socket_fd, struct sockaddr_ll *destination)
 {
+	const struct traffic_class_config *dcp_config = thread_context->conf;
 	int len, i;
 
 	/* Send them */
@@ -116,9 +121,9 @@ static int dcp_send_frames(struct thread_context *thread_context, unsigned char 
 	for (i = 0; i < len; i++) {
 		uint64_t sequence_counter;
 
-		sequence_counter = get_sequence_counter(
-			frame_data + i * app_config.dcp_frame_length,
-			thread_context->meta_data_offset, app_config.dcp_num_frames_per_cycle);
+		sequence_counter = get_sequence_counter(frame_data + i * dcp_config->frame_length,
+							thread_context->meta_data_offset,
+							dcp_config->num_frames_per_cycle);
 
 		stat_frame_sent(DCP_FRAME_TYPE, sequence_counter);
 	}
@@ -130,6 +135,7 @@ static void dcp_gen_and_send_frames(struct thread_context *thread_context, int s
 				    struct sockaddr_ll *destination,
 				    uint64_t sequence_counter_begin)
 {
+	const struct traffic_class_config *dcp_config = thread_context->conf;
 	struct vlan_ethernet_header *eth;
 	struct profinet_rt_header *rt;
 	struct timespec tx_time = {};
@@ -138,18 +144,18 @@ static void dcp_gen_and_send_frames(struct thread_context *thread_context, int s
 	clock_gettime(app_config.application_clock_id, &tx_time);
 
 	/* Adjust meta data */
-	for (i = 0; i < app_config.dcp_num_frames_per_cycle; i++) {
+	for (i = 0; i < dcp_config->num_frames_per_cycle; i++) {
 		rt = (struct profinet_rt_header *)(frame_idx(thread_context->tx_frame_data, i) +
 						   sizeof(*eth));
 		sequence_counter_to_meta_data(&rt->meta_data, sequence_counter_begin + i,
-					      app_config.dcp_num_frames_per_cycle);
+					      dcp_config->num_frames_per_cycle);
 
 		tx_timestamp_to_meta_data(&rt->meta_data, ts_to_ns(&tx_time));
 	}
 
 	/* Send them */
 	len = dcp_send_messages(thread_context, socket_fd, destination,
-				thread_context->tx_frame_data, app_config.dcp_num_frames_per_cycle);
+				thread_context->tx_frame_data, dcp_config->num_frames_per_cycle);
 
 	for (i = 0; i < len; i++)
 		stat_frame_sent(DCP_FRAME_TYPE, sequence_counter_begin + i);
@@ -158,9 +164,10 @@ static void dcp_gen_and_send_frames(struct thread_context *thread_context, int s
 static void *dcp_tx_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	size_t received_frames_length = MAX_FRAME_SIZE * app_config.dcp_num_frames_per_cycle;
+	const struct traffic_class_config *dcp_config = thread_context->conf;
+	size_t received_frames_length = MAX_FRAME_SIZE * dcp_config->num_frames_per_cycle;
 	unsigned char *received_frames = thread_context->rx_frame_data;
-	const bool mirror_enabled = app_config.dcp_rx_mirror_enabled;
+	const bool mirror_enabled = dcp_config->rx_mirror_enabled;
 	pthread_cond_t *cond = &thread_context->data_cond_var;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
 	struct sockaddr_ll destination;
@@ -170,7 +177,7 @@ static void *dcp_tx_thread_routine(void *data)
 
 	socket_fd = thread_context->socket_fd;
 
-	if_index = if_nametoindex(app_config.dcp_interface);
+	if_index = if_nametoindex(dcp_config->interface);
 	if (!if_index) {
 		log_message(LOG_LEVEL_ERROR, "DcpTx: if_nametoindex() failed!\n");
 		return NULL;
@@ -180,10 +187,10 @@ static void *dcp_tx_thread_routine(void *data)
 	destination.sll_family = PF_PACKET;
 	destination.sll_ifindex = if_index;
 	destination.sll_halen = ETH_ALEN;
-	memcpy(destination.sll_addr, app_config.dcp_destination, ETH_ALEN);
+	memcpy(destination.sll_addr, dcp_config->l2_destination, ETH_ALEN);
 
-	dcp_initialize_frames(thread_context->tx_frame_data, app_config.dcp_num_frames_per_cycle,
-			      thread_context->source);
+	dcp_initialize_frames(thread_context, thread_context->tx_frame_data,
+			      dcp_config->num_frames_per_cycle, thread_context->source);
 
 	while (!thread_context->stop) {
 		struct timespec timeout;
@@ -226,7 +233,7 @@ static void *dcp_tx_thread_routine(void *data)
 					  received_frames_length, &len);
 
 			/* Len should be a multiple of frame size */
-			num_frames = len / app_config.dcp_frame_length;
+			num_frames = len / dcp_config->frame_length;
 			dcp_send_frames(thread_context, received_frames, num_frames, socket_fd,
 					&destination);
 
@@ -249,13 +256,13 @@ static void *dcp_tx_thread_routine(void *data)
 static int dcp_rx_frame(void *data, unsigned char *frame_data, size_t len)
 {
 	struct thread_context *thread_context = data;
-	const unsigned char *expected_pattern =
-		(const unsigned char *)app_config.dcp_payload_pattern;
-	const size_t expected_pattern_length = app_config.dcp_payload_pattern_length;
-	const size_t num_frames_per_cycle = app_config.dcp_num_frames_per_cycle;
-	const bool mirror_enabled = app_config.dcp_rx_mirror_enabled;
-	const bool ignore_rx_errors = app_config.dcp_ignore_rx_errors;
-	const size_t frame_length = app_config.dcp_frame_length;
+	const struct traffic_class_config *dcp_config = thread_context->conf;
+	const unsigned char *expected_pattern = (const unsigned char *)dcp_config->payload_pattern;
+	const size_t expected_pattern_length = dcp_config->payload_pattern_length;
+	const size_t num_frames_per_cycle = dcp_config->num_frames_per_cycle;
+	const bool mirror_enabled = dcp_config->rx_mirror_enabled;
+	const bool ignore_rx_errors = dcp_config->ignore_rx_errors;
+	const size_t frame_length = dcp_config->frame_length;
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
 	unsigned char new_frame[MAX_FRAME_SIZE];
 	struct profinet_rt_header *rt;
@@ -305,7 +312,7 @@ static int dcp_rx_frame(void *data, unsigned char *frame_data, size_t len)
 		return 0;
 
 	/* Build new frame for Tx with VLAN info. */
-	dcp_build_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame),
+	dcp_build_frame_from_rx(thread_context, frame_data, len, new_frame, sizeof(new_frame),
 				thread_context->source);
 
 	/* Store the new frame. */
@@ -336,7 +343,7 @@ static void *dcp_rx_thread_routine(void *data)
 
 	while (!thread_context->stop) {
 		struct packet_receive_request recv_req = {
-			.traffic_class = stat_frame_type_to_string(DCP_FRAME_TYPE),
+			.traffic_class = thread_context->traffic_class,
 			.socket_fd = socket_fd,
 			.receive_function = dcp_rx_frame,
 			.data = thread_context,
@@ -366,9 +373,10 @@ static void *dcp_rx_thread_routine(void *data)
 static void *dcp_tx_generation_thread_routine(void *data)
 {
 	struct thread_context *thread_context = data;
-	uint64_t num_frames = app_config.dcp_num_frames_per_cycle;
+	const struct traffic_class_config *dcp_config = thread_context->conf;
+	uint64_t num_frames = dcp_config->num_frames_per_cycle;
 	pthread_mutex_t *mutex = &thread_context->data_mutex;
-	uint64_t cycle_time_ns = app_config.dcp_burst_period_ns;
+	uint64_t cycle_time_ns = dcp_config->burst_period_ns;
 	struct timespec wakeup_time;
 	int ret;
 
@@ -411,10 +419,16 @@ static void *dcp_tx_generation_thread_routine(void *data)
 
 int dcp_threads_create(struct thread_context *thread_context)
 {
+	struct traffic_class_config *dcp_config;
 	int ret;
 
-	if (!CONFIG_IS_TRAFFIC_CLASS_ACTIVE(dcp))
+	if (!config_is_traffic_class_active("Dcp"))
 		goto out;
+
+	thread_context->conf = dcp_config = &app_config.classes[DCP_FRAME_TYPE];
+	thread_context->frame_type = DCP_FRAME_TYPE;
+	thread_context->traffic_class = stat_frame_type_to_string(DCP_FRAME_TYPE);
+	thread_context->frame_id = DCP_FRAME_TYPE;
 
 	thread_context->socket_fd = create_dcp_socket();
 	if (thread_context->socket_fd < 0) {
@@ -426,38 +440,38 @@ int dcp_threads_create(struct thread_context *thread_context)
 	init_mutex(&thread_context->data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
-	thread_context->packet_context = packet_init(app_config.dcp_num_frames_per_cycle);
+	thread_context->packet_context = packet_init(dcp_config->num_frames_per_cycle);
 	if (!thread_context->packet_context) {
 		fprintf(stderr, "Failed to allocate Dcp packet context!\n");
 		ret = -ENOMEM;
 		goto err_packet;
 	}
 
-	thread_context->tx_frame_data = calloc(app_config.dcp_num_frames_per_cycle, MAX_FRAME_SIZE);
+	thread_context->tx_frame_data = calloc(dcp_config->num_frames_per_cycle, MAX_FRAME_SIZE);
 	if (!thread_context->tx_frame_data) {
 		fprintf(stderr, "Failed to allocate DcpTxFrameData!\n");
 		ret = -ENOMEM;
 		goto err_tx;
 	}
 
-	thread_context->rx_frame_data = calloc(app_config.dcp_num_frames_per_cycle, MAX_FRAME_SIZE);
+	thread_context->rx_frame_data = calloc(dcp_config->num_frames_per_cycle, MAX_FRAME_SIZE);
 	if (!thread_context->rx_frame_data) {
 		fprintf(stderr, "Failed to allocate DcpRxFrameData!\n");
 		ret = -ENOMEM;
 		goto err_rx;
 	}
 
-	ret = get_interface_mac_address(app_config.dcp_interface, thread_context->source,
+	ret = get_interface_mac_address(dcp_config->interface, thread_context->source,
 					sizeof(thread_context->source));
 	if (ret < 0) {
 		fprintf(stderr, "Failed to get Dcp Source MAC address!\n");
 		goto err_mac;
 	}
 
-	if (app_config.dcp_rx_mirror_enabled) {
+	if (dcp_config->rx_mirror_enabled) {
 		/* Per period the expectation is: DcpNumFramesPerCycle * MAX_FRAME */
 		thread_context->mirror_buffer =
-			ring_buffer_allocate(MAX_FRAME_SIZE * app_config.dcp_num_frames_per_cycle);
+			ring_buffer_allocate(MAX_FRAME_SIZE * dcp_config->num_frames_per_cycle);
 		if (!thread_context->mirror_buffer) {
 			fprintf(stderr, "Failed to allocate Dcp Mirror RingBuffer!\n");
 			ret = -ENOMEM;
@@ -466,17 +480,16 @@ int dcp_threads_create(struct thread_context *thread_context)
 	}
 
 	ret = create_rt_thread(&thread_context->tx_task_id, "DcpTxThread",
-			       app_config.dcp_tx_thread_priority, app_config.dcp_tx_thread_cpu,
+			       dcp_config->tx_thread_priority, dcp_config->tx_thread_cpu,
 			       dcp_tx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Dcp Tx Thread!\n");
 		goto err_thread;
 	}
 
-	if (!app_config.dcp_rx_mirror_enabled) {
+	if (!dcp_config->rx_mirror_enabled) {
 		ret = create_rt_thread(&thread_context->tx_gen_task_id, "DcpTxGenThread",
-				       app_config.dcp_tx_thread_priority,
-				       app_config.dcp_tx_thread_cpu,
+				       dcp_config->tx_thread_priority, dcp_config->tx_thread_cpu,
 				       dcp_tx_generation_thread_routine, thread_context);
 		if (ret) {
 			fprintf(stderr, "Failed to create Dcp TxGen Thread!\n");
@@ -485,7 +498,7 @@ int dcp_threads_create(struct thread_context *thread_context)
 	}
 
 	ret = create_rt_thread(&thread_context->rx_task_id, "DcpRxThread",
-			       app_config.dcp_rx_thread_priority, app_config.dcp_rx_thread_cpu,
+			       dcp_config->rx_thread_priority, dcp_config->rx_thread_cpu,
 			       dcp_rx_thread_routine, thread_context);
 	if (ret) {
 		fprintf(stderr, "Failed to create Dcp Rx Thread!\n");
