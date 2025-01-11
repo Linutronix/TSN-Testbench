@@ -735,6 +735,7 @@ int rtc_threads_create(struct thread_context *thread_context)
 		goto out;
 
 	init_mutex(&thread_context->data_mutex);
+	init_mutex(&thread_context->xdp_data_mutex);
 	init_condition_variable(&thread_context->data_cond_var);
 
 	/* For XDP the frames are stored in a umem area. That memory is part of the socket. */
