@@ -20,10 +20,12 @@
 #include <linux/if_ether.h>
 
 #include "config.h"
+#include "log.h"
 #include "net.h"
 #include "net_def.h"
 #include "security.h"
 #include "stat.h"
+#include "thread.h"
 #include "utils.h"
 #include "xdp.h"
 
@@ -220,6 +222,246 @@ void initialize_profinet_frame(enum security_mode mode, unsigned char *frame_dat
 						 payload_pattern_length, vlan_tci, frame_id);
 		break;
 	}
+}
+
+int receive_profinet_frame(void *data, unsigned char *frame_data, size_t len)
+{
+	struct thread_context *thread_context = data;
+	const struct traffic_class_config *class_config = thread_context->conf;
+	const unsigned char *expected_pattern =
+		(const unsigned char *)class_config->payload_pattern;
+	struct security_context *security_context = thread_context->rx_security_context;
+	const size_t expected_pattern_length = class_config->payload_pattern_length;
+	const bool mirror_enabled = class_config->rx_mirror_enabled;
+	const bool ignore_rx_errors = class_config->ignore_rx_errors;
+	size_t expected_frame_length = class_config->frame_length;
+	bool out_of_order, payload_mismatch, frame_id_mismatch;
+	unsigned char plaintext[MAX_FRAME_SIZE];
+	unsigned char new_frame[MAX_FRAME_SIZE];
+	struct timespec tx_timespec_mirror = {};
+	struct profinet_secure_header *srt;
+	struct profinet_rt_header *rt;
+	uint64_t sequence_counter;
+	uint64_t tx_timestamp;
+	bool vlan_tag_missing;
+	void *p = frame_data;
+	struct ethhdr *eth;
+	uint16_t frame_id;
+	uint16_t proto;
+
+	if (len < sizeof(struct vlan_ethernet_header)) {
+		log_message(LOG_LEVEL_WARNING, "%sRx: Too small frame received!\n",
+			    thread_context->traffic_class);
+		return -EINVAL;
+	}
+
+	eth = p;
+	if (eth->h_proto == htons(ETH_P_8021Q)) {
+		struct vlan_ethernet_header *veth = p;
+
+		proto = veth->vlan_encapsulated_proto;
+		p += sizeof(*veth);
+		vlan_tag_missing = false;
+	} else {
+		proto = eth->h_proto;
+		p += sizeof(*eth);
+		expected_frame_length -= sizeof(struct vlan_header);
+		vlan_tag_missing = true;
+	}
+
+	if (proto != htons(ETH_P_PROFINET_RT)) {
+		log_message(LOG_LEVEL_WARNING, "%sRx: Not a Profinet frame received!\n",
+			    thread_context->traffic_class);
+		return -EINVAL;
+	}
+
+	/* Check frame length: VLAN tag might be stripped or not. Check it. */
+	if (len != expected_frame_length) {
+		log_message(LOG_LEVEL_WARNING, "%sRx: Frame with wrong length received!\n",
+			    thread_context->traffic_class);
+		return -EINVAL;
+	}
+
+	clock_gettime(app_config.application_clock_id, &tx_timespec_mirror);
+
+	/* Check cycle counter, frame id range and payload. */
+	if (class_config->security_mode == SECURITY_MODE_NONE) {
+		rt = p;
+		p += sizeof(*rt);
+
+		frame_id = be16toh(rt->frame_id);
+		sequence_counter = meta_data_to_sequence_counter(
+			&rt->meta_data, class_config->num_frames_per_cycle);
+
+		tx_timestamp = meta_data_to_tx_timestamp(&rt->meta_data);
+		tx_timestamp_to_meta_data(&rt->meta_data,
+					  ts_to_ns(&tx_timespec_mirror) +
+						  (app_config.application_tx_base_offset_ns -
+						   app_config.application_rx_base_offset_ns));
+
+	} else if (class_config->security_mode == SECURITY_MODE_AO) {
+
+		unsigned char *begin_of_security_checksum;
+		unsigned char *begin_of_aad_data;
+		size_t size_of_eth_header;
+		size_t size_of_aad_data;
+		struct security_iv iv;
+		int ret;
+
+		srt = p;
+		p += sizeof(*srt);
+
+		frame_id = be16toh(srt->frame_id);
+		sequence_counter = meta_data_to_sequence_counter(
+			&srt->meta_data, class_config->num_frames_per_cycle);
+
+		tx_timestamp = meta_data_to_tx_timestamp(&srt->meta_data);
+
+		/* Authenticate received Profinet Frame */
+		size_of_eth_header = vlan_tag_missing ? sizeof(struct ethhdr)
+						      : sizeof(struct vlan_ethernet_header);
+
+		begin_of_aad_data = frame_data + size_of_eth_header;
+		size_of_aad_data = len - size_of_eth_header - sizeof(struct security_checksum);
+		begin_of_security_checksum = frame_data + (len - sizeof(struct security_checksum));
+
+		prepare_iv((const unsigned char *)class_config->security_iv_prefix,
+			   sequence_counter, &iv);
+
+		ret = security_decrypt(security_context, NULL, 0, begin_of_aad_data,
+				       size_of_aad_data, begin_of_security_checksum,
+				       (unsigned char *)&iv, NULL);
+		if (ret)
+			log_message(LOG_LEVEL_WARNING,
+				    "%sRx: frame[%" PRIu64 "] Not authentificated\n",
+				    thread_context->traffic_class, sequence_counter);
+
+		tx_timestamp_to_meta_data(&srt->meta_data,
+					  ts_to_ns(&tx_timespec_mirror) +
+						  (app_config.application_tx_base_offset_ns -
+						   app_config.application_rx_base_offset_ns));
+		security_encrypt(security_context, NULL, 0, begin_of_aad_data, size_of_aad_data,
+				 (unsigned char *)&iv, NULL, begin_of_security_checksum);
+
+	} else {
+		unsigned char *begin_of_security_checksum;
+		unsigned char *begin_of_ciphertext;
+		unsigned char *begin_of_aad_data;
+		size_t size_of_ciphertext;
+		size_t size_of_eth_header;
+		size_t size_of_aad_data;
+		struct security_iv iv;
+		int ret;
+
+		srt = p;
+
+		frame_id = be16toh(srt->frame_id);
+		sequence_counter = meta_data_to_sequence_counter(
+			&srt->meta_data, class_config->num_frames_per_cycle);
+
+		tx_timestamp = meta_data_to_tx_timestamp(&srt->meta_data);
+
+		/* Authenticate received Profinet Frame */
+		size_of_eth_header = vlan_tag_missing ? sizeof(struct ethhdr)
+						      : sizeof(struct vlan_ethernet_header);
+
+		begin_of_aad_data = frame_data + size_of_eth_header;
+		size_of_aad_data = sizeof(*srt);
+		begin_of_security_checksum = frame_data + (len - sizeof(struct security_checksum));
+		begin_of_ciphertext = frame_data + size_of_eth_header + sizeof(*srt);
+		size_of_ciphertext = len - sizeof(struct vlan_ethernet_header) -
+				     sizeof(struct profinet_secure_header) -
+				     sizeof(struct security_checksum);
+
+		prepare_iv((const unsigned char *)class_config->security_iv_prefix,
+			   sequence_counter, &iv);
+
+		ret = security_decrypt(security_context, begin_of_ciphertext, size_of_ciphertext,
+				       begin_of_aad_data, size_of_aad_data,
+				       begin_of_security_checksum, (unsigned char *)&iv, plaintext);
+		if (ret)
+			log_message(LOG_LEVEL_WARNING,
+				    "%sRx: frame[%" PRIu64 "] Not authentificated and decrypted\n",
+				    thread_context->traffic_class, sequence_counter);
+
+		/* plaintext points to the decrypted payload */
+		p = plaintext;
+
+		tx_timestamp_to_meta_data(&srt->meta_data,
+					  ts_to_ns(&tx_timespec_mirror) +
+						  (app_config.application_tx_base_offset_ns -
+						   app_config.application_rx_base_offset_ns));
+
+		security_encrypt(security_context, thread_context->payload_pattern,
+				 thread_context->payload_pattern_length, begin_of_aad_data,
+				 size_of_aad_data, (unsigned char *)&iv, begin_of_ciphertext,
+				 begin_of_security_checksum);
+	}
+
+	out_of_order = sequence_counter != thread_context->rx_sequence_counter;
+	payload_mismatch = memcmp(p, expected_pattern, expected_pattern_length);
+	frame_id_mismatch = frame_id != thread_context->frame_id;
+
+	stat_frame_received(thread_context->frame_type, sequence_counter, out_of_order,
+			    payload_mismatch, frame_id_mismatch, tx_timestamp);
+
+	if (frame_id_mismatch)
+		log_message(
+			LOG_LEVEL_WARNING, "%sRx: frame[%" PRIu64 "] FrameId mismatch: 0x%4x!\n",
+			thread_context->traffic_class, sequence_counter, thread_context->frame_id);
+
+	if (out_of_order) {
+		if (!ignore_rx_errors)
+			log_message(LOG_LEVEL_WARNING,
+				    "%sRx: frame[%" PRIu64 "] SequenceCounter mismatch: %" PRIu64
+				    "!\n",
+				    thread_context->traffic_class, sequence_counter,
+				    thread_context->rx_sequence_counter);
+		thread_context->rx_sequence_counter++;
+	}
+
+	if (payload_mismatch)
+		log_message(LOG_LEVEL_WARNING,
+			    "%sRx: frame[%" PRIu64 "] Payload Pattern mismatch!\n",
+			    thread_context->traffic_class, sequence_counter);
+
+	thread_context->rx_sequence_counter++;
+
+	/*
+	 * If mirror enabled, assemble and store the frame for Tx later.
+	 *
+	 * In case of XDP the Rx umem area will be reused for Tx.
+	 */
+	if (!mirror_enabled)
+		return 0;
+
+	if (class_config->xdp_enabled) {
+		/* Re-add vlan tag */
+		if (vlan_tag_missing)
+			insert_vlan_tag(frame_data, len,
+					class_config->vid | class_config->pcp << VLAN_PCP_SHIFT);
+
+		/* Swap mac addresses inline */
+		swap_mac_addresses(frame_data, len);
+	} else {
+		/* Build new frame for Tx with VLAN info. */
+		build_vlan_frame_from_rx(frame_data, len, new_frame, sizeof(new_frame),
+					 ETH_P_PROFINET_RT,
+					 class_config->vid | class_config->pcp << VLAN_PCP_SHIFT);
+
+		/* Store the new frame. */
+		ring_buffer_add(thread_context->mirror_buffer, new_frame,
+				len + sizeof(struct vlan_header));
+	}
+
+	/* RTA is a burst traffic class and needs to update num_frames_available */
+	if (thread_context->frame_type == RTA_FRAME_TYPE) {
+		pthread_mutex_lock(&thread_context->data_mutex);
+		thread_context->num_frames_available++;
+		pthread_mutex_unlock(&thread_context->data_mutex);
+	}
+
+	return 0;
 }
 
 int prepare_frame_for_tx(const struct prepare_frame_config *frame_config)
