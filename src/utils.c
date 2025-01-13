@@ -238,7 +238,6 @@ int receive_profinet_frame(void *data, unsigned char *frame_data, size_t len)
 	bool out_of_order, payload_mismatch, frame_id_mismatch;
 	unsigned char plaintext[MAX_FRAME_SIZE];
 	unsigned char new_frame[MAX_FRAME_SIZE];
-	struct timespec tx_timespec_mirror = {};
 	struct profinet_secure_header *srt;
 	struct profinet_rt_header *rt;
 	uint64_t sequence_counter;
@@ -282,8 +281,6 @@ int receive_profinet_frame(void *data, unsigned char *frame_data, size_t len)
 		return -EINVAL;
 	}
 
-	clock_gettime(app_config.application_clock_id, &tx_timespec_mirror);
-
 	/* Check cycle counter, frame id range and payload. */
 	if (class_config->security_mode == SECURITY_MODE_NONE) {
 		rt = p;
@@ -294,10 +291,7 @@ int receive_profinet_frame(void *data, unsigned char *frame_data, size_t len)
 			&rt->meta_data, class_config->num_frames_per_cycle);
 
 		tx_timestamp = meta_data_to_tx_timestamp(&rt->meta_data);
-		tx_timestamp_to_meta_data(&rt->meta_data,
-					  ts_to_ns(&tx_timespec_mirror) +
-						  (app_config.application_tx_base_offset_ns -
-						   app_config.application_rx_base_offset_ns));
+		set_mirror_tx_timestamp(&rt->meta_data);
 
 	} else if (class_config->security_mode == SECURITY_MODE_AO) {
 
@@ -336,10 +330,8 @@ int receive_profinet_frame(void *data, unsigned char *frame_data, size_t len)
 				    "%sRx: frame[%" PRIu64 "] Not authentificated\n",
 				    thread_context->traffic_class, sequence_counter);
 
-		tx_timestamp_to_meta_data(&srt->meta_data,
-					  ts_to_ns(&tx_timespec_mirror) +
-						  (app_config.application_tx_base_offset_ns -
-						   app_config.application_rx_base_offset_ns));
+		set_mirror_tx_timestamp(&srt->meta_data);
+
 		security_encrypt(security_context, NULL, 0, begin_of_aad_data, size_of_aad_data,
 				 (unsigned char *)&iv, NULL, begin_of_security_checksum);
 
@@ -387,10 +379,7 @@ int receive_profinet_frame(void *data, unsigned char *frame_data, size_t len)
 		/* plaintext points to the decrypted payload */
 		p = plaintext;
 
-		tx_timestamp_to_meta_data(&srt->meta_data,
-					  ts_to_ns(&tx_timespec_mirror) +
-						  (app_config.application_tx_base_offset_ns -
-						   app_config.application_rx_base_offset_ns));
+		set_mirror_tx_timestamp(&srt->meta_data);
 
 		security_encrypt(security_context, thread_context->payload_pattern,
 				 thread_context->payload_pattern_length, begin_of_aad_data,

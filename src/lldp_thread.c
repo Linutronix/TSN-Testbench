@@ -32,7 +32,6 @@
 static void lldp_build_frame_from_rx(unsigned char *frame_data, const unsigned char *source)
 {
 	struct ethhdr *eth = (struct ethhdr *)frame_data;
-	struct timespec tx_timespec_mirror = {};
 	struct reference_meta_data *meta;
 
 	/* One task: Swap source. */
@@ -40,10 +39,7 @@ static void lldp_build_frame_from_rx(unsigned char *frame_data, const unsigned c
 
 	/* One task: Set the tx timestamp. */
 	meta = (struct reference_meta_data *)(frame_data + sizeof(*eth));
-	clock_gettime(app_config.application_clock_id, &tx_timespec_mirror);
-	tx_timestamp_to_meta_data(meta, ts_to_ns(&tx_timespec_mirror) +
-						(app_config.application_tx_base_offset_ns -
-						 app_config.application_rx_base_offset_ns));
+	set_mirror_tx_timestamp(meta);
 }
 
 static void lldp_initialize_frame(struct thread_context *thread_context, unsigned char *frame_data,

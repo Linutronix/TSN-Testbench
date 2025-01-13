@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "config.h"
 #include "net_def.h"
 #include "security.h"
 #include "stat.h"
@@ -143,6 +144,17 @@ static inline uint64_t meta_data_to_tx_timestamp(const struct reference_meta_dat
 	tx_timestamp = be64toh(meta->tx_timestamp);
 
 	return tx_timestamp;
+}
+
+static inline void set_mirror_tx_timestamp(struct reference_meta_data *meta)
+{
+	struct timespec now;
+
+	clock_gettime(app_config.application_clock_id, &now);
+
+	tx_timestamp_to_meta_data(meta,
+				  ts_to_ns(&now) + (app_config.application_tx_base_offset_ns -
+						    app_config.application_rx_base_offset_ns));
 }
 
 static inline uint64_t get_sequence_counter(const unsigned char *frame_data,
