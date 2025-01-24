@@ -39,7 +39,7 @@ The parameters which affect the histogram integration are presented in the table
    * - StatsHistogramEnabled
      - Decides whether a histogram is written after successful run or not
 
-   * - StatsHistogramMininumNS
+   * - StatsHistogramMinimumNS
      - Lower boundary of RTT which is recorded in histogram e.g., 1ms
 
    * - StatsHistogramMaximumNS
