@@ -104,7 +104,7 @@ struct application_config {
 	unsigned char debug_monitor_destination[ETH_ALEN];
 	/* Statistics */
 	bool stats_histogram_enabled;
-	uint64_t stats_histogram_mininum_ns;
+	uint64_t stats_histogram_minimum_ns;
 	uint64_t stats_histogram_maximum_ns;
 	char *stats_histogram_file;
 	size_t stats_histogram_file_length;

@@ -31,7 +31,7 @@ int histogram_init(void)
 	for (i = 0; i < NUM_FRAME_TYPES; i++) {
 		struct histogram *hist = &histograms[i];
 
-		hist->min = app_config.stats_histogram_mininum_ns;
+		hist->min = app_config.stats_histogram_minimum_ns;
 		hist->max = app_config.stats_histogram_maximum_ns;
 
 		/* RTT is recorded in us */

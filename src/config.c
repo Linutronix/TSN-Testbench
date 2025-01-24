@@ -404,8 +404,8 @@ int config_read_from_file(const char *config_file)
 			CONFIG_STORE_MAC_PARAM(DebugMonitorDestination, debug_monitor_destination);
 
 			CONFIG_STORE_BOOL_PARAM(StatsHistogramEnabled, stats_histogram_enabled);
-			CONFIG_STORE_ULONG_PARAM(StatsHistogramMininumNS,
-						 stats_histogram_mininum_ns);
+			CONFIG_STORE_ULONG_PARAM(StatsHistogramMinimumNS,
+						 stats_histogram_minimum_ns);
 			CONFIG_STORE_ULONG_PARAM(StatsHistogramMaximumNS,
 						 stats_histogram_maximum_ns);
 			CONFIG_STORE_STRING_PARAM(StatsHistogramFile, stats_histogram_file);
@@ -780,7 +780,7 @@ void config_print_values(void)
 	       "\n");
 
 	printf("StatsHistogramEnabled=%s\n", app_config.stats_histogram_enabled ? "True" : "False");
-	printf("StatsHistogramMinimumNS=%" PRIu64 "\n", app_config.stats_histogram_mininum_ns);
+	printf("StatsHistogramMinimumNS=%" PRIu64 "\n", app_config.stats_histogram_minimum_ns);
 	printf("StatsHistogramMaximumNS=%" PRIu64 "\n", app_config.stats_histogram_maximum_ns);
 	printf("StatsHistogramFile=%s\n", app_config.stats_histogram_file);
 	printf("StatsCollectionIntervalNS=%" PRIu64 "\n", app_config.stats_collection_interval_ns);
@@ -1121,7 +1121,7 @@ int config_set_defaults(bool mirror_enabled)
 
 	/* Stats */
 	app_config.stats_histogram_enabled = false;
-	app_config.stats_histogram_mininum_ns = 1 * 1e6;
+	app_config.stats_histogram_minimum_ns = 1 * 1e6;
 	app_config.stats_histogram_maximum_ns = 10 * 1e6;
 	app_config.stats_histogram_file = strdup(default_hist_file);
 	if (!app_config.stats_histogram_file)
@@ -1337,7 +1337,7 @@ bool config_sanity_check(void)
 		return false;
 
 	/* Stats */
-	if (app_config.stats_histogram_mininum_ns > app_config.stats_histogram_maximum_ns) {
+	if (app_config.stats_histogram_minimum_ns > app_config.stats_histogram_maximum_ns) {
 		fprintf(stderr, "Histogram minimum and maximum values are invalid!\n");
 		return false;
 	}
