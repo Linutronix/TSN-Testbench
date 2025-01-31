@@ -1,0 +1,116 @@
+---
+#
+# Copyright (C) 2023-2025 Linutronix GmbH
+# Author Kurt Kanzenbach <kurt@linutronix.de>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# Sample reference YAML configuration file for Intel i225 NIC(s).
+#
+Application:
+  ApplicationClockId: CLOCK_TAI
+  # ApplicationBaseStartTimeNS: 0
+  ApplicationBaseCycleTimeNS: 1000000
+  ApplicationTxBaseOffsetNS: 800000
+  ApplicationRxBaseOffsetNS: 600000
+  ApplicationXdpProgram: xdp_kern_profinet_vid100.o
+TSNHigh:
+  TsnHighEnabled: true
+  TsnHighXdpEnabled: true
+  TsnHighXdpSkbMode: false
+  TsnHighXdpZcMode: true
+  TsnHighXdpWakeupMode: true
+  TsnHighTxTimeEnabled: false
+  TsnHighTxTimeOffsetNS: 0
+  TsnHighVid: 100
+  TsnHighPcp: 7
+  TsnHighNumFramesPerCycle: 1
+  TsnHighPayloadPattern: |
+    TsnHighPayloadPattern
+  TsnHighFrameLength: 128
+  TsnHighRxQueue: 0
+  TsnHighTxQueue: 0
+  TsnHighSocketPriority: 7
+  TsnHighTxThreadPriority: 98
+  TsnHighRxThreadPriority: 98
+  TsnHighTxThreadCpu: 0
+  TsnHighRxThreadCpu: 0
+  TsnHighInterface: enp88s0
+  TsnHighDestination: 48:21:0b:26:3f:42
+TSNLow:
+  TsnLowEnabled: true
+  TsnLowXdpEnabled: true
+  TsnLowXdpSkbMode: false
+  TsnLowXdpZcMode: true
+  TsnLowXdpWakeupMode: true
+  TsnLowTxTimeEnabled: false
+  TsnLowTxTimeOffsetNS: 0
+  TsnLowVid: 100
+  TsnLowPcp: 6
+  TsnLowNumFramesPerCycle: 1
+  TsnLowPayloadPattern: |
+    TsnLowPayloadPattern
+  TsnLowFrameLength: 128
+  TsnLowRxQueue: 1
+  TsnLowTxQueue: 1
+  TsnLowSocketPriority: 6
+  TsnLowTxThreadPriority: 98
+  TsnLowRxThreadPriority: 98
+  TsnLowTxThreadCpu: 0
+  TsnLowRxThreadCpu: 0
+  TsnLowInterface: enp88s0
+  TsnLowDestination: 48:21:0b:26:3f:42
+RTC:
+  RtcEnabled: true
+  RtcXdpEnabled: true
+  RtcXdpSkbMode: false
+  RtcXdpZcMode: true
+  RtcXdpWakeupMode: true
+  RtcVid: 100
+  RtcPcp: 5
+  RtcNumFramesPerCycle: 1
+  RtcPayloadPattern: |
+    RtcPayloadPattern
+  RtcFrameLength: 128
+  RtcRxQueue: 2
+  RtcTxQueue: 2
+  RtcSocketPriority: 5
+  RtcTxThreadPriority: 98
+  RtcRxThreadPriority: 98
+  RtcTxThreadCpu: 0
+  RtcRxThreadCpu: 0
+  RtcInterface: enp88s0
+  RtcDestination: 48:21:0b:26:3f:42
+RTA:
+  RtaEnabled: true
+  RtaXdpEnabled: false
+  RtaXdpSkbMode: false
+  RtaXdpZcMode: false
+  RtaXdpWakeupMode: true
+  RtaVid: 100
+  RtaPcp: 4
+  RtaBurstPeriodNS: 200000000
+  RtaNumFramesPerCycle: 20
+  RtaPayloadPattern: |
+    RtaPayloadPattern
+  RtaFrameLength: 256
+  RtaRxQueue: 3
+  RtaTxQueue: 3
+  RtaSocketPriority: 4
+  RtaTxThreadPriority: 97
+  RtaRxThreadPriority: 97
+  RtaTxThreadCpu: 1
+  RtaRxThreadCpu: 1
+  RtaInterface: enp88s0
+  RtaDestination: 48:21:0b:26:3f:42
+Stats:
+  StatsHistogramEnabled: true
+  StatsHistogramMinimumNS: 1000000
+  StatsHistogramMaximumNS: 10000000
+  StatsHistogramFile: histogram.txt
+Log:
+  LogThreadPeriodNS: 500000000
+  LogThreadPriority: 1
+  LogThreadCpu: 1
+  LogFile: mirror_vid100.log
+  LogLevel: Info
