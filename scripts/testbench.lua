@@ -4,7 +4,7 @@
 --
 -- SPDX-License-Identifier: BSD-2-Clause
 --
-testbench_proto = Proto("Testbench", "Linux TSN Testbench Protocol")
+testbench_proto = Proto("Testbench", "Linux RealTime Communication Testbench Protocol")
 
 -- MetaData valid for all frames
 frame_id = ProtoField.uint16("Testbench.FrameId", "frame_id", base.HEX)

@@ -9,12 +9,12 @@
 Introduction
 ============
 
-The TSN ``Testbench`` is a real-time and non-real time traffic validation tool
+The Linux RealTime Communication ``Testbench`` is a real-time and non-real time traffic validation tool
 for converged TSN networks. PROFINET as well as OPC/UA PubSub and other
 configurable protocols are supported. Furthermore, the performance validation of
 security algorithms can be utilized. The evaluation application is primarily
 used to simulate a PLC. It generates RT and non-RT traffic, mirrors traffic and
-performs consistency and latency checks. The Linux TSN ``Testbench`` is split
+performs consistency and latency checks. The Linux RealTime Communication ``Testbench`` is split
 into two applications:
 
 - ``reference``: Traffic generation and checking simulation
@@ -25,7 +25,7 @@ The concept is shown below.
 
 .. image:: images/overview.png
   :width: 600
-  :alt: Linux TSN Testbench
+  :alt: Linux RealTime Communication Testbench
 
 The traffic generation and reception are based on standard Linux interfaces. RAW
 sockets and BPF filters are utilized. The interface is configured into
@@ -62,7 +62,7 @@ real-time Operating-System. How well do these mechanisms perform for real world
 use cases? For instance, is it possible to run PROFINET over TSN on top of
 Linux? Which jitter, cycle times, throughputs and latencies can be achieved?
 
-To answer these questions, the Linux TSN ``Testbench`` has been developed. The
+To answer these questions, the Linux RealTime Communication ``Testbench`` has been developed. The
 purpose of that tool is to evaluate manufacturer’s hardware as well as
 underlying drivers and the Linux network stack itself. Thereby, please note that
 is not a TSN conformance testing tool, it is intended for evaluation. The tool
@@ -87,11 +87,11 @@ different traffic classes ranging from real time Layer 2 up to UDP
 communication. The cyclic receivers and transmitters utilize either traditional
 ``AF_PACKET`` or modern ``AF_XDP`` sockets. For both socket types the receive
 flow is configured via either BPF filters or eBPF XDP programs. Based on the
-configuration, or profiles, the Linux TSN ``Testbench`` can simulate different
+configuration, or profiles, the Linux RealTime Communication ``Testbench`` can simulate different
 traffic types such as PROFINET or OPC/UA PubSub. The image below shows an
 example of three different middlewares in combination with non-real time
 applications utilizing XDP.
 
 .. image:: images/ref_test_app_architecture_xdp.png
   :width: 600
-  :alt: Linux TSN Testbench XDP Architecture
+  :alt: Linux RealTime Communication Testbench XDP Architecture

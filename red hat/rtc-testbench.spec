@@ -2,13 +2,13 @@
 # Author Pablo Iranzo Gómez <Pablo.Iranzo@redhat.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
-Name: TSN-Testbench
+Name: RTC-Testbench
 Version: %{version}
 Release: 1%{?dist}
 Summary: Time-Sensitive Networks Testbench is a set of tools for validating the networks with different protocols
 License: BSD-2
 %undefine _disable_source_fetch
-URL: https://github.com/Linutronix/TSN-Testbench
+URL: https://github.com/Linutronix/RTC-Testbench
 Source0: https://github.com/%{myrepo}/archive/refs/tags/%{version}.tar.gz
 
 
@@ -24,7 +24,7 @@ BuildRequires: python3-sphinx_rtd_theme
 BuildRequires: texinfo
 
 %description
-The TSN Testbench is a real-time and non-real-time traffic validation tool for converged TSN networks. PROFINET as well as OPC/UA PubSub and other configurable protocols are supported.
+The RTC Testbench is a real-time and non-real-time traffic validation tool for converged TSN networks. PROFINET as well as OPC/UA PubSub and other configurable protocols are supported.
 
 %prep
 cd %{_topdir}/BUILD
@@ -49,7 +49,7 @@ install -m 755 /usr/local/bin/mirror %{buildroot}/usr/bin/mirror
 
 
 mkdir -p $RPM_BUILD_ROOT/usr/share/man/man8
-install -m  644 %{_topdir}/BUILD/%{name}-%{version}/Documentation/_build/man/linuxtsntestbench.1  $RPM_BUILD_ROOT/usr/share/man/man8/%{name}.1
+install -m  644 %{_topdir}/BUILD/%{name}-%{version}/Documentation/_build/man/linuxrealtimecommunicationtestbench.1  $RPM_BUILD_ROOT/usr/share/man/man8/%{name}.1
 
 mkdir -p %{buildroot}/usr/local/testbench/ebpf/
 install -m 755 -d /usr/local/share/testbench/ebpf/

@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: TSN-Testbench
+Upstream-Name: RTC-Testbench
 Upstream-Contact: Kurt Kanzenbach <kurt@linutronix.de>
-Source: https://www.github.com/Linutronix/TSN-Testbench
+Source: https://www.github.com/Linutronix/RTC-Testbench
 
 Files: .clang-format .clang-tidy .dir-locals.el CONTRIBUTING.md Documentation/Makefile Documentation/conf.py
 Copyright: 2020-2024 Linutronix GmbH

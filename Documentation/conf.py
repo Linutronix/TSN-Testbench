@@ -17,8 +17,8 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "Linux TSN Testbench"
-copyright = "2022-2024, Linutronix GmbH"
+project = "Linux RealTime Communication Testbench"
+copyright = "2022-2025, Linutronix GmbH"
 author = "Kurt Kanzenbach"
 
 # The full version, including alpha/beta/rc tags

@@ -1,13 +1,13 @@
-# Linux TSN Testbench
+# Linux RealTime Communication Testbench
 
 ## About
 
-The Linux TSN `Testbench` is a real-time and non-real time traffic validation
+The Linux RealTime Communication `Testbench` is a real-time and non-real time traffic validation
 tool for converged TSN networks. PROFINET as well as OPC/UA PubSub and other
 configurable protocols are supported. Furthermore, the performance validation of
 security algorithms can be utilized. The evaluation application is primarily
 used to simulate a PLC. It generates RT and non-RT traffic, mirrors traffic and
-performs consistency and latency checks. The Linux TSN `Testbench` is split
+performs consistency and latency checks. The Linux RealTime Communication `Testbench` is split
 into two applications:
 
 - `reference`: Traffic generation and checking simulation
@@ -16,7 +16,7 @@ into two applications:
 
 The concept is shown below.
 
-<img src="Documentation/images/overview.png" width="600" alt="Linux TSN Testbench" />
+<img src="Documentation/images/overview.png" width="600" alt="Linux RealTime Communication Testbench" />
 
 ### Motivation
 
@@ -28,7 +28,7 @@ real-time Operating-System. How well do these mechanisms perform for real world
 use cases? For instance, is it possible to run PROFINET over TSN on top of
 Linux? Which jitter, cycle times, throughputs and latencies can be achieved?
 
-To answer these questions, the Linux TSN `Testbench` has been developed. The
+To answer these questions, the Linux RealTime Communication `Testbench` has been developed. The
 purpose of that tool is to evaluate manufacturer’s hardware as well as
 underlying drivers and the Linux network stack itself. Thereby, please note that
 is not a TSN conformance testing tool, it is intended for evaluation. The tool
@@ -50,26 +50,26 @@ different traffic classes ranging from real time Layer 2 up to UDP
 communication. The cyclic receivers and transmitters utilize either traditional
 `AF_PACKET` or modern `AF_XDP` sockets. For both socket types the receive
 flow is configured via either BPF filters or eBPF XDP programs. Based on the
-configuration, or profiles, the Linux TSN `Testbench` can simulate different
+configuration, or profiles, the Linux RealTime Communication `Testbench` can simulate different
 traffic types such as PROFINET or OPC/UA PubSub. The image below shows an
 example of three different middlewares in combination with non-real time
 applications utilizing XDP.
 
-<img src="Documentation/images/ref_test_app_architecture_xdp.png" width="600" alt="Linux TSN Testbench XDP Architecture" />
+<img src="Documentation/images/ref_test_app_architecture_xdp.png" width="600" alt="Linux RealTime Communication Testbench XDP Architecture" />
 
 ## Resources
 
-Project home: https://github.com/Linutronix/TSN-Testbench
+Project home: https://github.com/Linutronix/RTC-Testbench
 
-Project documentation: https://linutronix.github.io/TSN-Testbench
+Project documentation: https://linutronix.github.io/RTC-Testbench
 
-Contribution: See [CONTRIBUTING](https://github.com/Linutronix/TSN-Testbench/blob/main/CONTRIBUTING.md)
+Contribution: See [CONTRIBUTING](https://github.com/Linutronix/RTC-Testbench/blob/main/CONTRIBUTING.md)
 
 This project is maintained by: [Linutronix](https://www.linutronix.de/)
 
 ## Features
 
-Linux TSN `Testbench` features include:
+Linux RealTime Communication `Testbench` features include:
 
 - Real-time and non-real time protocols
 - Configurable traffic class mapping
@@ -94,8 +94,8 @@ The following list contains ideas for further development:
 ## Documentation
 
 The documentation includes information on how to build, use and run the Linux
-TSN `Testbench`. The documentation is available at
-https://linutronix.github.io/TSN-Testbench
+RealTime Communication `Testbench`. The documentation is available at
+https://linutronix.github.io/RTC-Testbench
 
 ## Credits
 
@@ -105,7 +105,7 @@ Supported by Siemens AG and Intel Corporation
 
 ## Copyright
 
-Copyright (C) 2020-2024 Linutronix GmbH
+Copyright (C) 2020-2025 Linutronix GmbH
 
 Copyright (C) 2024 Intel Corporation
 

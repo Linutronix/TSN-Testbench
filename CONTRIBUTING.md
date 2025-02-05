@@ -1,11 +1,11 @@
-# Contributing to Linux TSN Testbench
+# Contributing to Linux RealTime Communication Testbench
 
-The Linux TSN Testbench encourages contributions in form of feedback, bug
+The Linux RealTime Communication Testbench encourages contributions in form of feedback, bug
 reports and/or code contributions.
 
 ## Github Workflow
 
-The Linux TSN Testbench follows the Github development model using pull
+The Linux RealTime Communication Testbench follows the Github development model using pull
 request. To contribute code to the project use the following workflow:
 
 1. Fork the repo and create your branch from `main`
@@ -33,7 +33,7 @@ In addition, contributions are accepted via email as well:
 
 ## Commit message rules
 
-For individual commits the Linux TSN Testbench follows the Linux kernel way of
+For individual commits the Linux RealTime Communication Testbench follows the Linux kernel way of
 writing and signing commit messages.
 
 Describe your changes:

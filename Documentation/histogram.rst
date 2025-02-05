@@ -12,12 +12,12 @@ Histograms
 Motivation
 ----------
 
-The Linux TSN Testbench keeps track of the round-trip times of each frame. Currently the minimum,
+The Linux RealTime Communication Testbench keeps track of the round-trip times of each frame. Currently the minimum,
 maximum and average values are displayed in the log files over the whole application run
 time. However, it does not show the distribution of the round-trip times. For example, the
 distribution is of interest to see the relation of outliers in contrast to regular case.
 
-Therefore, the Linux TSN Testbench also includes the possibility to generate a histogram file after
+Therefore, the Linux RealTime Communication Testbench also includes the possibility to generate a histogram file after
 a successful run. The histogram itself is a text file which can be easily plotted e.g., with
 ``gnuplot``.
 

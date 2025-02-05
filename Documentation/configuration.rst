@@ -95,21 +95,22 @@ The possible traffic classes are:
 .. Note:: The ``XdpBusyPollMode`` option requires Linux kernel >= v6.5. Previous Linux kernel version do not support
           this feature with ``PREEMPT_RT`` enabled.
 
-.. Note:: The **security settings** are only valid for the PROFINET real time traffic classes. Furthermore, the Linux
-          TSN ``Testbench`` demonstrates only one exemplary implementation. The PROFINET security specification is still
-          under development. This implementation is to be used only for performance measurements. For instance, what
-          impact does real time frame encryption and decryption has on quantity structures? Key updates and other
-          mechanisms are not covered.
+.. Note:: The **security settings** are only valid for the PROFINET real time traffic
+          classes. Furthermore, the Linux RealTime Communication ``Testbench`` demonstrates only one
+          exemplary implementation. The PROFINET security specification is still under
+          development. This implementation is to be used only for performance measurements. For
+          instance, what impact does real time frame encryption and decryption has on quantity
+          structures? Key updates and other mechanisms are not covered.
 
 Sample configuration files are provided for Intel i225/i226 and stmmac.
 
 Starting point for PROFINET TSN:
 
-- https://github.com/Linutronix/TSN-Testbench/tree/main/tests/profinet
+- https://github.com/Linutronix/RTC-Testbench/tree/main/tests/profinet
 
 Starting point for OPC/UA:
 
-- https://github.com/Linutronix/TSN-Testbench/tree/main/tests/opcua
+- https://github.com/Linutronix/RTC-Testbench/tree/main/tests/opcua
 
 At minimum MAC and IP addresses as well as network interface names have to be adjusted.
 

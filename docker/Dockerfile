@@ -25,11 +25,11 @@ RUN apt install -y libbpf-dev libyaml-dev libc6-dev rt-tests ethtool iproute2
 RUN apt install -y iperf3 linuxptp libxdp-dev libssl-dev libmosquitto-dev
 RUN apt install -y git
 
-# Install TSN Testbench
+# Install RTC Testbench
 WORKDIR /root
-RUN git clone https://www.github.com/Linutronix/TSN-Testbench
-RUN mkdir -p TSN-Testbench/build
-WORKDIR /root/TSN-Testbench/build
+RUN git clone https://www.github.com/Linutronix/RTC-Testbench
+RUN mkdir -p RTC-Testbench/build
+WORKDIR /root/RTC-Testbench/build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DWITH_MQTT=TRUE ..
 RUN make -j`nproc`
 RUN make install
