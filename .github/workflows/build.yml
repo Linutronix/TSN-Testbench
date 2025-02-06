@@ -21,12 +21,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1.4.2
+        uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
-          packages: clang llvm cmake pkg-config libbpf-dev libyaml-dev libc6-dev build-essential libxdp-dev libssl-dev libmosquitto-dev bash sphinx python3-sphinx-rtd-theme
+          packages: >-
+            clang llvm cmake pkg-config libbpf-dev libyaml-dev libc6-dev build-essential libxdp-dev
+            libssl-dev libmosquitto-dev bash sphinx python3-sphinx-rtd-theme
           version: 1.0
 
       - name: Build code
