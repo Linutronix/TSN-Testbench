@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: BSD-2-Clause
 ..
-.. Copyright (C) 2022-2024 Linutronix GmbH
+.. Copyright (C) 2022-2025 Linutronix GmbH
 .. Author Kurt Kanzenbach <kurt@linutronix.de>
 ..
 .. Testbench documentation introduction file.
@@ -50,6 +50,7 @@ Version history:
 - v4.0: July 2023, PROFINET Security
 - v5.0: September 2024, Grafana visualization
 - v5.1: November 2024, Tooling and bugfixes
+- v5.2: February 2025, Histogram and bugfixes
 
 Motivation
 ^^^^^^^^^^

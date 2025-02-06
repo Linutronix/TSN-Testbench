@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
-# Copyright (C) 2020-2024 Linutronix GmbH
+# Copyright (C) 2020-2025 Linutronix GmbH
 # Author Kurt Kanzenbach <kurt@linutronix.de>
 #
 
 cmake_minimum_required(VERSION 3.5)
 project(profinet-eval)
 
-set(VERSION "5.1")
+set(VERSION "5.2")
 
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
