@@ -12,7 +12,7 @@ Quality Assurance
 License Checks
 --------------
 
-The license for the Linux TSN ``Testbench`` is the permissive BSD-2-Clause. All
+The license for the Linux RealTime Communication ``Testbench`` is the permissive BSD-2-Clause. All
 files have a valid SPDX identifier (see https://spdx.dev/). The provided license
 information can be automatically checked for errors by using the ``reuse``
 tool. Example:
@@ -40,7 +40,7 @@ No errors should be printed.
 Coding Style Check
 ------------------
 
-The coding style for the Linux TSN ``Testbench`` is the Linux kernel style. The
+The coding style for the Linux RealTime Communication ``Testbench`` is the Linux kernel style. The
 rules are described here:
 
 - https://www.kernel.org/doc/html/latest/process/coding-style.html#codingstyle

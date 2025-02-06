@@ -9,4 +9,4 @@
 Contribution
 ============
 
-See `CONTRIBUTING <https://github.com/Linutronix/TSN-Testbench/blob/main/CONTRIBUTING.md>`_ on Github.
+See `CONTRIBUTING <https://github.com/Linutronix/RTC-Testbench/blob/main/CONTRIBUTING.md>`_ on Github.

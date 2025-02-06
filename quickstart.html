@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quick Start Guide &mdash; Linux TSN Testbench v5.1 documentation</title>
+  <title>Quick Start Guide &mdash; Linux RealTime Communication Testbench v5.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=21fce3b4"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=160469de"></script>
       <script src="_static/doctools.js?v=888ff710"></script>
       <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
@@ -32,7 +32,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            Linux TSN Testbench
+            Linux RealTime Communication Testbench
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -91,7 +91,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Linux TSN Testbench</a>
+          <a href="index.html">Linux RealTime Communication Testbench</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -113,12 +113,12 @@
 <span id="quickstart"></span><h1>Quick Start Guide<a class="headerlink" href="#quick-start-guide" title="Permalink to this heading"></a></h1>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
-<p>The following sections provide an overview how to quickly setup the Linux TSN Testbench. It includes
+<p>The following sections provide an overview how to quickly setup the Linux RealTime Communication Testbench. It includes
 suited and available hardware as well as the recommended Linux system.</p>
 </section>
 <section id="hardware">
 <h2>Hardware<a class="headerlink" href="#hardware" title="Permalink to this heading"></a></h2>
-<p>The Linux TSN Testbench runs well on x86 processors with Intel i225/i226 TSN NIC(s). These network
+<p>The Linux RealTime Communication Testbench runs well on x86 processors with Intel i225/i226 TSN NIC(s). These network
 cards include capabilities such time synchronization via PTP, 802.1Qav, 802.1Qbv, Tx Launch Time and
 multi queue. Furthermore, the NIC(s) are connected via PCIe and can be used in any system with
 corresponding PCIe slots.</p>
@@ -134,22 +134,22 @@ for the time synchronization via PTP.</p>
 <section id="linux">
 <h2>Linux<a class="headerlink" href="#linux" title="Permalink to this heading"></a></h2>
 <p>The recommend Linux distribution is Debian Stable (Bookworm). It includes all necessary libraries
-and tools to run the Linux TSN Testbench. Debian can be installed on any PC by using the Debian
+and tools to run the Linux RealTime Communication Testbench. Debian can be installed on any PC by using the Debian
 installer:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://www.debian.org/distrib/">https://www.debian.org/distrib/</a></p></li>
 </ul>
-<p>Once Debian is and up and running the Linux TSN Testbench and its dependencies can be installed:</p>
+<p>Once Debian is and up and running the Linux RealTime Communication Testbench and its dependencies can be installed:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install dependencies</span>
 apt<span class="w"> </span>update
 apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>build-essential<span class="w"> </span>clang<span class="w"> </span>llvm<span class="w"> </span>cmake<span class="w"> </span>pkg-config<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>libbpf-dev<span class="w"> </span>libyaml-dev<span class="w"> </span>libc6-dev<span class="w"> </span>rt-tests<span class="w"> </span>ethtool<span class="w"> </span>iproute2<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>iperf3<span class="w"> </span>linuxptp<span class="w"> </span>libxdp-dev<span class="w"> </span>libssl-dev<span class="w"> </span>libmosquitto-dev<span class="w"> </span>git
 
-<span class="c1"># Install Linux TSN Testbench</span>
-git<span class="w"> </span>clone<span class="w"> </span>https://www.github.com/Linutronix/TSN-Testbench
-mkdir<span class="w"> </span>-p<span class="w"> </span>TSN-Testbench/build
-<span class="nb">cd</span><span class="w"> </span>TSN-Testbench/build
+<span class="c1"># Install Linux RealTime Communication Testbench</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://www.github.com/Linutronix/RTC-Testbench
+mkdir<span class="w"> </span>-p<span class="w"> </span>RTC-Testbench/build
+<span class="nb">cd</span><span class="w"> </span>RTC-Testbench/build
 cmake<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>/usr<span class="w"> </span>-DWITH_MQTT<span class="o">=</span>TRUE<span class="w"> </span>..
 make<span class="w"> </span>-j<span class="sb">`</span>nproc<span class="sb">`</span>
 make<span class="w"> </span>install
@@ -165,23 +165,23 @@ apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </s
 </section>
 <section id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
-<p>In addition, the Linux TSN Testbench requires a configuration. That is used to specify what and how
+<p>In addition, the Linux RealTime Communication Testbench requires a configuration. That is used to specify what and how
 many frames are transmitted and received. Furthermore, it specifies system parameters such as what
 priorities, queues and CPU(s) are used. Example configurations are provided, but have to be adjusted
 to the particular systems. At least, the names of the network interfaces and the MAC/IP addresses
 have to be changed.</p>
 <p>Starting point for PROFINET TSN:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.com/Linutronix/TSN-Testbench/tree/main/tests/profinet">https://github.com/Linutronix/TSN-Testbench/tree/main/tests/profinet</a></p></li>
+<li><p><a class="reference external" href="https://github.com/Linutronix/RTC-Testbench/tree/main/tests/profinet">https://github.com/Linutronix/RTC-Testbench/tree/main/tests/profinet</a></p></li>
 </ul>
 <p>Starting point for OPC/UA:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.com/Linutronix/TSN-Testbench/tree/main/tests/opcua">https://github.com/Linutronix/TSN-Testbench/tree/main/tests/opcua</a></p></li>
+<li><p><a class="reference external" href="https://github.com/Linutronix/RTC-Testbench/tree/main/tests/opcua">https://github.com/Linutronix/RTC-Testbench/tree/main/tests/opcua</a></p></li>
 </ul>
 <p>As soon as the configuration files are created, the <code class="docutils literal notranslate"><span class="pre">reference</span></code> and <code class="docutils literal notranslate"><span class="pre">mirror</span></code> application can be
 started on two different nodes in the network. The <code class="docutils literal notranslate"><span class="pre">reference</span></code> logs the statistics for
 analysis. For a graphical visualization with Grafana, see:
-<a class="reference external" href="https://linutronix.github.io/TSN-Testbench/mqtt.html">https://linutronix.github.io/TSN-Testbench/mqtt.html</a></p>
+<a class="reference external" href="https://linutronix.github.io/RTC-Testbench/mqtt.html">https://linutronix.github.io/RTC-Testbench/mqtt.html</a></p>
 </section>
 </section>
 
@@ -196,7 +196,7 @@ analysis. For a graphical visualization with Grafana, see:
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022-2024, Linutronix GmbH.</p>
+    <p>&#169; Copyright 2022-2025, Linutronix GmbH.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

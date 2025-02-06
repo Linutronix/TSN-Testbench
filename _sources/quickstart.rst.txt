@@ -14,13 +14,13 @@ Quick Start Guide
 Introduction
 ^^^^^^^^^^^^
 
-The following sections provide an overview how to quickly setup the Linux TSN Testbench. It includes
+The following sections provide an overview how to quickly setup the Linux RealTime Communication Testbench. It includes
 suited and available hardware as well as the recommended Linux system.
 
 Hardware
 ^^^^^^^^
 
-The Linux TSN Testbench runs well on x86 processors with Intel i225/i226 TSN NIC(s). These network
+The Linux RealTime Communication Testbench runs well on x86 processors with Intel i225/i226 TSN NIC(s). These network
 cards include capabilities such time synchronization via PTP, 802.1Qav, 802.1Qbv, Tx Launch Time and
 multi queue. Furthermore, the NIC(s) are connected via PCIe and can be used in any system with
 corresponding PCIe slots.
@@ -38,12 +38,12 @@ Linux
 ^^^^^
 
 The recommend Linux distribution is Debian Stable (Bookworm). It includes all necessary libraries
-and tools to run the Linux TSN Testbench. Debian can be installed on any PC by using the Debian
+and tools to run the Linux RealTime Communication Testbench. Debian can be installed on any PC by using the Debian
 installer:
 
 - https://www.debian.org/distrib/
 
-Once Debian is and up and running the Linux TSN Testbench and its dependencies can be installed:
+Once Debian is and up and running the Linux RealTime Communication Testbench and its dependencies can be installed:
 
 .. code:: bash
 
@@ -53,10 +53,10 @@ Once Debian is and up and running the Linux TSN Testbench and its dependencies c
       libbpf-dev libyaml-dev libc6-dev rt-tests ethtool iproute2 \
       iperf3 linuxptp libxdp-dev libssl-dev libmosquitto-dev git
 
-   # Install Linux TSN Testbench
-   git clone https://www.github.com/Linutronix/TSN-Testbench
-   mkdir -p TSN-Testbench/build
-   cd TSN-Testbench/build
+   # Install Linux RealTime Communication Testbench
+   git clone https://www.github.com/Linutronix/RTC-Testbench
+   mkdir -p RTC-Testbench/build
+   cd RTC-Testbench/build
    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DWITH_MQTT=TRUE ..
    make -j`nproc`
    make install
@@ -73,7 +73,7 @@ simply installed via the package management:
 Configuration
 ^^^^^^^^^^^^^
 
-In addition, the Linux TSN Testbench requires a configuration. That is used to specify what and how
+In addition, the Linux RealTime Communication Testbench requires a configuration. That is used to specify what and how
 many frames are transmitted and received. Furthermore, it specifies system parameters such as what
 priorities, queues and CPU(s) are used. Example configurations are provided, but have to be adjusted
 to the particular systems. At least, the names of the network interfaces and the MAC/IP addresses
@@ -81,13 +81,13 @@ have to be changed.
 
 Starting point for PROFINET TSN:
 
-- https://github.com/Linutronix/TSN-Testbench/tree/main/tests/profinet
+- https://github.com/Linutronix/RTC-Testbench/tree/main/tests/profinet
 
 Starting point for OPC/UA:
 
-- https://github.com/Linutronix/TSN-Testbench/tree/main/tests/opcua
+- https://github.com/Linutronix/RTC-Testbench/tree/main/tests/opcua
 
 As soon as the configuration files are created, the ``reference`` and ``mirror`` application can be
 started on two different nodes in the network. The ``reference`` logs the statistics for
 analysis. For a graphical visualization with Grafana, see:
-https://linutronix.github.io/TSN-Testbench/mqtt.html
+https://linutronix.github.io/RTC-Testbench/mqtt.html

@@ -6,21 +6,21 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Introduction &mdash; Linux TSN Testbench v5.1 documentation</title>
+  <title>Introduction &mdash; Linux RealTime Communication Testbench v5.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=21fce3b4"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=160469de"></script>
       <script src="_static/doctools.js?v=888ff710"></script>
       <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Quick Start Guide" href="quickstart.html" />
-    <link rel="prev" title="Welcome to Linux TSN Testbench’s documentation!" href="index.html" /> 
+    <link rel="prev" title="Welcome to Linux RealTime Communication Testbench’s documentation!" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -32,7 +32,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            Linux TSN Testbench
+            Linux RealTime Communication Testbench
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -89,7 +89,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Linux TSN Testbench</a>
+          <a href="index.html">Linux RealTime Communication Testbench</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -109,12 +109,12 @@
              
   <section id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h1>
-<p>The TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is a real-time and non-real time traffic validation tool
+<p>The Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is a real-time and non-real time traffic validation tool
 for converged TSN networks. PROFINET as well as OPC/UA PubSub and other
 configurable protocols are supported. Furthermore, the performance validation of
 security algorithms can be utilized. The evaluation application is primarily
 used to simulate a PLC. It generates RT and non-RT traffic, mirrors traffic and
-performs consistency and latency checks. The Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is split
+performs consistency and latency checks. The Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is split
 into two applications:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">reference</span></code>: Traffic generation and checking simulation</p></li>
@@ -122,7 +122,7 @@ into two applications:</p>
 application</p></li>
 </ul>
 <p>The concept is shown below.</p>
-<a class="reference internal image-reference" href="_images/overview.png"><img alt="Linux TSN Testbench" src="_images/overview.png" style="width: 600px;" /></a>
+<a class="reference internal image-reference" href="_images/overview.png"><img alt="Linux RealTime Communication Testbench" src="_images/overview.png" style="width: 600px;" /></a>
 <p>The traffic generation and reception are based on standard Linux interfaces. RAW
 sockets and BPF filters are utilized. The interface is configured into
 promiscuous mode. Sending and receiving packets are implemented via system
@@ -142,6 +142,7 @@ is the Linux kernel one.</p>
 <li><p>v4.0: July 2023, PROFINET Security</p></li>
 <li><p>v5.0: September 2024, Grafana visualization</p></li>
 <li><p>v5.1: November 2024, Tooling and bugfixes</p></li>
+<li><p>v5.2: February 2025, Histogram and bugfixes</p></li>
 </ul>
 <section id="motivation">
 <h2>Motivation<a class="headerlink" href="#motivation" title="Permalink to this heading"></a></h2>
@@ -152,7 +153,7 @@ reception and transmission. Furthermore, the PREEMPT_RT patch turns Linux into a
 real-time Operating-System. How well do these mechanisms perform for real world
 use cases? For instance, is it possible to run PROFINET over TSN on top of
 Linux? Which jitter, cycle times, throughputs and latencies can be achieved?</p>
-<p>To answer these questions, the Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> has been developed. The
+<p>To answer these questions, the Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> has been developed. The
 purpose of that tool is to evaluate manufacturer’s hardware as well as
 underlying drivers and the Linux network stack itself. Thereby, please note that
 is not a TSN conformance testing tool, it is intended for evaluation. The tool
@@ -171,11 +172,11 @@ different traffic classes ranging from real time Layer 2 up to UDP
 communication. The cyclic receivers and transmitters utilize either traditional
 <code class="docutils literal notranslate"><span class="pre">AF_PACKET</span></code> or modern <code class="docutils literal notranslate"><span class="pre">AF_XDP</span></code> sockets. For both socket types the receive
 flow is configured via either BPF filters or eBPF XDP programs. Based on the
-configuration, or profiles, the Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> can simulate different
+configuration, or profiles, the Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> can simulate different
 traffic types such as PROFINET or OPC/UA PubSub. The image below shows an
 example of three different middlewares in combination with non-real time
 applications utilizing XDP.</p>
-<a class="reference internal image-reference" href="_images/ref_test_app_architecture_xdp.png"><img alt="Linux TSN Testbench XDP Architecture" src="_images/ref_test_app_architecture_xdp.png" style="width: 600px;" /></a>
+<a class="reference internal image-reference" href="_images/ref_test_app_architecture_xdp.png"><img alt="Linux RealTime Communication Testbench XDP Architecture" src="_images/ref_test_app_architecture_xdp.png" style="width: 600px;" /></a>
 </section>
 </section>
 
@@ -183,14 +184,14 @@ applications utilizing XDP.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Linux TSN Testbench’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Linux RealTime Communication Testbench’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="quickstart.html" class="btn btn-neutral float-right" title="Quick Start Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022-2024, Linutronix GmbH.</p>
+    <p>&#169; Copyright 2022-2025, Linutronix GmbH.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

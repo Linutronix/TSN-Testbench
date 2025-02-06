@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test runs &mdash; Linux TSN Testbench v5.1 documentation</title>
+  <title>Test runs &mdash; Linux RealTime Communication Testbench v5.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=21fce3b4"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=160469de"></script>
       <script src="_static/doctools.js?v=888ff710"></script>
       <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
@@ -32,7 +32,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            Linux TSN Testbench
+            Linux RealTime Communication Testbench
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -100,7 +100,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Linux TSN Testbench</a>
+          <a href="index.html">Linux RealTime Communication Testbench</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -200,18 +200,18 @@ was executed over the period of 4 hours. In total 4 billion RT frames have
 been transmitted, received and checked. Not a single one missed its deadline or
 was damaged in any way.</p>
 <p>The following image shows how the expected round-trip time is calculated according to the parameters shown above:</p>
-<a class="reference internal image-reference" href="_images/tsn_testbench_timing_1ms_en.png"><img alt="Linux TSN Testbench scheduling 1ms" src="_images/tsn_testbench_timing_1ms_en.png" style="width: 600px;" /></a>
-<p>Furthermore, the Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> can also be utilized to check the
+<a class="reference internal image-reference" href="_images/rtc_testbench_timing_1ms_en.png"><img alt="Linux RealTime Communication Testbench scheduling 1ms" src="_images/rtc_testbench_timing_1ms_en.png" style="width: 600px;" /></a>
+<p>Furthermore, the Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> can also be utilized to check the
 Ethernet behavior on the wire. Therefore, special hardware equipment such as a
 TSN-Monitor from Fraunhofer or a Profishark 1G+ network TAP is required. The
 image below shows a burst of real time traffic:</p>
-<a class="reference internal image-reference" href="_images/ipg_256x128bytes.png"><img alt="Linux TSN Testbench burst" src="_images/ipg_256x128bytes.png" style="width: 600px;" /></a>
+<a class="reference internal image-reference" href="_images/ipg_256x128bytes.png"><img alt="Linux RealTime Communication Testbench burst" src="_images/ipg_256x128bytes.png" style="width: 600px;" /></a>
 </section>
 <section id="predefined-test-scenarios">
 <h2>Predefined Test Scenarios<a class="headerlink" href="#predefined-test-scenarios" title="Permalink to this heading"></a></h2>
 <section id="multi-middleware">
 <h3>Multi Middleware<a class="headerlink" href="#multi-middleware" title="Permalink to this heading"></a></h3>
-<p>The Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is able to simulate different Middlewares such as
+<p>The Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> is able to simulate different Middlewares such as
 OPC/UA PubSub or PROFINET. The multi middleware scenario is useful for analyzing
 whether it is possible to execute multiple time aware applications at the same
 time using the same network interface on real time Linux.</p>
@@ -596,7 +596,7 @@ polling with AF_XDP sockets.</p>
 </section>
 <section id="tested-hardware">
 <h2>Tested Hardware<a class="headerlink" href="#tested-hardware" title="Permalink to this heading"></a></h2>
-<p>The Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> has been successfully tested on the following
+<p>The Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> has been successfully tested on the following
 hardware platforms and TSN NIC(s).</p>
 <p>Hardware platforms:</p>
 <ul class="simple">
@@ -615,11 +615,11 @@ hardware platforms and TSN NIC(s).</p>
 </section>
 <section id="switches">
 <h2>Switches<a class="headerlink" href="#switches" title="Permalink to this heading"></a></h2>
-<p>The Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> relies on precise time synchronization between all
+<p>The Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> relies on precise time synchronization between all
 involved nodes. Therefore, the PTP is leveraged. As a consequence it is
 recommended to use Ethernet switches which do support PTP based on 802.1AS.</p>
 <p>Furthermore, when using Ethernet switches, disable the LLDP traffic class by
-setting <code class="docutils literal notranslate"><span class="pre">LldpNumFramesPerCycle</span></code> to 0. The Linux TSN <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> simulates
+setting <code class="docutils literal notranslate"><span class="pre">LldpNumFramesPerCycle</span></code> to 0. The Linux RealTime Communication <code class="docutils literal notranslate"><span class="pre">Testbench</span></code> simulates
 LLDP traffic with its own special crafted Ethernet frames, which are not valid
 LLDP messages in terms of the 802.1AB protocol.  As LLDP is link local traffic
 and interpreted by Ethernet switches, that will confuse the applications and the
@@ -638,7 +638,7 @@ switches. Still LLDP can be enabled in the whole network.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022-2024, Linutronix GmbH.</p>
+    <p>&#169; Copyright 2022-2025, Linutronix GmbH.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
