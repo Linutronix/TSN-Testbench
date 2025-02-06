@@ -111,7 +111,7 @@ target_include_directories(mirror PUBLIC ${LIBBPF_INCLUDE_DIRS})
 target_include_directories(mirror PUBLIC ${LIBXDP_INCLUDE_DIRS})
 target_include_directories(mirror PUBLIC ${LIBCRYPTO_INCLUDE_DIRS})
 
-set(INSTALL_EBPF_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR}/testbench/ebpf)
+set(INSTALL_EBPF_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/rtc-testbench/ebpf)
 configure_file(
   "${PROJECT_SOURCE_DIR}/app_config.in"
   "${PROJECT_BINARY_DIR}/app_config.h"
@@ -140,7 +140,7 @@ function(add_xdp_prog name)
     SOURCES src/${name}.c
   )
 
-  install(FILES ${CMAKE_BINARY_DIR}/${name}.o DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/testbench/ebpf)
+  install(FILES ${CMAKE_BINARY_DIR}/${name}.o DESTINATION ${CMAKE_INSTALL_LIBDIR}/rtc-testbench/ebpf)
 endfunction()
 
 add_xdp_prog(xdp_kern_profinet_vid100)
@@ -152,4 +152,4 @@ add_xdp_prog(xdp_kern_avtp_vid400)
 
 install(TARGETS reference DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT binaries)
 install(TARGETS mirror DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT binaries)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/ DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/testbench/tests)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/ DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/rtc-testbench/tests)
