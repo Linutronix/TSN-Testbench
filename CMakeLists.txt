@@ -121,9 +121,7 @@ include_directories("${PROJECT_BINARY_DIR}")
 #
 # Add code for compiling XDP eBPF programes.
 #
-execute_process(COMMAND uname -m OUTPUT_VARIABLE BUILD_ARCH ERROR_QUIET)
-string(STRIP "${BUILD_ARCH}" BUILD_ARCH)
-set(ASM_INCLUDE "/usr/include/${BUILD_ARCH}-linux-gnu")
+set(ASM_INCLUDE "/usr/include/${CMAKE_C_LIBRARY_ARCHITECTURE}")
 set(CLANG_FLAGS -S --target=bpf -D __BPF_TRACING__ -Wall -O2 -fno-stack-protector -emit-llvm -g -I ${ASM_INCLUDE})
 set(LLC_FLAGS -march=bpf -filetype=obj)
 
